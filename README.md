@@ -26,7 +26,7 @@ That origin shapes the codebase: it leans on the standard library, keeps depende
 
 ## Installation
 
-**Requirements:** Go 1.24 or newer (developed on Go 1.26). A few commands shell out to external tools — see [External dependencies](#external-dependencies).
+**Requirements:** Go 1.24 or newer (developed on Go 1.26) — install it with `brew install go` (or from [go.dev/dl](https://go.dev/dl/)). A few commands shell out to external tools — see [External dependencies](#external-dependencies).
 
 ### Install with `go install`
 
@@ -150,8 +150,8 @@ A few deliberate choices:
 
 Most commands are pure Go and need nothing extra. A few delegate to mature system tools and will report a clear error if the tool isn't installed:
 
-- **`video`** — requires [`yt-dlp`](https://github.com/yt-dlp/yt-dlp) (and `ffmpeg` for some formats).
-- **`svg2png`** — requires an SVG renderer such as [`resvg`](https://github.com/linebender/resvg).
+- **`video`** — requires `yt-dlp` (and `ffmpeg` for some formats): `brew install yt-dlp ffmpeg`
+- **`svg2png`** — requires an SVG renderer: `brew install resvg`
 
 ## License
 
