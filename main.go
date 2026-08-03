@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/adamakhlaq/dev-utils/internal/cli"
+	"github.com/adamakhlaq/dev-utils/internal/encode"
 )
 
 func main() {
@@ -23,12 +24,13 @@ func main() {
 }
 
 func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
-	commands := map[string]cli.Command{
-		"base64": {
-			Name:    "base64",
-			Summary: "base64-encode or -decode stdin (-d to decode)",
-			Run:     cli.Base64Cmd,
-		},
+	commands := make(map[string]cli.Command)
+	for _, cmd := range []cli.Command{
+		cli.EncodeCommand("base64", "base64-encode or -decode input (-d to decode)", encode.Base64, encode.Base64Decode),
+		cli.EncodeCommand("hex", "hex-encode or -decode input (-d to decode)", encode.Hex, encode.HexDecode),
+		cli.EncodeCommand("url", "URL-encode or -decode input (-d to decode)", encode.URL, encode.URLDecode),
+	} {
+		commands[cmd.Name] = cmd
 	}
 	return cli.Dispatch(commands, args, stdin, stdout, stderr)
 }

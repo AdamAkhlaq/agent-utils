@@ -14,7 +14,7 @@ It is **local-first** (core utilities are pure offline transforms; nothing leave
 
 - **Single binary**: written in Go, compiles to one static executable with no runtime or interpreter to install.
 - **Local-first**: core utilities run fully offline; nothing is sent anywhere.
-- **Composable**: every command reads from `stdin` and writes to `stdout`, with errors on `stderr` and meaningful exit codes, so commands pipe together and slot into scripts.
+- **Composable**: every command reads from `stdin` (or a file argument) and writes to `stdout`, with errors on `stderr` and consistent exit codes (`0` success, `1` failure, `2` usage error), so commands pipe together and slot into scripts.
 - **Consistent interface**: predictable subcommand and flag conventions across every utility.
 - **Ever-growing**: new utilities are added over time, and the architecture makes adding one a small, self-contained change.
 
@@ -44,10 +44,10 @@ go build -o dev-utils .
 ## Usage
 
 ```sh
-dev-utils <command> [flags]
+dev-utils <command> [flags] [file]
 ```
 
-Commands read input from `stdin` and write results to `stdout`. Run `dev-utils` with no arguments to list every command.
+Commands read input from the file argument when one is given, otherwise from `stdin`, and write results to `stdout`. Flags go before the filename. Run `dev-utils` with no arguments to list every command.
 
 ## Commands
 
@@ -61,9 +61,43 @@ Base64-encode or -decode data.
 | ---- | ------------------------- |
 | `-d` | Decode instead of encode. |
 
+Like system `base64`, input is encoded byte for byte (`echo` appends a newline; use `printf` to encode an exact string), and newlines in base64 input are ignored when decoding.
+
 ```sh
-echo "hi" | dev-utils base64        # aGk=
+printf "hi" | dev-utils base64      # aGk=
 echo "aGk=" | dev-utils base64 -d   # hi
+dev-utils base64 photo.png > photo.b64
+dev-utils base64 -d photo.b64 > photo.png
+```
+
+### `hex`
+
+Hex-encode or -decode data.
+
+| Flag | Description               |
+| ---- | ------------------------- |
+| `-d` | Decode instead of encode. |
+
+Surrounding whitespace is ignored when decoding, so piped shell output decodes cleanly.
+
+```sh
+printf "hi" | dev-utils hex         # 6869
+echo "6869" | dev-utils hex -d      # hi
+```
+
+### `url`
+
+URL-encode or -decode data, with query-component semantics (space becomes `+`).
+
+| Flag | Description               |
+| ---- | ------------------------- |
+| `-d` | Decode instead of encode. |
+
+Surrounding whitespace is ignored when decoding.
+
+```sh
+printf "a b&c" | dev-utils url        # a+b%26c
+echo "a+b%26c" | dev-utils url -d     # a b&c
 ```
 
 ## Scripting and automation
@@ -88,7 +122,7 @@ The same design that makes `dev-utils` script-friendly makes it a clean tool for
 
 - **Discoverable**: running `dev-utils` lists every command and its summary.
 - **Deterministic**: a real transformation every time, rather than a probabilistic guess.
-- **Predictable I/O and exit codes**: output on `stdout`, diagnostics on `stderr`, and the exit code to signal what happened.
+- **Predictable I/O and exit codes**: output on `stdout`, diagnostics on `stderr`, and `0`/`1`/`2` to signal what happened.
 - **No runtime**: a single static binary drops into any sandbox or container with no setup.
 
 In practice this offloads well-specified work (conversion, encoding, extraction) from the model onto fast local code, keeping large data out of the context window entirely.
