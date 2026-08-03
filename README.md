@@ -85,6 +85,25 @@ printf "hi" | dev-utils hex         # 6869
 echo "6869" | dev-utils hex -d      # hi
 ```
 
+### `qr`
+
+Generate a QR code PNG from text, or decode a QR code image back to its text.
+
+| Flag        | Description                                     |
+| ----------- | ----------------------------------------------- |
+| `-d`        | Decode a QR code image (PNG or JPEG) to text.   |
+| `-o <file>` | Write output to a file instead of `stdout`.     |
+| `-s <px>`   | Image size in pixels when encoding (default 256). |
+
+Decoding works best on clean images (screenshots, generated files); expect lower success on photos than a phone camera scanner.
+
+```sh
+dev-utils qr -o qr.png "https://example.com"
+dev-utils qr -s 512 "wifi password" > code.png
+dev-utils qr -d qr.png                # https://example.com
+dev-utils qr -d < screenshot.png
+```
+
 ### `url`
 
 URL-encode or -decode data, with query-component semantics (space becomes `+`).

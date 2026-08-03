@@ -8,6 +8,7 @@ import (
 
 	"github.com/adamakhlaq/dev-utils/internal/cli"
 	"github.com/adamakhlaq/dev-utils/internal/encode"
+	"github.com/adamakhlaq/dev-utils/internal/img"
 )
 
 func main() {
@@ -29,6 +30,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 		cli.EncodeCommand("base64", "base64-encode or -decode input (-d to decode)", encode.Base64, encode.Base64Decode),
 		cli.EncodeCommand("hex", "hex-encode or -decode input (-d to decode)", encode.Hex, encode.HexDecode),
 		cli.EncodeCommand("url", "URL-encode or -decode input (-d to decode)", encode.URL, encode.URLDecode),
+		cli.QRCommand(img.QR, img.QRDecode),
 	} {
 		commands[cmd.Name] = cmd
 	}
