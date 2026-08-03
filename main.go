@@ -1,37 +1,34 @@
 package main
 
 import (
-	"encoding/base64"
+	"errors"
 	"fmt"
 	"io"
 	"os"
+
+	"github.com/adamakhlaq/dev-utils/internal/cli"
 )
 
 func main() {
-
-	if len(os.Args) < 2 {
-		fmt.Fprintln(os.Stderr, "Error: supply an argument")
-		os.Exit(1)
+	err := run(os.Args[1:], os.Stdin, os.Stdout, os.Stderr)
+	if err == nil {
+		return
 	}
-
-	input, err := io.ReadAll(os.Stdin)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error while reading input: %v\n", err)
-		os.Exit(1)
+	fmt.Fprintln(os.Stderr, "dev-utils:", err)
+	var usageErr *cli.UsageError
+	if errors.As(err, &usageErr) {
+		os.Exit(2)
 	}
+	os.Exit(1)
+}
 
-	if os.Args[1] == "base64" {
-		if len(os.Args) > 2 && os.Args[2] == "-d" {
-			decoded, err := base64.StdEncoding.DecodeString(string(input))
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error while decoding input: %v\n", err)
-				os.Exit(1)
-			}
-			os.Stdout.Write(decoded)
-			return
-
-		} else {
-			fmt.Println(base64.StdEncoding.EncodeToString(input))
-		}
+func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
+	commands := map[string]cli.Command{
+		"base64": {
+			Name:    "base64",
+			Summary: "base64-encode or -decode stdin (-d to decode)",
+			Run:     cli.Base64Cmd,
+		},
 	}
+	return cli.Dispatch(commands, args, stdin, stdout, stderr)
 }
