@@ -81,6 +81,98 @@ func TestYAMLToJSON(t *testing.T) {
 	}
 }
 
+func TestJSONToYAML(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   string
+		want    string
+		wantErr string
+	}{
+		{
+			name:  "key order preserved",
+			input: `{"zebra":1,"alpha":2}`,
+			want:  "zebra: 1\nalpha: 2",
+		},
+		{
+			name:  "nested structures",
+			input: `{"b":{"y":1,"x":[true,null]},"a":"str"}`,
+			want:  "b:\n  \"y\": 1\n  x:\n  - true\n  - null\na: str",
+		},
+		{
+			name:  "array document",
+			input: `[1,"two",3.5]`,
+			want:  "- 1\n- two\n- 3.5",
+		},
+		{
+			name:  "big integer survives exactly",
+			input: `{"n":12345678901234567890}`,
+			want:  "\"n\": 12345678901234567890",
+		},
+		{
+			name:  "boolean-looking string stays quoted",
+			input: `{"a":"yes"}`,
+			want:  "a: \"yes\"",
+		},
+		{
+			name:  "number-looking string stays quoted",
+			input: `{"a":"123"}`,
+			want:  "a: \"123\"",
+		},
+		{
+			name:  "scalar document",
+			input: `42`,
+			want:  "42",
+		},
+		{
+			name:  "pretty-printed input",
+			input: "{\n  \"a\": 1\n}",
+			want:  "a: 1",
+		},
+		{name: "empty input", input: "", wantErr: "empty input"},
+		{name: "whitespace only", input: "  \n\n", wantErr: "empty input"},
+		{name: "invalid JSON with position", input: `{"a":}`, wantErr: "line 1, column"},
+		{name: "trailing garbage", input: `{} {}`, wantErr: "invalid JSON"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var out bytes.Buffer
+			err := JSONToYAML(&out, strings.NewReader(tt.input))
+			if tt.wantErr != "" {
+				if err == nil {
+					t.Fatal("JSONToYAML() expected an error, got nil")
+				}
+				if !strings.Contains(err.Error(), tt.wantErr) {
+					t.Fatalf("JSONToYAML() error = %q, want it to contain %q", err, tt.wantErr)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("JSONToYAML() error = %v", err)
+			}
+			if got := out.String(); got != tt.want {
+				t.Errorf("JSONToYAML() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestJSONToYAMLRoundTrip(t *testing.T) {
+	input := `{"zebra":1,"alpha":"yes","n":12345678901234567890,"nested":{"a":"123","list":[true,null,1.5]}}`
+	var yamlOut, jsonOut, compact bytes.Buffer
+	if err := JSONToYAML(&yamlOut, strings.NewReader(input)); err != nil {
+		t.Fatalf("JSONToYAML() error = %v", err)
+	}
+	if err := YAMLToJSON(&jsonOut, &yamlOut); err != nil {
+		t.Fatalf("YAMLToJSON() error = %v", err)
+	}
+	if err := JSONCompact(&compact, &jsonOut); err != nil {
+		t.Fatalf("JSONCompact() error = %v", err)
+	}
+	if got := compact.String(); got != input {
+		t.Errorf("round trip = %q, want %q", got, input)
+	}
+}
+
 func TestYAMLToJSONOutputIsValidJSON(t *testing.T) {
 	input := "service:\n  name: api\n  ports:\n    - 80\n    - 443\n  debug: false"
 	var out bytes.Buffer
