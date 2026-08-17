@@ -163,6 +163,18 @@ dev-utils qr -d qr.png                # https://example.com
 dev-utils qr -d < screenshot.png
 ```
 
+### `slugify`
+
+Turn text into a lowercase hyphenated slug: runs of anything that isn't a letter or digit become single hyphens, with none leading or trailing.
+
+Unicode letters are kept and lowercased, not transliterated (`Café` becomes `café`, not `cafe`).
+
+```sh
+printf "Hello, World!" | dev-utils slugify   # hello-world
+printf "A -- Messy___Title (2024)" | dev-utils slugify   # a-messy-title-2024
+dev-utils slugify title.txt
+```
+
 ### `url`
 
 URL-encode or -decode data, with query-component semantics (space becomes `+`).

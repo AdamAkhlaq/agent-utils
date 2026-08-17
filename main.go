@@ -12,6 +12,7 @@ import (
 	"github.com/adamakhlaq/dev-utils/internal/format"
 	"github.com/adamakhlaq/dev-utils/internal/generate"
 	"github.com/adamakhlaq/dev-utils/internal/img"
+	"github.com/adamakhlaq/dev-utils/internal/text"
 )
 
 func main() {
@@ -38,6 +39,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 		cli.ConvertCommand("jpeg2png", "convert a JPEG image to PNG", img.JPEGToPNG),
 		cli.PNGToJPEGCommand(img.PNGToJPEG),
 		cli.QRCommand(img.QR, img.QRDecode),
+		cli.StringTransformCommand("slugify", "turn text into a lowercase hyphenated slug", text.Slugify),
 		cli.UUIDCommand(generate.UUID),
 		cli.VideoCommand(download.Video),
 	} {
