@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/adamakhlaq/dev-utils/internal/cli"
+	"github.com/adamakhlaq/dev-utils/internal/download"
 	"github.com/adamakhlaq/dev-utils/internal/encode"
 	"github.com/adamakhlaq/dev-utils/internal/format"
 	"github.com/adamakhlaq/dev-utils/internal/generate"
@@ -37,6 +38,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 		cli.PNGToJPEGCommand(img.PNGToJPEG),
 		cli.QRCommand(img.QR, img.QRDecode),
 		cli.UUIDCommand(generate.UUID),
+		cli.VideoCommand(download.Video),
 	} {
 		commands[cmd.Name] = cmd
 	}

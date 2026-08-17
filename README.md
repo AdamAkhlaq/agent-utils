@@ -181,6 +181,22 @@ dev-utils uuid          # e.g. 8b28f3f4-9d51-4a7b-b8a2-52c62c54cbf5
 dev-utils uuid -n 5     # five, one per line
 ```
 
+### `video`
+
+Download a video by driving [`yt-dlp`](https://github.com/yt-dlp/yt-dlp), streaming its progress output through to the terminal.
+
+| Flag       | Description                                     |
+| ---------- | ----------------------------------------------- |
+| `-o <dir>` | Output directory (default: current directory).  |
+| `-audio`   | Download the audio track only.                  |
+
+Requires `yt-dlp` on your `PATH` (`brew install yt-dlp`); the command fails with a clear message if it's missing. `-audio` extraction, and merging of high-resolution formats, additionally use `ffmpeg` (`brew install ffmpeg`). Unlike the pure transforms above, this command talks to the network.
+
+```sh
+dev-utils video "https://www.youtube.com/watch?v=..."
+dev-utils video -audio -o ~/Music "https://www.youtube.com/watch?v=..."
+```
+
 ## Scripting and automation
 
 Every command follows the same contract (`stdin` in, `stdout` out, diagnostics on `stderr`, meaningful exit codes), so `dev-utils` composes naturally with the rest of the shell:
