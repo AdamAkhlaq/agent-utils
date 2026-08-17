@@ -85,6 +85,18 @@ printf "hi" | dev-utils hex         # 6869
 echo "6869" | dev-utils hex -d      # hi
 ```
 
+### `jpeg2png`
+
+Convert a JPEG image to PNG.
+
+Takes an optional input file and output file (`jpeg2png in.jpg out.png`); with one argument the PNG goes to `stdout`, with none the JPEG is read from `stdin` too.
+
+```sh
+dev-utils jpeg2png photo.jpg photo.png
+dev-utils jpeg2png photo.jpg > photo.png
+dev-utils jpeg2png < photo.jpg > photo.png
+```
+
 ### `json-fmt`
 
 Pretty-print, minify, or validate JSON.
@@ -102,6 +114,22 @@ cat data.json | dev-utils json-fmt
 dev-utils json-fmt -indent 4 data.json
 cat data.json | dev-utils json-fmt -c
 dev-utils json-fmt -check data.json && echo "valid"
+```
+
+### `png2jpeg`
+
+Convert a PNG image to JPEG.
+
+| Flag         | Description                        |
+| ------------ | ---------------------------------- |
+| `-q <1-100>` | JPEG quality (default 85).         |
+
+Takes an optional input file and output file, like `jpeg2png`. Transparent and semi-transparent pixels are composited onto a white background, since JPEG has no transparency.
+
+```sh
+dev-utils png2jpeg in.png out.jpg
+dev-utils png2jpeg -q 95 in.png out.jpg
+dev-utils png2jpeg < in.png > out.jpg
 ```
 
 ### `qr`

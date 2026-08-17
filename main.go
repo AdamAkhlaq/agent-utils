@@ -33,6 +33,8 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 		cli.EncodeCommand("hex", "hex-encode or -decode input (-d to decode)", encode.Hex, encode.HexDecode),
 		cli.EncodeCommand("url", "URL-encode or -decode input (-d to decode)", encode.URL, encode.URLDecode),
 		cli.JSONFmtCommand(format.JSON, format.JSONCompact, format.JSONValid),
+		cli.ConvertCommand("jpeg2png", "convert a JPEG image to PNG", img.JPEGToPNG),
+		cli.PNGToJPEGCommand(img.PNGToJPEG),
 		cli.QRCommand(img.QR, img.QRDecode),
 		cli.UUIDCommand(generate.UUID),
 	} {
