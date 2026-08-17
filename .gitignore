@@ -2,6 +2,8 @@
 agent-utils
 dev-utils
 
+# GoReleaser output
+dist/
+
 # Personal Docs
 CLAUDE.md
-ROADMAP.md

@@ -20,9 +20,13 @@ AI agents constantly need small, exact transformations: decode this base64, vali
 
 ## Installation
 
-**Requirements:** Go 1.26 or newer; install it with `brew install go` or from [go.dev/dl](https://go.dev/dl/).
+### Download a release binary
+
+Grab the archive for your platform from the [latest release](https://github.com/AdamAkhlaq/agent-utils/releases/latest) (macOS, Linux, and Windows; amd64 and arm64), unpack it, and put `agent-utils` on your `PATH`. Checksums ship alongside the archives.
 
 ### Install with `go install`
+
+**Requirements:** Go 1.26 or newer; install it with `brew install go` or from [go.dev/dl](https://go.dev/dl/).
 
 ```sh
 go install github.com/adamakhlaq/agent-utils@latest
@@ -249,6 +253,14 @@ agent-utils uuid          # e.g. 8b28f3f4-9d51-4a7b-b8a2-52c62c54cbf5
 agent-utils uuid -n 5     # five, one per line
 ```
 
+### `version`
+
+Print the binary's version as a bare, script-friendly value.
+
+```sh
+agent-utils version     # v1.0.0
+```
+
 ### `video`
 
 Download a video by driving [`yt-dlp`](https://github.com/yt-dlp/yt-dlp), streaming its progress output through to the terminal.
@@ -320,13 +332,17 @@ A few deliberate choices shape the codebase:
 
 ## Contributing
 
-Issues and pull requests are welcome. Before submitting, run:
+Issues and pull requests are welcome. All changes land through pull requests: `main` is protected, and CI (gofmt, vet, tests, build) must pass before merging. Before submitting, run:
 
 ```sh
 go fmt ./... && go vet ./... && go test ./...
 ```
 
-Keep changes small and focused: one utility or fix per PR, tests alongside the code.
+Keep changes small and focused: one utility or fix per PR, tests alongside the code, and commit messages in [Conventional Commits](https://www.conventionalcommits.org) style (`feat:`, `fix:`, ...), which the release changelog is generated from.
+
+## Releases
+
+Releases follow [semantic versioning](https://semver.org). Pushing a `vX.Y.Z` tag triggers the release workflow, which cross-compiles the binaries, generates the changelog from commit messages, and publishes a GitHub Release.
 
 ## License
 

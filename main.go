@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"runtime/debug"
 
 	"github.com/adamakhlaq/agent-utils/internal/cli"
 	"github.com/adamakhlaq/agent-utils/internal/download"
@@ -14,6 +15,23 @@ import (
 	"github.com/adamakhlaq/agent-utils/internal/img"
 	"github.com/adamakhlaq/agent-utils/internal/text"
 )
+
+// version is stamped by GoReleaser via ldflags for release binaries; builds
+// installed with `go install ...@vX.Y.Z` get their version from build info
+// instead, and local `go build` reports "dev".
+var version = "dev"
+
+func resolveVersion() string {
+	if version != "dev" {
+		return version
+	}
+	if info, ok := debug.ReadBuildInfo(); ok {
+		if v := info.Main.Version; v != "" && v != "(devel)" {
+			return v
+		}
+	}
+	return version
+}
 
 func main() {
 	err := run(os.Args[1:], os.Stdin, os.Stdout, os.Stderr)
@@ -43,6 +61,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 		cli.QRCommand(img.QR, img.QRDecode),
 		cli.StringTransformCommand("slugify", "turn text into a lowercase hyphenated slug", text.Slugify),
 		cli.UUIDCommand(generate.UUID),
+		cli.VersionCommand(resolveVersion()),
 		cli.VideoCommand(download.Video),
 		cli.TransformCommand("yaml2json", "convert a YAML document to pretty-printed JSON", format.YAMLToJSON),
 	} {
