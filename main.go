@@ -6,13 +6,13 @@ import (
 	"io"
 	"os"
 
-	"github.com/adamakhlaq/dev-utils/internal/cli"
-	"github.com/adamakhlaq/dev-utils/internal/download"
-	"github.com/adamakhlaq/dev-utils/internal/encode"
-	"github.com/adamakhlaq/dev-utils/internal/format"
-	"github.com/adamakhlaq/dev-utils/internal/generate"
-	"github.com/adamakhlaq/dev-utils/internal/img"
-	"github.com/adamakhlaq/dev-utils/internal/text"
+	"github.com/adamakhlaq/agent-utils/internal/cli"
+	"github.com/adamakhlaq/agent-utils/internal/download"
+	"github.com/adamakhlaq/agent-utils/internal/encode"
+	"github.com/adamakhlaq/agent-utils/internal/format"
+	"github.com/adamakhlaq/agent-utils/internal/generate"
+	"github.com/adamakhlaq/agent-utils/internal/img"
+	"github.com/adamakhlaq/agent-utils/internal/text"
 )
 
 func main() {
@@ -20,7 +20,7 @@ func main() {
 	if err == nil {
 		return
 	}
-	fmt.Fprintln(os.Stderr, "dev-utils:", err)
+	fmt.Fprintln(os.Stderr, "agent-utils:", err)
 	var usageErr *cli.UsageError
 	if errors.As(err, &usageErr) {
 		os.Exit(2)
@@ -48,5 +48,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 	} {
 		commands[cmd.Name] = cmd
 	}
+	meta := cli.CommandsCommand(commands)
+	commands[meta.Name] = meta
 	return cli.Dispatch(commands, args, stdin, stdout, stderr)
 }

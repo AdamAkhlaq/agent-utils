@@ -1,4 +1,4 @@
-module github.com/adamakhlaq/dev-utils
+module github.com/adamakhlaq/agent-utils
 
 go 1.26.4
 

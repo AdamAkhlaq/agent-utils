@@ -34,7 +34,7 @@ func TestDispatch(t *testing.T) {
 			if got := errors.As(err, &usageErr); got != tt.wantUsage {
 				t.Fatalf("Dispatch() usage error = %v (err = %v), want %v", got, err, tt.wantUsage)
 			}
-			if tt.wantUsage && !strings.Contains(stderr.String(), "usage: dev-utils") {
+			if tt.wantUsage && !strings.Contains(stderr.String(), "usage: agent-utils") {
 				t.Errorf("expected usage on stderr, got %q", stderr.String())
 			}
 		})

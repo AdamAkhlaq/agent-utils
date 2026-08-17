@@ -12,15 +12,19 @@ func TestQRRoundTrip(t *testing.T) {
 	tests := []struct {
 		name string
 		text string
+		size int
 	}{
-		{name: "url", text: "https://example.com"},
-		{name: "plain text", text: "hello, world"},
-		{name: "long text", text: strings.Repeat("dev-utils ", 50)},
+		{name: "url", text: "https://example.com", size: 256},
+		{name: "plain text", text: "hello, world", size: 256},
+		// Dense codes need more pixels: around 500 characters at 256px sits
+		// right at the decoder's edge, where success depends on the exact
+		// content, so the long case uses 512px for reliable margin.
+		{name: "long text", text: strings.Repeat("agent-utils ", 50), size: 512},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
-			if err := QR(&buf, tt.text, 256); err != nil {
+			if err := QR(&buf, tt.text, tt.size); err != nil {
 				t.Fatalf("QR() error = %v", err)
 			}
 			got, err := QRDecode(&buf)

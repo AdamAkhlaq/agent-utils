@@ -43,7 +43,7 @@ func Dispatch(commands map[string]Command, args []string, stdin io.Reader, stdou
 // Usage writes the command list to w, sorted by name because map iteration
 // order is randomized.
 func Usage(w io.Writer, commands map[string]Command) {
-	fmt.Fprintln(w, "usage: dev-utils <command> [flags]")
+	fmt.Fprintln(w, "usage: agent-utils <command> [flags]")
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, "Commands:")
 	names := make([]string, 0, len(commands))

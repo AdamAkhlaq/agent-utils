@@ -1,22 +1,22 @@
-# dev-utils
+# agent-utils
 
-> Small, fast command-line utilities for everyday development tasks, bundled into a single Go binary that runs entirely on your machine.
+> An agent-first toolbox: small, deterministic command-line utilities an AI agent can call instead of doing the work itself, bundled into a single Go binary.
 
 [![Made with Go](https://img.shields.io/badge/made%20with-Go-00ADD8.svg)](https://go.dev)
 [![Go Version](https://img.shields.io/badge/go-1.26%2B-00ADD8.svg)](https://go.dev/dl/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-`dev-utils` bundles the little utilities developers reach for constantly behind one consistent CLI, so everyday tasks never require a website, a language runtime, or a one-off script.
+AI agents constantly need small, exact transformations: decode this base64, validate this JSON, convert this config, generate a UUID. Doing these "by hand" in the model is slow, token-expensive, and probabilistic; a purpose-built tool is instant, free, and exact. `agent-utils` packages those operations behind one consistent, machine-friendly CLI. Humans and shell scripts get the same benefits, but every design decision starts from the question: *what makes this trivially usable by an agent?*
 
-It is **local-first** (core utilities are pure offline transforms; nothing leaves your machine), ships as **one self-contained binary**, and is designed to be equally usable by a human at a terminal, a shell script, or an AI agent.
+## Agent-first design
 
-## Features
-
-- **Single binary**: written in Go, compiles to one static executable with no runtime or interpreter to install.
-- **Local-first**: core utilities run fully offline; nothing is sent anywhere.
-- **Composable**: every command reads from `stdin` (or a file argument) and writes to `stdout`, with errors on `stderr` and consistent exit codes (`0` success, `1` failure, `2` usage error), so commands pipe together and slot into scripts.
-- **Consistent interface**: predictable subcommand and flag conventions across every utility.
-- **Ever-growing**: new utilities are added over time, and the architecture makes adding one a small, self-contained change.
+- **Discoverable**: `agent-utils commands` emits the full command list as JSON; each command answers `-h`. An agent can learn the whole tool surface in two calls.
+- **Deterministic**: a real transformation every time, never a plausible guess. Commands with no inherent randomness (like `lorem`) are deterministic by design.
+- **Predictable contract**: every command reads `stdin` (or a file argument), writes results to `stdout`, keeps diagnostics on `stderr`, and exits `0` (success), `1` (runtime failure), or `2` (usage error). No colors, no prompts, no interactivity, ever.
+- **Structured output where data is structured**: `jwt-decode`, `yaml2json`, and `commands` emit clean JSON that pipes straight into `jq`.
+- **Loud failures**: bad input and misused flags produce a specific error and a non-zero exit code; nothing is silently ignored or truncated.
+- **No runtime**: one static Go binary drops into any sandbox or container with no setup, keeping large data out of the model's context window entirely.
+- **Local-first**: everything except `video` runs fully offline; nothing is sent anywhere.
 
 ## Installation
 
@@ -25,29 +25,29 @@ It is **local-first** (core utilities are pure offline transforms; nothing leave
 ### Install with `go install`
 
 ```sh
-go install github.com/adamakhlaq/dev-utils@latest
+go install github.com/adamakhlaq/agent-utils@latest
 ```
 
-This puts a `dev-utils` binary on your `PATH` (in `$(go env GOPATH)/bin`).
+This puts a `agent-utils` binary on your `PATH` (in `$(go env GOPATH)/bin`).
 
 ### Build from source
 
 ```sh
-git clone https://github.com/adamakhlaq/dev-utils.git
-cd dev-utils
-go build -o dev-utils .
-./dev-utils
+git clone https://github.com/adamakhlaq/agent-utils.git
+cd agent-utils
+go build -o agent-utils .
+./agent-utils
 ```
 
-> **Tip:** if you use it interactively a lot, alias it to something shorter, e.g. `alias dv=dev-utils`. (Avoid `du`, which is the standard Unix disk-usage tool.)
+> **Tip:** if you use it interactively a lot, alias it to something shorter, e.g. `alias au=agent-utils`.
 
 ## Usage
 
 ```sh
-dev-utils <command> [flags] [file]
+agent-utils <command> [flags] [file]
 ```
 
-Commands read input from the file argument when one is given, otherwise from `stdin`, and write results to `stdout`. Flags go before the filename. Run `dev-utils` with no arguments to list every command.
+Commands read input from the file argument when one is given, otherwise from `stdin`, and write results to `stdout`. Flags go before the filename. Run `agent-utils` with no arguments for a human-readable command list, or `agent-utils commands` for the same list as JSON.
 
 ## Commands
 
@@ -64,10 +64,19 @@ Base64-encode or -decode data.
 Like system `base64`, input is encoded byte for byte (`echo` appends a newline; use `printf` to encode an exact string), and newlines in base64 input are ignored when decoding.
 
 ```sh
-printf "hi" | dev-utils base64      # aGk=
-echo "aGk=" | dev-utils base64 -d   # hi
-dev-utils base64 photo.png > photo.b64
-dev-utils base64 -d photo.b64 > photo.png
+printf "hi" | agent-utils base64      # aGk=
+echo "aGk=" | agent-utils base64 -d   # hi
+agent-utils base64 photo.png > photo.b64
+agent-utils base64 -d photo.b64 > photo.png
+```
+
+### `commands`
+
+List every command as JSON: the machine-readable counterpart to the bare `agent-utils` help text, meant for tool discovery by agents and scripts.
+
+```sh
+agent-utils commands                          # [{"name": "base64", "summary": "..."}, ...]
+agent-utils commands | jq -r '.[].name'       # command names, one per line
 ```
 
 ### `hex`
@@ -81,8 +90,8 @@ Hex-encode or -decode data.
 Surrounding whitespace is ignored when decoding, so piped shell output decodes cleanly.
 
 ```sh
-printf "hi" | dev-utils hex         # 6869
-echo "6869" | dev-utils hex -d      # hi
+printf "hi" | agent-utils hex         # 6869
+echo "6869" | agent-utils hex -d      # hi
 ```
 
 ### `jpeg2png`
@@ -92,9 +101,9 @@ Convert a JPEG image to PNG.
 Takes an optional input file and output file (`jpeg2png in.jpg out.png`); with one argument the PNG goes to `stdout`, with none the JPEG is read from `stdin` too.
 
 ```sh
-dev-utils jpeg2png photo.jpg photo.png
-dev-utils jpeg2png photo.jpg > photo.png
-dev-utils jpeg2png < photo.jpg > photo.png
+agent-utils jpeg2png photo.jpg photo.png
+agent-utils jpeg2png photo.jpg > photo.png
+agent-utils jpeg2png < photo.jpg > photo.png
 ```
 
 ### `json-fmt`
@@ -110,10 +119,10 @@ Pretty-print, minify, or validate JSON.
 Formatting preserves the document exactly as written: key order and number representation are untouched, so large integers never lose precision. Invalid input is reported with its line and column.
 
 ```sh
-cat data.json | dev-utils json-fmt
-dev-utils json-fmt -indent 4 data.json
-cat data.json | dev-utils json-fmt -c
-dev-utils json-fmt -check data.json && echo "valid"
+cat data.json | agent-utils json-fmt
+agent-utils json-fmt -indent 4 data.json
+cat data.json | agent-utils json-fmt -c
+agent-utils json-fmt -check data.json && echo "valid"
 ```
 
 ### `jwt-decode`
@@ -123,9 +132,9 @@ Decode a JWT's header and payload into one pretty-printed JSON document.
 This only decodes; it does **not** verify the signature, so never treat the claims as authentic on this basis alone. Claim order and number representation are preserved exactly. A leading `Bearer ` (as pasted from an `Authorization` header) is ignored, and the output is a single JSON object, so it pipes straight into `jq`.
 
 ```sh
-printf '%s' "$TOKEN" | dev-utils jwt-decode
-dev-utils jwt-decode token.txt
-printf '%s' "$TOKEN" | dev-utils jwt-decode | jq -r .payload.exp
+printf '%s' "$TOKEN" | agent-utils jwt-decode
+agent-utils jwt-decode token.txt
+printf '%s' "$TOKEN" | agent-utils jwt-decode | jq -r .payload.exp
 ```
 
 ### `lorem`
@@ -140,9 +149,9 @@ Generate lorem ipsum filler text.
 `-w` and `-p` are mutually exclusive. Output is deterministic: the canonical Lorem Ipsum passage, cycled for word counts and repeated for paragraphs, so the same command always produces the same text. This command reads no input.
 
 ```sh
-dev-utils lorem                 # one canonical paragraph
-dev-utils lorem -p 3            # three paragraphs, blank-line separated
-dev-utils lorem -w 40           # exactly 40 words
+agent-utils lorem                 # one canonical paragraph
+agent-utils lorem -p 3            # three paragraphs, blank-line separated
+agent-utils lorem -w 40           # exactly 40 words
 ```
 
 ### `password`
@@ -158,9 +167,9 @@ Generate random passwords, one per line, from a cryptographically secure random 
 Characters are drawn uniformly (no modulo bias) from letters, digits, and the symbols `!@#$%^&*-_=+?`, a set chosen to paste safely into shells and config files. The default 20 characters with symbols gives roughly 124 bits of entropy. This command reads no input.
 
 ```sh
-dev-utils password
-dev-utils password -l 32 -n 5
-dev-utils password -no-symbols
+agent-utils password
+agent-utils password -l 32 -n 5
+agent-utils password -no-symbols
 ```
 
 ### `png2jpeg`
@@ -174,9 +183,9 @@ Convert a PNG image to JPEG.
 Takes an optional input file and output file, like `jpeg2png`. Transparent and semi-transparent pixels are composited onto a white background, since JPEG has no transparency.
 
 ```sh
-dev-utils png2jpeg in.png out.jpg
-dev-utils png2jpeg -q 95 in.png out.jpg
-dev-utils png2jpeg < in.png > out.jpg
+agent-utils png2jpeg in.png out.jpg
+agent-utils png2jpeg -q 95 in.png out.jpg
+agent-utils png2jpeg < in.png > out.jpg
 ```
 
 ### `qr`
@@ -192,10 +201,10 @@ Generate a QR code PNG from text, or decode a QR code image back to its text.
 Decoding works best on clean images (screenshots, generated files); expect lower success on photos than a phone camera scanner.
 
 ```sh
-dev-utils qr -o qr.png "https://example.com"
-dev-utils qr -s 512 "wifi password" > code.png
-dev-utils qr -d qr.png                # https://example.com
-dev-utils qr -d < screenshot.png
+agent-utils qr -o qr.png "https://example.com"
+agent-utils qr -s 512 "wifi password" > code.png
+agent-utils qr -d qr.png                # https://example.com
+agent-utils qr -d < screenshot.png
 ```
 
 ### `slugify`
@@ -205,9 +214,9 @@ Turn text into a lowercase hyphenated slug: runs of anything that isn't a letter
 Unicode letters are kept and lowercased, not transliterated (`Café` becomes `café`, not `cafe`).
 
 ```sh
-printf "Hello, World!" | dev-utils slugify   # hello-world
-printf "A -- Messy___Title (2024)" | dev-utils slugify   # a-messy-title-2024
-dev-utils slugify title.txt
+printf "Hello, World!" | agent-utils slugify   # hello-world
+printf "A -- Messy___Title (2024)" | agent-utils slugify   # a-messy-title-2024
+agent-utils slugify title.txt
 ```
 
 ### `url`
@@ -221,8 +230,8 @@ URL-encode or -decode data, with query-component semantics (space becomes `+`).
 Surrounding whitespace is ignored when decoding.
 
 ```sh
-printf "a b&c" | dev-utils url        # a+b%26c
-echo "a+b%26c" | dev-utils url -d     # a b&c
+printf "a b&c" | agent-utils url        # a+b%26c
+echo "a+b%26c" | agent-utils url -d     # a b&c
 ```
 
 ### `uuid`
@@ -236,8 +245,8 @@ Generate random (version 4) UUIDs, one per line.
 UUIDs are drawn from the operating system's cryptographically secure random source. This command reads no input.
 
 ```sh
-dev-utils uuid          # e.g. 8b28f3f4-9d51-4a7b-b8a2-52c62c54cbf5
-dev-utils uuid -n 5     # five, one per line
+agent-utils uuid          # e.g. 8b28f3f4-9d51-4a7b-b8a2-52c62c54cbf5
+agent-utils uuid -n 5     # five, one per line
 ```
 
 ### `video`
@@ -252,8 +261,8 @@ Download a video by driving [`yt-dlp`](https://github.com/yt-dlp/yt-dlp), stream
 Requires `yt-dlp` on your `PATH` (`brew install yt-dlp`); the command fails with a clear message if it's missing. `-audio` extraction, and merging of high-resolution formats, additionally use `ffmpeg` (`brew install ffmpeg`). Unlike the pure transforms above, this command talks to the network.
 
 ```sh
-dev-utils video "https://www.youtube.com/watch?v=..."
-dev-utils video -audio -o ~/Music "https://www.youtube.com/watch?v=..."
+agent-utils video "https://www.youtube.com/watch?v=..."
+agent-utils video -audio -o ~/Music "https://www.youtube.com/watch?v=..."
 ```
 
 ### `yaml2json`
@@ -263,37 +272,42 @@ Convert a YAML document to pretty-printed JSON.
 Key order and number representation are preserved, anchors and aliases are resolved, and YAML 1.2 semantics apply (`yes`/`no` stay strings, not booleans). Input with multiple `---` documents is rejected rather than silently truncated. Output pipes straight into `jq` or `json-fmt`.
 
 ```sh
-dev-utils yaml2json config.yaml
-cat config.yaml | dev-utils yaml2json | jq .service.name
-dev-utils yaml2json config.yaml | dev-utils json-fmt -c   # minified
+agent-utils yaml2json config.yaml
+cat config.yaml | agent-utils yaml2json | jq .service.name
+agent-utils yaml2json config.yaml | agent-utils json-fmt -c   # minified
 ```
 
 ## Scripting and automation
 
-Every command follows the same contract (`stdin` in, `stdout` out, diagnostics on `stderr`, meaningful exit codes), so `dev-utils` composes naturally with the rest of the shell:
+Every command follows the same contract (`stdin` in, `stdout` out, diagnostics on `stderr`, meaningful exit codes), so `agent-utils` composes naturally with the rest of the shell:
 
 ```sh
 # Pipe anything through a utility
-cat photo.png | dev-utils base64 > photo.b64
+cat photo.png | agent-utils base64 > photo.b64
 
 # Use exit codes for control flow
-if dev-utils base64 -d < input.b64 > /dev/null; then
+if agent-utils base64 -d < input.b64 > /dev/null; then
   echo "valid base64"
 fi
 ```
 
 That makes it easy to drop into shell scripts, `Makefile`s, pre-commit hooks, or CI steps.
 
-## Use with AI agents
+## Wiring it into an agent
 
-The same design that makes `dev-utils` script-friendly makes it a clean tool for AI agents to call. An agent can run a deterministic utility instead of attempting the operation itself, which is faster, cheaper, and exact:
+Give an agent access to the binary and one line of instruction; the tool teaches itself from there:
 
-- **Discoverable**: running `dev-utils` lists every command and its summary.
-- **Deterministic**: a real transformation every time, rather than a probabilistic guess.
-- **Predictable I/O and exit codes**: output on `stdout`, diagnostics on `stderr`, and `0`/`1`/`2` to signal what happened.
-- **No runtime**: a single static binary drops into any sandbox or container with no setup.
+```
+You have `agent-utils`, a CLI of exact local utilities. Run `agent-utils commands`
+to see what it offers, and prefer it over doing transformations yourself.
+```
 
-In practice this offloads well-specified work (conversion, encoding, extraction) from the model onto fast local code, keeping large data out of the context window entirely.
+Patterns that work well in practice:
+
+- **Discovery first**: `agent-utils commands` returns JSON the agent can parse; `agent-utils <command> -h` documents flags on demand.
+- **Trust the exit code**: `0` means the output is the answer; `1` means the input or operation was bad (the reason is on `stderr`); `2` means the invocation itself was wrong.
+- **Keep data out of context**: `agent-utils base64 -d blob.b64 > out.png` transforms a file without the agent ever reading its contents.
+- **Sandbox-friendly**: one static binary, no runtime, no network (except `video`), so it can be allowlisted broadly in restricted environments.
 
 ## Architecture
 
