@@ -6,8 +6,14 @@ import (
 	"io"
 	"os"
 	"runtime/debug"
+	"time"
+
+	// The time command resolves IANA zones; Windows has no OS tz database,
+	// so embed Go's (the binary must behave identically on every platform).
+	_ "time/tzdata"
 
 	"github.com/adamakhlaq/agent-utils/internal/cli"
+	"github.com/adamakhlaq/agent-utils/internal/clock"
 	"github.com/adamakhlaq/agent-utils/internal/download"
 	"github.com/adamakhlaq/agent-utils/internal/encode"
 	"github.com/adamakhlaq/agent-utils/internal/format"
@@ -60,6 +66,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 		cli.PasswordCommand(generate.Password),
 		cli.QRCommand(img.QR, img.QRDecode),
 		cli.StringTransformCommand("slugify", "turn text into a lowercase hyphenated slug", text.Slugify),
+		cli.TimeCommand(time.Now, clock.Parse, clock.Format, clock.JSON),
 		cli.UUIDCommand(generate.UUID),
 		cli.VersionCommand(resolveVersion()),
 		cli.VideoCommand(download.Video),
