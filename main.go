@@ -56,6 +56,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 	commands := make(map[string]cli.Command)
 	for _, cmd := range []cli.Command{
 		cli.EncodeCommand("base64", "base64-encode or -decode input (-d to decode)", encode.Base64, encode.Base64Decode),
+		cli.CaseCommand(text.Case),
 		cli.CSVToJSONCommand(format.CSVToJSON),
 		cli.EncodeCommand("hex", "hex-encode or -decode input (-d to decode)", encode.Hex, encode.HexDecode),
 		cli.EncodeCommand("url", "URL-encode or -decode input (-d to decode)", encode.URL, encode.URLDecode),
