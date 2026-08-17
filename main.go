@@ -19,6 +19,7 @@ import (
 	"github.com/adamakhlaq/agent-utils/internal/format"
 	"github.com/adamakhlaq/agent-utils/internal/generate"
 	"github.com/adamakhlaq/agent-utils/internal/img"
+	"github.com/adamakhlaq/agent-utils/internal/inspect"
 	"github.com/adamakhlaq/agent-utils/internal/text"
 )
 
@@ -53,11 +54,23 @@ func main() {
 }
 
 func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
+	filetypePlain := func(r io.Reader) (string, error) {
+		info, err := inspect.Detect(r)
+		return info.MIME, err
+	}
+	filetypeJSON := func(r io.Reader) (string, error) {
+		info, err := inspect.Detect(r)
+		if err != nil {
+			return "", err
+		}
+		return inspect.JSON(info)
+	}
 	commands := make(map[string]cli.Command)
 	for _, cmd := range []cli.Command{
 		cli.EncodeCommand("base64", "base64-encode or -decode input (-d to decode)", encode.Base64, encode.Base64Decode),
 		cli.CaseCommand(text.Case),
 		cli.CSVToJSONCommand(format.CSVToJSON),
+		cli.FiletypeCommand(filetypePlain, filetypeJSON),
 		cli.EncodeCommand("hex", "hex-encode or -decode input (-d to decode)", encode.Hex, encode.HexDecode),
 		cli.EncodeCommand("url", "URL-encode or -decode input (-d to decode)", encode.URL, encode.URLDecode),
 		cli.ConvertCommand("jpeg2png", "convert a JPEG image to PNG", img.JPEGToPNG),
