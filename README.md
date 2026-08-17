@@ -57,6 +57,35 @@ Commands read input from the file argument when one is given, otherwise from `st
 
 > This project is under active development; the command set below grows with each release.
 
+### At a glance
+
+| Category | Command | What it does |
+| -------- | ------- | ------------ |
+| Encode | [`base64`](#base64) | Base64-encode or -decode data |
+| Encode | [`hex`](#hex) | Hex-encode or -decode data |
+| Encode | [`url`](#url) | URL-encode or -decode data |
+| Encode | [`jwt-decode`](#jwt-decode) | Decode a JWT's header and payload as JSON (no verification) |
+| Format | [`json-fmt`](#json-fmt) | Pretty-print, minify, or validate JSON |
+| Format | [`json2yaml`](#json2yaml) | Convert JSON to YAML |
+| Format | [`yaml2json`](#yaml2json) | Convert YAML to JSON |
+| Format | [`csv2json`](#csv2json) | Convert CSV with a header row to a JSON array |
+| Image | [`qr`](#qr) | Generate or decode QR code PNGs |
+| Image | [`png2jpeg`](#png2jpeg) | Convert PNG to JPEG |
+| Image | [`jpeg2png`](#jpeg2png) | Convert JPEG to PNG |
+| Inspect | [`filetype`](#filetype) | Identify a file's MIME type and image dimensions |
+| Inspect | [`hash`](#hash) | Checksum data with sha256/sha1/sha512/md5, or verify one |
+| Generate | [`uuid`](#uuid) | Generate random v4 UUIDs |
+| Generate | [`password`](#password) | Generate secure random passwords |
+| Generate | [`lorem`](#lorem) | Generate deterministic lorem ipsum filler text |
+| Text | [`slugify`](#slugify) | Turn text into a lowercase hyphenated slug |
+| Text | [`case`](#case) | Convert between snake, camel, pascal, kebab, screaming case |
+| Time | [`time`](#time) | Print or convert timestamps across formats and timezones |
+| Download | [`video`](#video) | Download a video via yt-dlp |
+| Meta | [`commands`](#commands-1) | List every command as JSON for tool discovery |
+| Meta | [`version`](#version) | Print the binary's version |
+
+Full documentation for each command follows, in alphabetical order.
+
 ### `base64`
 
 Base64-encode or -decode data.
