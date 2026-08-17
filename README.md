@@ -83,6 +83,23 @@ agent-utils commands                          # [{"name": "base64", "summary": "
 agent-utils commands | jq -r '.[].name'       # command names, one per line
 ```
 
+### `csv2json`
+
+Convert CSV with a header row to a pretty-printed JSON array of objects.
+
+| Flag       | Description                                                    |
+| ---------- | -------------------------------------------------------------- |
+| `-sep <s>` | Field separator: one character, or `\t` for tab (default `,`). |
+
+The first row is the header row; every later row becomes one object with the headers as keys, in column order. All values remain JSON strings: CSV carries no type information, and inferring types corrupts data (a zip code `01234` must not become the number `1234`). Quoted fields (embedded separators, quotes, newlines) and CRLF line endings are handled per RFC 4180, and duplicate header names are rejected rather than silently overwritten. Output pipes straight into `jq`.
+
+```sh
+printf 'name,zip\nJane,01234' | agent-utils csv2json
+agent-utils csv2json data.csv | jq -r '.[0].name'
+agent-utils csv2json -sep ';' european.csv
+printf 'a\tb\n1\t2' | agent-utils csv2json -sep '\t'
+```
+
 ### `hex`
 
 Hex-encode or -decode data.
