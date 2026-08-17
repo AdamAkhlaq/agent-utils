@@ -128,6 +128,24 @@ dev-utils jwt-decode token.txt
 printf '%s' "$TOKEN" | dev-utils jwt-decode | jq -r .payload.exp
 ```
 
+### `password`
+
+Generate random passwords, one per line, from a cryptographically secure random source.
+
+| Flag          | Description                                       |
+| ------------- | ------------------------------------------------- |
+| `-l <len>`    | Password length (default 20).                     |
+| `-n <count>`  | How many to generate (default 1).                 |
+| `-no-symbols` | Letters and digits only.                          |
+
+Characters are drawn uniformly (no modulo bias) from letters, digits, and the symbols `!@#$%^&*-_=+?`, a set chosen to paste safely into shells and config files. The default 20 characters with symbols gives roughly 124 bits of entropy. This command reads no input.
+
+```sh
+dev-utils password
+dev-utils password -l 32 -n 5
+dev-utils password -no-symbols
+```
+
 ### `png2jpeg`
 
 Convert a PNG image to JPEG.
