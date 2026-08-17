@@ -138,6 +138,21 @@ printf "a b&c" | dev-utils url        # a+b%26c
 echo "a+b%26c" | dev-utils url -d     # a b&c
 ```
 
+### `uuid`
+
+Generate random (version 4) UUIDs, one per line.
+
+| Flag         | Description                          |
+| ------------ | ------------------------------------ |
+| `-n <count>` | How many to generate (default 1).    |
+
+UUIDs are drawn from the operating system's cryptographically secure random source. This command reads no input.
+
+```sh
+dev-utils uuid          # e.g. 8b28f3f4-9d51-4a7b-b8a2-52c62c54cbf5
+dev-utils uuid -n 5     # five, one per line
+```
+
 ## Scripting and automation
 
 Every command follows the same contract (`stdin` in, `stdout` out, diagnostics on `stderr`, meaningful exit codes), so `dev-utils` composes naturally with the rest of the shell:
