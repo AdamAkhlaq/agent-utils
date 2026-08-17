@@ -44,6 +44,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 		cli.StringTransformCommand("slugify", "turn text into a lowercase hyphenated slug", text.Slugify),
 		cli.UUIDCommand(generate.UUID),
 		cli.VideoCommand(download.Video),
+		cli.TransformCommand("yaml2json", "convert a YAML document to pretty-printed JSON", format.YAMLToJSON),
 	} {
 		commands[cmd.Name] = cmd
 	}

@@ -256,6 +256,18 @@ dev-utils video "https://www.youtube.com/watch?v=..."
 dev-utils video -audio -o ~/Music "https://www.youtube.com/watch?v=..."
 ```
 
+### `yaml2json`
+
+Convert a YAML document to pretty-printed JSON.
+
+Key order and number representation are preserved, anchors and aliases are resolved, and YAML 1.2 semantics apply (`yes`/`no` stay strings, not booleans). Input with multiple `---` documents is rejected rather than silently truncated. Output pipes straight into `jq` or `json-fmt`.
+
+```sh
+dev-utils yaml2json config.yaml
+cat config.yaml | dev-utils yaml2json | jq .service.name
+dev-utils yaml2json config.yaml | dev-utils json-fmt -c   # minified
+```
+
 ## Scripting and automation
 
 Every command follows the same contract (`stdin` in, `stdout` out, diagnostics on `stderr`, meaningful exit codes), so `dev-utils` composes naturally with the rest of the shell:
