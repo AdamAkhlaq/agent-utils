@@ -116,6 +116,18 @@ cat data.json | dev-utils json-fmt -c
 dev-utils json-fmt -check data.json && echo "valid"
 ```
 
+### `jwt-decode`
+
+Decode a JWT's header and payload into one pretty-printed JSON document.
+
+This only decodes; it does **not** verify the signature, so never treat the claims as authentic on this basis alone. Claim order and number representation are preserved exactly. A leading `Bearer ` (as pasted from an `Authorization` header) is ignored, and the output is a single JSON object, so it pipes straight into `jq`.
+
+```sh
+printf '%s' "$TOKEN" | dev-utils jwt-decode
+dev-utils jwt-decode token.txt
+printf '%s' "$TOKEN" | dev-utils jwt-decode | jq -r .payload.exp
+```
+
 ### `png2jpeg`
 
 Convert a PNG image to JPEG.
