@@ -85,6 +85,25 @@ printf "hi" | dev-utils hex         # 6869
 echo "6869" | dev-utils hex -d      # hi
 ```
 
+### `json-fmt`
+
+Pretty-print, minify, or validate JSON.
+
+| Flag          | Description                                                     |
+| ------------- | --------------------------------------------------------------- |
+| `-indent <n>` | Spaces per indentation level when pretty-printing (default 2).  |
+| `-c`          | Compact (minify) instead of pretty-print.                       |
+| `-check`      | Validate only: print nothing, exit `0` if valid and `1` if not. |
+
+Formatting preserves the document exactly as written: key order and number representation are untouched, so large integers never lose precision. Invalid input is reported with its line and column.
+
+```sh
+cat data.json | dev-utils json-fmt
+dev-utils json-fmt -indent 4 data.json
+cat data.json | dev-utils json-fmt -c
+dev-utils json-fmt -check data.json && echo "valid"
+```
+
 ### `qr`
 
 Generate a QR code PNG from text, or decode a QR code image back to its text.
