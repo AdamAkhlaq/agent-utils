@@ -14,6 +14,7 @@ import (
 
 	"github.com/adamakhlaq/agent-utils/internal/cli"
 	"github.com/adamakhlaq/agent-utils/internal/clock"
+	"github.com/adamakhlaq/agent-utils/internal/digest"
 	"github.com/adamakhlaq/agent-utils/internal/download"
 	"github.com/adamakhlaq/agent-utils/internal/encode"
 	"github.com/adamakhlaq/agent-utils/internal/format"
@@ -71,6 +72,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 		cli.CaseCommand(text.Case),
 		cli.CSVToJSONCommand(format.CSVToJSON),
 		cli.FiletypeCommand(filetypePlain, filetypeJSON),
+		cli.HashCommand(digest.Sum),
 		cli.EncodeCommand("hex", "hex-encode or -decode input (-d to decode)", encode.Hex, encode.HexDecode),
 		cli.EncodeCommand("url", "URL-encode or -decode input (-d to decode)", encode.URL, encode.URLDecode),
 		cli.ConvertCommand("jpeg2png", "convert a JPEG image to PNG", img.JPEGToPNG),
