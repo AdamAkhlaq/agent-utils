@@ -128,6 +128,23 @@ dev-utils jwt-decode token.txt
 printf '%s' "$TOKEN" | dev-utils jwt-decode | jq -r .payload.exp
 ```
 
+### `lorem`
+
+Generate lorem ipsum filler text.
+
+| Flag     | Description                                |
+| -------- | ------------------------------------------ |
+| `-w <n>` | Number of words.                           |
+| `-p <n>` | Number of paragraphs (default 1).          |
+
+`-w` and `-p` are mutually exclusive. Output is deterministic: the canonical Lorem Ipsum passage, cycled for word counts and repeated for paragraphs, so the same command always produces the same text. This command reads no input.
+
+```sh
+dev-utils lorem                 # one canonical paragraph
+dev-utils lorem -p 3            # three paragraphs, blank-line separated
+dev-utils lorem -w 40           # exactly 40 words
+```
+
 ### `password`
 
 Generate random passwords, one per line, from a cryptographically secure random source.

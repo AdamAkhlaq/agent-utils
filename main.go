@@ -38,6 +38,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 		cli.TransformCommand("jwt-decode", "decode a JWT's header and payload (does not verify the signature)", encode.JWTDecode),
 		cli.ConvertCommand("jpeg2png", "convert a JPEG image to PNG", img.JPEGToPNG),
 		cli.PNGToJPEGCommand(img.PNGToJPEG),
+		cli.LoremCommand(generate.LoremWords, generate.LoremParagraphs),
 		cli.PasswordCommand(generate.Password),
 		cli.QRCommand(img.QR, img.QRDecode),
 		cli.StringTransformCommand("slugify", "turn text into a lowercase hyphenated slug", text.Slugify),
