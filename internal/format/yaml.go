@@ -44,3 +44,36 @@ func YAMLToJSON(w io.Writer, r io.Reader) error {
 	}
 	return nil
 }
+
+// JSONToYAML converts the JSON document in r to YAML in w, the inverse of
+// YAMLToJSON. Key order and number representation survive, and strings that
+// would read as YAML booleans or numbers ("yes", "123") come out quoted, so
+// feeding the output back through YAMLToJSON reproduces the original document.
+func JSONToYAML(w io.Writer, r io.Reader) error {
+	data, err := readInput(r)
+	if err != nil {
+		return err
+	}
+	if len(data) == 0 {
+		return fmt.Errorf("empty input")
+	}
+	// Validate before converting: yaml.JSONToYAML's errors carry no input
+	// position, while encoding/json's do. Mirrors JSONCompact, including its
+	// json.Indent re-run to recover the offset json.Compact reports as 0.
+	var scratch bytes.Buffer
+	if err := json.Compact(&scratch, data); err != nil {
+		var indented bytes.Buffer
+		if ierr := json.Indent(&indented, data, "", ""); ierr != nil {
+			err = ierr
+		}
+		return syntaxError(data, err)
+	}
+	out, err := yaml.JSONToYAML(data)
+	if err != nil {
+		return fmt.Errorf("converting to YAML: %w", err)
+	}
+	if _, err := w.Write(bytes.TrimSuffix(out, []byte("\n"))); err != nil {
+		return fmt.Errorf("writing output: %w", err)
+	}
+	return nil
+}
