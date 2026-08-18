@@ -77,6 +77,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 		cli.EncodeCommand("url", "URL-encode or -decode input (-d to decode)", encode.URL, encode.URLDecode),
 		cli.ConvertCommand("jpeg2png", "convert a JPEG image to PNG", img.JPEGToPNG),
 		cli.JSONFmtCommand(format.JSON, format.JSONCompact, format.JSONValid),
+		cli.JSONToCSVCommand(format.JSONToCSV),
 		cli.TransformCommand("json2yaml", "convert a JSON document to YAML", format.JSONToYAML),
 		cli.TransformCommand("jwt-decode", "decode a JWT's header and payload (does not verify the signature)", encode.JWTDecode),
 		cli.PNGToJPEGCommand(img.PNGToJPEG),
