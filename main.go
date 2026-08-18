@@ -22,6 +22,7 @@ import (
 	"github.com/adamakhlaq/agent-utils/internal/hue"
 	"github.com/adamakhlaq/agent-utils/internal/img"
 	"github.com/adamakhlaq/agent-utils/internal/inspect"
+	"github.com/adamakhlaq/agent-utils/internal/semver"
 	"github.com/adamakhlaq/agent-utils/internal/text"
 )
 
@@ -67,6 +68,13 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 		}
 		return inspect.JSON(info)
 	}
+	semverCheck := func(constraint string) (func(version string) (bool, error), error) {
+		c, err := semver.ParseConstraint(constraint)
+		if err != nil {
+			return nil, err
+		}
+		return c.MatchString, nil
+	}
 	commands := make(map[string]cli.Command)
 	for _, cmd := range []cli.Command{
 		cli.EncodeCommand("base64", "base64-encode or -decode input (-d to decode)", encode.Base64, encode.Base64Decode),
@@ -87,6 +95,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 		cli.LoremCommand(generate.LoremWords, generate.LoremParagraphs),
 		cli.PasswordCommand(generate.Password),
 		cli.QRCommand(img.QR, img.QRDecode),
+		cli.SemverCommand(semver.Sort, semver.CompareStrings, semverCheck),
 		cli.StringTransformCommand("slugify", "turn text into a lowercase hyphenated slug", text.Slugify),
 		cli.TimeCommand(time.Now, clock.Parse, clock.Format, clock.JSON),
 		cli.TransformCommand("toml2json", "convert a TOML document to pretty-printed JSON", format.TOMLToJSON),
