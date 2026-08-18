@@ -19,6 +19,7 @@ import (
 	"github.com/adamakhlaq/agent-utils/internal/encode"
 	"github.com/adamakhlaq/agent-utils/internal/format"
 	"github.com/adamakhlaq/agent-utils/internal/generate"
+	"github.com/adamakhlaq/agent-utils/internal/hue"
 	"github.com/adamakhlaq/agent-utils/internal/img"
 	"github.com/adamakhlaq/agent-utils/internal/inspect"
 	"github.com/adamakhlaq/agent-utils/internal/text"
@@ -70,6 +71,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 	for _, cmd := range []cli.Command{
 		cli.EncodeCommand("base64", "base64-encode or -decode input (-d to decode)", encode.Base64, encode.Base64Decode),
 		cli.CaseCommand(text.Case),
+		cli.ColorCommand(hue.Convert, hue.JSON),
 		cli.CSVToJSONCommand(format.CSVToJSON),
 		cli.FiletypeCommand(filetypePlain, filetypeJSON),
 		cli.HashCommand(digest.Sum),
