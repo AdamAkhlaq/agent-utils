@@ -22,14 +22,14 @@ AI agents constantly need small, exact transformations: decode this base64, vali
 
 ### Download a release binary
 
-Grab the archive for your platform from the [v1.2.0 release](https://github.com/AdamAkhlaq/agent-utils/releases/tag/v1.2.0) (macOS, Linux, and Windows; amd64 and arm64), unpack it, and put `agent-utils` on your `PATH`. Checksums ship alongside the archives.
+Grab the archive for your platform from the [latest release](https://github.com/AdamAkhlaq/agent-utils/releases/latest) (macOS, Linux, and Windows; amd64 and arm64), unpack it, and put `agent-utils` on your `PATH`. Checksums ship alongside the archives.
 
 ### Install with `go install`
 
 **Requirements:** Go 1.26 or newer; install it with `brew install go` or from [go.dev/dl](https://go.dev/dl/).
 
 ```sh
-go install github.com/adamakhlaq/agent-utils@v1.2.0
+go install github.com/adamakhlaq/agent-utils@latest
 ```
 
 This puts a `agent-utils` binary on your `PATH` (in `$(go env GOPATH)/bin`).
