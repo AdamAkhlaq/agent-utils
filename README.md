@@ -66,7 +66,9 @@ Commands read input from the file argument when one is given, otherwise from `st
 | Encode | [`url`](#url) | URL-encode or -decode data |
 | Encode | [`jwt-decode`](#jwt-decode) | Decode a JWT's header and payload as JSON (no verification) |
 | Format | [`json-fmt`](#json-fmt) | Pretty-print, minify, or validate JSON |
+| Format | [`json2toml`](#json2toml) | Convert JSON to TOML |
 | Format | [`json2yaml`](#json2yaml) | Convert JSON to YAML |
+| Format | [`toml2json`](#toml2json) | Convert TOML to JSON |
 | Format | [`yaml2json`](#yaml2json) | Convert YAML to JSON |
 | Format | [`csv2json`](#csv2json) | Convert CSV with a header row to a JSON array |
 | Format | [`json2csv`](#json2csv) | Convert a JSON array of objects to CSV |
@@ -247,6 +249,18 @@ agent-utils json2csv -sep ';' data.json
 agent-utils csv2json data.csv | agent-utils json2csv   # round trip
 ```
 
+### `json2toml`
+
+Convert a JSON document to TOML.
+
+The inverse of `toml2json`. Keys are emitted in sorted order, so the same input always produces identical output. Integers stay integers and floats stay floats (`1.0` becomes `1.0`, never `1`). Values TOML cannot represent fail loudly with exit 1 and the offending path: a non-object root, any `null` (TOML has no null), and integers outside the signed 64-bit range (converting them to floats would silently lose precision). Heterogeneous arrays are fine, TOML 1.0 allows them. Invalid JSON is reported with its line and column.
+
+```sh
+agent-utils json2toml config.json
+cat config.json | agent-utils json2toml > config.toml
+cat config.json | agent-utils json2toml | agent-utils toml2json   # round trip
+```
+
 ### `json2yaml`
 
 Convert a JSON document to YAML.
@@ -372,6 +386,18 @@ agent-utils time 1755459000                   # epoch seconds to RFC 3339
 agent-utils time -z Asia/Tokyo 1755459000     # same instant, Tokyo wall clock
 agent-utils time -f unix "2026-08-17T19:45:20Z"   # RFC 3339 to epoch
 agent-utils time -json now                    # unix, unix_ms, rfc3339, utc, date, time, weekday, zone
+```
+
+### `toml2json`
+
+Convert a TOML document to pretty-printed JSON.
+
+Keys are emitted in sorted order: TOML decodes into unordered maps, so sorting is what makes the output deterministic (same input, byte-identical output, always). Integers and floats keep their types, and integers survive exactly up to the full signed 64-bit range. TOML datetimes become JSON strings: offset date-times in RFC 3339, local date-times, dates, and times as their literal text (`1979-05-27T07:32:00`, `1979-05-27`, `07:32:00`). Output pipes straight into `jq` or `json-fmt`. Invalid TOML is reported with its line and column.
+
+```sh
+agent-utils toml2json Cargo.toml
+cat pyproject.toml | agent-utils toml2json | jq -r .project.name
+agent-utils toml2json config.toml | agent-utils json-fmt -c   # minified
 ```
 
 ### `url`
