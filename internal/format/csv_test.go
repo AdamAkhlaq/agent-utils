@@ -82,6 +82,121 @@ func TestCSVToJSON(t *testing.T) {
 	}
 }
 
+func TestJSONToCSV(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   string
+		sep     rune
+		want    string
+		wantErr string
+	}{
+		{
+			name:  "key order preserved",
+			input: `[{"zebra":"1","alpha":"2"},{"zebra":"3","alpha":"4"}]`,
+			want:  "zebra,alpha\n1,2\n3,4\n",
+		},
+		{
+			name:  "union of keys in first-seen order",
+			input: `[{"a":"1"},{"b":"2","a":"3"},{"c":"4"}]`,
+			want:  "a,b,c\n1,,\n3,2,\n,,4\n",
+		},
+		{
+			name:  "missing keys become empty cells",
+			input: `[{"a":"1","b":"2"},{"a":"3"}]`,
+			want:  "a,b\n1,2\n3,\n",
+		},
+		{
+			name:  "null becomes empty cell",
+			input: `[{"a":null,"b":"x"}]`,
+			want:  "a,b\n,x\n",
+		},
+		{
+			name:  "numbers keep source form",
+			input: `[{"price":1.10,"big":9007199254740993,"exp":1e3}]`,
+			want:  "price,big,exp\n1.10,9007199254740993,1e3\n",
+		},
+		{
+			name:  "booleans",
+			input: `[{"yes":true,"no":false}]`,
+			want:  "yes,no\ntrue,false\n",
+		},
+		{
+			name:  "strings needing quoting",
+			input: `[{"name":"Doe, Jane","note":"line \"one\"\nline two"}]`,
+			want:  "name,note\n\"Doe, Jane\",\"line \"\"one\"\"\nline two\"\n",
+		},
+		{
+			name:  "semicolon separator",
+			input: `[{"a":"1;x","b":"2"}]`,
+			sep:   ';',
+			want:  "a;b\n\"1;x\";2\n",
+		},
+		{
+			name:  "tab separator",
+			input: `[{"a":"1","b":"2"}]`,
+			sep:   '\t',
+			want:  "a\tb\n1\t2\n",
+		},
+		{
+			name:  "empty array",
+			input: `[]`,
+			want:  "",
+		},
+		{name: "empty input", input: "", wantErr: "empty input"},
+		{name: "whitespace only", input: "  \n", wantErr: "empty input"},
+		{name: "top-level object", input: `{"a":1}`, wantErr: "input must be a JSON array of objects, got an object"},
+		{name: "top-level string", input: `"hi"`, wantErr: "input must be a JSON array of objects, got a string"},
+		{name: "element not an object", input: `[{"a":"1"},"x"]`, wantErr: "array element 2 must be an object, got a string"},
+		{name: "nested object value", input: `[{"a":"1"},{"addr":{"city":"Oslo"}}]`, wantErr: `array element 2, key "addr": nested objects are not supported`},
+		{name: "nested array value", input: `[{"tags":["x"]}]`, wantErr: `array element 1, key "tags": nested arrays are not supported`},
+		{name: "duplicate key", input: `[{"a":"1","a":"2"}]`, wantErr: `array element 1: duplicate key "a"`},
+		{name: "objects without keys", input: `[{},{}]`, wantErr: "no columns to write"},
+		{name: "trailing data", input: `[] "extra"`, wantErr: "unexpected data after the JSON array"},
+		{name: "invalid JSON", input: `[{"a":}]`, wantErr: "invalid JSON"},
+		{name: "truncated input", input: `[{"a":"1"}`, wantErr: "invalid JSON"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sep := tt.sep
+			if sep == 0 {
+				sep = ','
+			}
+			var out bytes.Buffer
+			err := JSONToCSV(&out, strings.NewReader(tt.input), sep)
+			if tt.wantErr != "" {
+				if err == nil {
+					t.Fatal("JSONToCSV() expected an error, got nil")
+				}
+				if !strings.Contains(err.Error(), tt.wantErr) {
+					t.Fatalf("JSONToCSV() error = %q, want it to contain %q", err, tt.wantErr)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("JSONToCSV() error = %v", err)
+			}
+			if got := out.String(); got != tt.want {
+				t.Errorf("JSONToCSV() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestJSONToCSVRoundTripsWithCSVToJSON(t *testing.T) {
+	csvIn := "name,note\n\"Doe, Jane\",\"line \"\"one\"\"\nline two\"\nBob,plain\n"
+	var jsonOut bytes.Buffer
+	if err := CSVToJSON(&jsonOut, strings.NewReader(csvIn), ','); err != nil {
+		t.Fatalf("CSVToJSON() error = %v", err)
+	}
+	var csvOut bytes.Buffer
+	if err := JSONToCSV(&csvOut, &jsonOut, ','); err != nil {
+		t.Fatalf("JSONToCSV() error = %v", err)
+	}
+	if got := csvOut.String(); got != csvIn {
+		t.Errorf("round trip = %q, want %q", got, csvIn)
+	}
+}
+
 func TestCSVToJSONOutputIsValidJSON(t *testing.T) {
 	input := "name,city\n\"Doe, Jane\",Oslo\nBob,\"New\nYork\""
 	var out bytes.Buffer

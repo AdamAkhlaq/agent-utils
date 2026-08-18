@@ -69,6 +69,7 @@ Commands read input from the file argument when one is given, otherwise from `st
 | Format | [`json2yaml`](#json2yaml) | Convert JSON to YAML |
 | Format | [`yaml2json`](#yaml2json) | Convert YAML to JSON |
 | Format | [`csv2json`](#csv2json) | Convert CSV with a header row to a JSON array |
+| Format | [`json2csv`](#json2csv) | Convert a JSON array of objects to CSV |
 | Image | [`qr`](#qr) | Generate or decode QR code PNGs |
 | Image | [`png2jpeg`](#png2jpeg) | Convert PNG to JPEG |
 | Image | [`jpeg2png`](#jpeg2png) | Convert JPEG to PNG |
@@ -227,6 +228,23 @@ cat data.json | agent-utils json-fmt
 agent-utils json-fmt -indent 4 data.json
 cat data.json | agent-utils json-fmt -c
 agent-utils json-fmt -check data.json && echo "valid"
+```
+
+### `json2csv`
+
+Convert a JSON array of flat objects to CSV with a header row: the inverse of `csv2json`.
+
+| Flag       | Description                                                    |
+| ---------- | -------------------------------------------------------------- |
+| `-sep <s>` | Field separator: one character, or `\t` for tab (default `,`). |
+
+Columns are the union of keys across all objects, in first-seen order (the input is decoded token by token, so the document's own key order is preserved). A key missing from an object, or set to `null`, becomes an empty cell. Strings are written as-is (fields with embedded separators, quotes, or newlines are quoted per RFC 4180), numbers keep their exact source form (`1.10` stays `1.10`, large integers never lose precision), and booleans become `true`/`false`. Nested objects and arrays are rejected with the offending element and key rather than silently flattened, as are inputs that are not an array of objects. Note that CSV carries no type information: feeding the output back through `csv2json` yields all-string values.
+
+```sh
+printf '[{"name":"Jane","zip":"01234"}]' | agent-utils json2csv
+agent-utils json2csv data.json > data.csv
+agent-utils json2csv -sep ';' data.json
+agent-utils csv2json data.csv | agent-utils json2csv   # round trip
 ```
 
 ### `json2yaml`
