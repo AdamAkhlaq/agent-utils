@@ -108,6 +108,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 		cli.VersionCommand(resolveVersion()),
 		cli.VideoCommand(download.Video),
 		cli.ConvertCommand("webp2png", "convert a WebP image to PNG", img.WebPToPNG),
+		cli.TransformCommand("xml2json", "convert an XML document to pretty-printed JSON", format.XMLToJSON),
 		cli.TransformCommand("yaml2json", "convert a YAML document to pretty-printed JSON", format.YAMLToJSON),
 	} {
 		commands[cmd.Name] = cmd
