@@ -102,6 +102,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 		cli.UUIDCommand(generate.UUID),
 		cli.VersionCommand(resolveVersion()),
 		cli.VideoCommand(download.Video),
+		cli.TransformCommand("xml2json", "convert an XML document to pretty-printed JSON", format.XMLToJSON),
 		cli.TransformCommand("yaml2json", "convert a YAML document to pretty-printed JSON", format.YAMLToJSON),
 	} {
 		commands[cmd.Name] = cmd
