@@ -99,6 +99,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 		cli.QRCommand(img.QR, img.QRDecode),
 		cli.SemverCommand(semver.Sort, semver.CompareStrings, semverCheck),
 		cli.StringTransformCommand("slugify", "turn text into a lowercase hyphenated slug", text.Slugify),
+		cli.ConvertCommand("strip-ansi", "remove ANSI escape sequences (colors, cursor movement, OSC) from text", text.StripANSI),
 		cli.TimeCommand(time.Now, clock.Parse, clock.Format, clock.JSON),
 		cli.ConvertCommand("tiff2png", "convert a TIFF image to PNG (first page of a multi-page file)", img.TIFFToPNG),
 		cli.TransformCommand("toml2json", "convert a TOML document to pretty-printed JSON", format.TOMLToJSON),
