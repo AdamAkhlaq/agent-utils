@@ -22,6 +22,7 @@ import (
 	"github.com/adamakhlaq/agent-utils/internal/hue"
 	"github.com/adamakhlaq/agent-utils/internal/img"
 	"github.com/adamakhlaq/agent-utils/internal/inspect"
+	"github.com/adamakhlaq/agent-utils/internal/netcalc"
 	"github.com/adamakhlaq/agent-utils/internal/semver"
 	"github.com/adamakhlaq/agent-utils/internal/text"
 )
@@ -68,6 +69,13 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 		}
 		return inspect.JSON(info)
 	}
+	cidrInfoJSON := func(prefix string) (string, error) {
+		d, err := netcalc.Info(prefix)
+		if err != nil {
+			return "", err
+		}
+		return netcalc.JSON(d)
+	}
 	urlparseJSON := func(raw string) (string, error) {
 		info, err := inspect.ParseURL(raw)
 		if err != nil {
@@ -103,6 +111,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 		cli.ConvertCommand("bmp2png", "convert a BMP image to PNG", img.BMPToPNG),
 		cli.CaseCommand(text.Case),
 		cli.TransformCommand("cert-decode", "decode X.509 certificates (PEM or DER) to a JSON array", certDecode),
+		cli.CIDRCommand(cidrInfoJSON, netcalc.Contains, netcalc.Overlaps, netcalc.Split),
 		cli.ColorCommand(hue.Convert, hue.JSON),
 		cli.CSVToJSONCommand(format.CSVToJSON),
 		cli.FiletypeCommand(filetypePlain, filetypeJSON),
