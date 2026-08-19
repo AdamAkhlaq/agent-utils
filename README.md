@@ -75,6 +75,10 @@ Commands read input from the file argument when one is given, otherwise from `st
 | Image | [`qr`](#qr) | Generate or decode QR code PNGs |
 | Image | [`png2jpeg`](#png2jpeg) | Convert PNG to JPEG |
 | Image | [`jpeg2png`](#jpeg2png) | Convert JPEG to PNG |
+| Image | [`webp2png`](#webp2png) | Convert WebP to PNG |
+| Image | [`gif2png`](#gif2png) | Convert GIF to PNG (first frame of an animation) |
+| Image | [`bmp2png`](#bmp2png) | Convert BMP to PNG |
+| Image | [`tiff2png`](#tiff2png) | Convert TIFF to PNG (first page of a multi-page file) |
 | Inspect | [`filetype`](#filetype) | Identify a file's MIME type and image dimensions |
 | Inspect | [`hash`](#hash) | Checksum data with sha256/sha1/sha512/md5, or verify one |
 | Generate | [`uuid`](#uuid) | Generate random v4 UUIDs |
@@ -82,6 +86,7 @@ Commands read input from the file argument when one is given, otherwise from `st
 | Generate | [`lorem`](#lorem) | Generate deterministic lorem ipsum filler text |
 | Text | [`slugify`](#slugify) | Turn text into a lowercase hyphenated slug |
 | Text | [`case`](#case) | Convert between snake, camel, pascal, kebab, screaming case |
+| Text | [`strip-ansi`](#strip-ansi) | Remove ANSI escape sequences from text |
 | Text | [`md-table`](#md-table) | Render a JSON array or CSV as a GitHub-flavored Markdown table |
 | Color | [`color`](#color) | Convert a color between hex, rgb, and hsl |
 | Time | [`time`](#time) | Print or convert timestamps across formats and timezones |
@@ -107,6 +112,18 @@ printf "hi" | agent-utils base64      # aGk=
 echo "aGk=" | agent-utils base64 -d   # hi
 agent-utils base64 photo.png > photo.b64
 agent-utils base64 -d photo.b64 > photo.png
+```
+
+### `bmp2png`
+
+Convert a BMP image to PNG.
+
+Takes an optional input file and output file (`bmp2png in.bmp out.png`); with one argument the PNG goes to `stdout`, with none the BMP is read from `stdin` too.
+
+```sh
+agent-utils bmp2png scan.bmp scan.png
+agent-utils bmp2png scan.bmp > scan.png
+agent-utils bmp2png < scan.bmp > scan.png
 ```
 
 ### `case`
@@ -190,6 +207,18 @@ agent-utils filetype photo.png                    # image/png
 agent-utils filetype -json photo.png              # {"mime": "image/png", "bytes": 340, "width": 256, "height": 256}
 curl -s https://example.com/asset | agent-utils filetype
 agent-utils filetype -json photo.png | jq -r .mime
+```
+
+### `gif2png`
+
+Convert a GIF image to PNG.
+
+For an animated GIF only the first frame is converted; the animation itself is not preserved (PNG is a single-image format). Takes an optional input file and output file (`gif2png in.gif out.png`); with one argument the PNG goes to `stdout`, with none the GIF is read from `stdin` too.
+
+```sh
+agent-utils gif2png icon.gif icon.png
+agent-utils gif2png animation.gif > first-frame.png
+agent-utils gif2png < icon.gif > icon.png
 ```
 
 ### `hash`
@@ -438,6 +467,19 @@ printf "A -- Messy___Title (2024)" | agent-utils slugify   # a-messy-title-2024
 agent-utils slugify title.txt
 ```
 
+### `strip-ansi`
+
+Remove ANSI escape sequences from text: the classic cleanup for CI logs and captured terminal output before parsing them. Strips CSI sequences (colors including 256-color and truecolor, cursor movement, erase-line as used by progress bars, private `?`-prefixed modes), OSC strings terminated by BEL or ST (window titles, OSC 8 hyperlinks), the other ECMA-48 strings (DCS, SOS, PM, APC), and short ESC sequences such as `ESC ( B` and `ESC =`.
+
+Only escape sequences are removed: `\r`, `\n`, `\t`, and all plain text, including multi-byte UTF-8, pass through untouched, so input with no escapes comes out byte-identical. The input is streamed in constant memory, so arbitrarily large logs are fine. A sequence truncated at EOF is dropped silently rather than emitted half-stripped. Reads stdin or an input-file positional; an optional second positional names an output file.
+
+```sh
+printf '\033[31mred\033[0m plain\n' | agent-utils strip-ansi   # red plain
+agent-utils strip-ansi ci-log.txt
+agent-utils strip-ansi raw.log clean.log
+npm test 2>&1 | agent-utils strip-ansi | grep FAIL
+```
+
 ### `time`
 
 Print or convert a timestamp. With no argument, prints the current time; with one, parses it from any accepted form: `now`, epoch seconds or milliseconds (told apart by magnitude), RFC 3339, RFC 1123, or `2006-01-02` with an optional `15:04[:05]`.
@@ -457,6 +499,18 @@ agent-utils time 1755459000                   # epoch seconds to RFC 3339
 agent-utils time -z Asia/Tokyo 1755459000     # same instant, Tokyo wall clock
 agent-utils time -f unix "2026-08-17T19:45:20Z"   # RFC 3339 to epoch
 agent-utils time -json now                    # unix, unix_ms, rfc3339, utc, date, time, weekday, zone
+```
+
+### `tiff2png`
+
+Convert a TIFF image to PNG.
+
+For a multi-page TIFF only the first page is converted. Takes an optional input file and output file (`tiff2png in.tiff out.png`); with one argument the PNG goes to `stdout`, with none the TIFF is read from `stdin` too.
+
+```sh
+agent-utils tiff2png scan.tiff scan.png
+agent-utils tiff2png scan.tiff > scan.png
+agent-utils tiff2png < scan.tiff > scan.png
 ```
 
 ### `toml2json`
@@ -523,6 +577,18 @@ Requires `yt-dlp` on your `PATH` (`brew install yt-dlp`); the command fails with
 ```sh
 agent-utils video "https://www.youtube.com/watch?v=..."
 agent-utils video -audio -o ~/Music "https://www.youtube.com/watch?v=..."
+```
+
+### `webp2png`
+
+Convert a WebP image to PNG.
+
+Handles lossy and lossless WebP, with or without transparency (alpha is preserved). Animated WebP is not supported and fails with exit `1`. The reverse direction (`png2webp`) is deliberately not offered: there is no maintained pure-Go WebP encoder, and a cgo one would break the single static binary. Takes an optional input file and output file (`webp2png in.webp out.png`); with one argument the PNG goes to `stdout`, with none the WebP is read from `stdin` too.
+
+```sh
+agent-utils webp2png photo.webp photo.png
+agent-utils webp2png photo.webp > photo.png
+agent-utils webp2png < photo.webp > photo.png
 ```
 
 ### `yaml2json`
