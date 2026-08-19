@@ -69,6 +69,7 @@ Commands read input from the file argument when one is given, otherwise from `st
 | Format | [`json2toml`](#json2toml) | Convert JSON to TOML |
 | Format | [`json2yaml`](#json2yaml) | Convert JSON to YAML |
 | Format | [`toml2json`](#toml2json) | Convert TOML to JSON |
+| Format | [`xml2json`](#xml2json) | Convert XML to JSON |
 | Format | [`yaml2json`](#yaml2json) | Convert YAML to JSON |
 | Format | [`csv2json`](#csv2json) | Convert CSV with a header row to a JSON array |
 | Format | [`json2csv`](#json2csv) | Convert a JSON array of objects to CSV |
@@ -76,6 +77,11 @@ Commands read input from the file argument when one is given, otherwise from `st
 | Image | [`png2jpeg`](#png2jpeg) | Convert PNG to JPEG |
 | Image | [`jpeg2png`](#jpeg2png) | Convert JPEG to PNG |
 | Image | [`img-resize`](#img-resize) | Resize a PNG or JPEG, keeping its format |
+| Image | [`webp2png`](#webp2png) | Convert WebP to PNG |
+| Image | [`gif2png`](#gif2png) | Convert GIF to PNG (first frame of an animation) |
+| Image | [`bmp2png`](#bmp2png) | Convert BMP to PNG |
+| Image | [`tiff2png`](#tiff2png) | Convert TIFF to PNG (first page of a multi-page file) |
+| Inspect | [`cert-decode`](#cert-decode) | Decode X.509 certificates (PEM or DER) to a JSON array |
 | Inspect | [`filetype`](#filetype) | Identify a file's MIME type and image dimensions |
 | Inspect | [`hash`](#hash) | Checksum data with sha256/sha1/sha512/md5, or verify one |
 | Generate | [`uuid`](#uuid) | Generate random v4 UUIDs |
@@ -83,6 +89,8 @@ Commands read input from the file argument when one is given, otherwise from `st
 | Generate | [`lorem`](#lorem) | Generate deterministic lorem ipsum filler text |
 | Text | [`slugify`](#slugify) | Turn text into a lowercase hyphenated slug |
 | Text | [`case`](#case) | Convert between snake, camel, pascal, kebab, screaming case |
+| Text | [`strip-ansi`](#strip-ansi) | Remove ANSI escape sequences from text |
+| Text | [`md-table`](#md-table) | Render a JSON array or CSV as a GitHub-flavored Markdown table |
 | Color | [`color`](#color) | Convert a color between hex, rgb, and hsl |
 | Time | [`time`](#time) | Print or convert timestamps across formats and timezones |
 | Version | [`semver`](#semver) | Sort, compare, or constraint-check SemVer 2.0.0 versions |
@@ -109,6 +117,18 @@ agent-utils base64 photo.png > photo.b64
 agent-utils base64 -d photo.b64 > photo.png
 ```
 
+### `bmp2png`
+
+Convert a BMP image to PNG.
+
+Takes an optional input file and output file (`bmp2png in.bmp out.png`); with one argument the PNG goes to `stdout`, with none the BMP is read from `stdin` too.
+
+```sh
+agent-utils bmp2png scan.bmp scan.png
+agent-utils bmp2png scan.bmp > scan.png
+agent-utils bmp2png < scan.bmp > scan.png
+```
+
 ### `case`
 
 Convert identifier casing: snake, camel, pascal, kebab, or SCREAMING_SNAKE.
@@ -126,6 +146,22 @@ printf "kebab-case" | agent-utils case -to pascal     # KebabCase
 printf "HTTPServer" | agent-utils case -to snake      # http_server
 printf "hello world" | agent-utils case -to screaming # HELLO_WORLD
 agent-utils case -to kebab name.txt
+```
+
+### `cert-decode`
+
+Decode X.509 certificates (PEM or DER) into a pretty-printed JSON array: answer "why is TLS failing" without wrestling `openssl x509` output. No flags.
+
+PEM input decodes every `CERTIFICATE` block in order, so a chain file yields one entry per certificate; other block types (a bundled `PRIVATE KEY`, for example) are passed over, but PEM input with zero `CERTIFICATE` blocks is an error naming the block types found. Input without PEM markers is parsed as a single DER certificate. Decoding is inspection, not validation: an expired certificate still decodes successfully, with the verdict carried by the `expired` boolean (computed against the current time) and `notAfter`.
+
+Each entry contains `subject` and `issuer` (RFC 2253 style strings), `serialNumber` (decimal string), `notBefore`/`notAfter` (RFC 3339 UTC), `expired`, `selfSigned` (subject equals issuer and the signature verifies against the certificate's own key), the SANs split by type (`dnsNames`, `ipAddresses`, `emailAddresses`, `uris`), `isCA`, `keyUsage` and `extKeyUsage` as readable string arrays, `signatureAlgorithm`, `publicKeyAlgorithm` with `publicKeyBits` (RSA modulus bits, ECDSA curve bits plus a `curve` name, 256 for Ed25519), and `sha256Fingerprint` (lowercase hex, no colons). The output is always an array, even for a single certificate, and the SAN and usage arrays are always present (empty when absent), so the shape is stable for scripts.
+
+```sh
+agent-utils cert-decode fullchain.pem | jq -r '.[].notAfter'   # expiry across the chain
+openssl s_client -connect example.com:443 -showcerts </dev/null 2>/dev/null \
+  | agent-utils cert-decode | jq '.[0] | {subject, expired, dnsNames}'
+agent-utils cert-decode cert.der                               # DER works too
+agent-utils cert-decode chain.pem | jq '[.[] | {subject, selfSigned, isCA}]'
 ```
 
 ### `color`
@@ -190,6 +226,18 @@ agent-utils filetype photo.png                    # image/png
 agent-utils filetype -json photo.png              # {"mime": "image/png", "bytes": 340, "width": 256, "height": 256}
 curl -s https://example.com/asset | agent-utils filetype
 agent-utils filetype -json photo.png | jq -r .mime
+```
+
+### `gif2png`
+
+Convert a GIF image to PNG.
+
+For an animated GIF only the first frame is converted; the animation itself is not preserved (PNG is a single-image format). Takes an optional input file and output file (`gif2png in.gif out.png`); with one argument the PNG goes to `stdout`, with none the GIF is read from `stdin` too.
+
+```sh
+agent-utils gif2png icon.gif icon.png
+agent-utils gif2png animation.gif > first-frame.png
+agent-utils gif2png < icon.gif > icon.png
 ```
 
 ### `hash`
@@ -345,6 +393,29 @@ agent-utils lorem -p 3            # three paragraphs, blank-line separated
 agent-utils lorem -w 40           # exactly 40 words
 ```
 
+### `md-table`
+
+Render a JSON array or CSV as a GitHub-flavored Markdown pipe table, with cells padded so the pipes align vertically in monospace - exact alignment an agent would otherwise approximate by hand.
+
+| Flag   | Description                                        |
+| ------ | -------------------------------------------------- |
+| `-csv` | Input is CSV with a header row instead of JSON.    |
+
+The default input is a JSON array of objects: one row per object, with the columns being the union of keys in first-seen order - the first object's key order exactly as written in the source, then keys that only appear in later objects appended in first-encountered order. Missing keys render as empty cells. A JSON array of arrays is also accepted, with the first inner array as the header row; shorter rows are padded with empty cells, and a row wider than the header is an error. Strings render as-is, numbers keep their exact source form (`1.10` stays `1.10`), booleans render as `true`/`false`, and `null` becomes an empty cell. Nested objects and arrays are rejected: table cells are flat. With `-csv`, the first record is the header row, handled per RFC 4180 like `csv2json` (pipe through `csv2json -sep` first for other separators). Empty input and an empty JSON array are errors: a table with no rows has no meaning.
+
+Pipes in cells are escaped as `\|` and newlines become `<br>`, so any cell value survives the trip. Column widths are computed in runes; East Asian wide characters occupy two terminal columns and may still misalign visually (exact display-width handling would need data tables beyond the stdlib).
+
+```sh
+echo '[{"name":"Jane","age":30},{"name":"Bob","city":"Oslo","age":4}]' | agent-utils md-table
+# | name | age | city |
+# | ---- | --- | ---- |
+# | Jane | 30  |      |
+# | Bob  | 4   | Oslo |
+agent-utils md-table -csv report.csv
+echo '[["metric","value"],["p99","250ms"]]' | agent-utils md-table
+agent-utils csv2json -sep ';' european.csv | agent-utils md-table
+```
+
 ### `password`
 
 Generate random passwords, one per line, from a cryptographically secure random source.
@@ -435,6 +506,19 @@ printf "A -- Messy___Title (2024)" | agent-utils slugify   # a-messy-title-2024
 agent-utils slugify title.txt
 ```
 
+### `strip-ansi`
+
+Remove ANSI escape sequences from text: the classic cleanup for CI logs and captured terminal output before parsing them. Strips CSI sequences (colors including 256-color and truecolor, cursor movement, erase-line as used by progress bars, private `?`-prefixed modes), OSC strings terminated by BEL or ST (window titles, OSC 8 hyperlinks), the other ECMA-48 strings (DCS, SOS, PM, APC), and short ESC sequences such as `ESC ( B` and `ESC =`.
+
+Only escape sequences are removed: `\r`, `\n`, `\t`, and all plain text, including multi-byte UTF-8, pass through untouched, so input with no escapes comes out byte-identical. The input is streamed in constant memory, so arbitrarily large logs are fine. A sequence truncated at EOF is dropped silently rather than emitted half-stripped. Reads stdin or an input-file positional; an optional second positional names an output file.
+
+```sh
+printf '\033[31mred\033[0m plain\n' | agent-utils strip-ansi   # red plain
+agent-utils strip-ansi ci-log.txt
+agent-utils strip-ansi raw.log clean.log
+npm test 2>&1 | agent-utils strip-ansi | grep FAIL
+```
+
 ### `time`
 
 Print or convert a timestamp. With no argument, prints the current time; with one, parses it from any accepted form: `now`, epoch seconds or milliseconds (told apart by magnitude), RFC 3339, RFC 1123, or `2006-01-02` with an optional `15:04[:05]`.
@@ -454,6 +538,18 @@ agent-utils time 1755459000                   # epoch seconds to RFC 3339
 agent-utils time -z Asia/Tokyo 1755459000     # same instant, Tokyo wall clock
 agent-utils time -f unix "2026-08-17T19:45:20Z"   # RFC 3339 to epoch
 agent-utils time -json now                    # unix, unix_ms, rfc3339, utc, date, time, weekday, zone
+```
+
+### `tiff2png`
+
+Convert a TIFF image to PNG.
+
+For a multi-page TIFF only the first page is converted. Takes an optional input file and output file (`tiff2png in.tiff out.png`); with one argument the PNG goes to `stdout`, with none the TIFF is read from `stdin` too.
+
+```sh
+agent-utils tiff2png scan.tiff scan.png
+agent-utils tiff2png scan.tiff > scan.png
+agent-utils tiff2png < scan.tiff > scan.png
 ```
 
 ### `toml2json`
@@ -520,6 +616,68 @@ Requires `yt-dlp` on your `PATH` (`brew install yt-dlp`); the command fails with
 ```sh
 agent-utils video "https://www.youtube.com/watch?v=..."
 agent-utils video -audio -o ~/Music "https://www.youtube.com/watch?v=..."
+```
+
+### `webp2png`
+
+Convert a WebP image to PNG.
+
+Handles lossy and lossless WebP, with or without transparency (alpha is preserved). Animated WebP is not supported and fails with exit `1`. The reverse direction (`png2webp`) is deliberately not offered: there is no maintained pure-Go WebP encoder, and a cgo one would break the single static binary. Takes an optional input file and output file (`webp2png in.webp out.png`); with one argument the PNG goes to `stdout`, with none the WebP is read from `stdin` too.
+
+```sh
+agent-utils webp2png photo.webp photo.png
+agent-utils webp2png photo.webp > photo.png
+agent-utils webp2png < photo.webp > photo.png
+```
+
+### `xml2json`
+
+Convert an XML document to pretty-printed JSON.
+
+XML and JSON do not map onto each other one-to-one, so this command implements one fixed convention:
+
+- An element becomes a JSON object, and the root element's name is the single top-level key.
+- Attributes become keys prefixed with `@` (`id="7"` becomes `"@id": "7"`).
+- Text content of an element that also has attributes or children goes under `"#text"`. Whitespace-only text between elements is dropped; meaningful text is preserved with leading and trailing whitespace trimmed.
+- An element with only text and no attributes becomes a plain JSON string; an empty element becomes `""`.
+- Repeated sibling elements with the same name become a JSON array. A single occurrence stays a single value, which is the convention's sharpest edge: a list with one `<item>` produces a string or object where a list with two produces an array, so consumers that expect a list should normalize with something like `jq 'if type == "array" then . else [.] end'`.
+- CDATA is treated as text, and entities are decoded. Comments, processing instructions, the XML declaration, and the DOCTYPE are dropped. Namespace prefixes are kept as part of the key name as written (`<x:b>` becomes `"x:b"`, and `xmlns` declarations survive as `@xmlns...` attributes).
+
+Object keys are emitted in sorted order, so the same input always produces byte-identical output. All values are strings; nothing is guessed into numbers or booleans. Malformed XML (unclosed or mismatched tags, text outside the root, multiple roots, unknown entities) fails with a specific error and exit 1. A worked example:
+
+```xml
+<rss version="2.0">
+  <channel>
+    <title>Example</title>
+    <item><title>First</title></item>
+    <item><title>Second</title></item>
+  </channel>
+</rss>
+```
+
+```json
+{
+  "rss": {
+    "@version": "2.0",
+    "channel": {
+      "item": [
+        {
+          "title": "First"
+        },
+        {
+          "title": "Second"
+        }
+      ],
+      "title": "Example"
+    }
+  }
+}
+```
+
+```sh
+agent-utils xml2json pom.xml
+curl -s https://example.com/feed.rss | agent-utils xml2json | jq -r '.rss.channel.item[].title'
+agent-utils xml2json config.xml | agent-utils json-fmt -c   # minified
 ```
 
 ### `yaml2json`

@@ -71,6 +71,18 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 	imgResize := func(w io.Writer, r io.Reader, width, height, max, quality int) error {
 		return img.Resize(w, r, img.ResizeOptions{Width: width, Height: height, Max: max, Quality: quality})
 	}
+	certDecode := func(w io.Writer, r io.Reader) error {
+		certs, err := inspect.Certificates(r, time.Now())
+		if err != nil {
+			return err
+		}
+		out, err := inspect.CertJSON(certs)
+		if err != nil {
+			return err
+		}
+		_, err = io.WriteString(w, out)
+		return err
+	}
 	semverCheck := func(constraint string) (func(version string) (bool, error), error) {
 		c, err := semver.ParseConstraint(constraint)
 		if err != nil {
@@ -81,10 +93,13 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 	commands := make(map[string]cli.Command)
 	for _, cmd := range []cli.Command{
 		cli.EncodeCommand("base64", "base64-encode or -decode input (-d to decode)", encode.Base64, encode.Base64Decode),
+		cli.ConvertCommand("bmp2png", "convert a BMP image to PNG", img.BMPToPNG),
 		cli.CaseCommand(text.Case),
+		cli.TransformCommand("cert-decode", "decode X.509 certificates (PEM or DER) to a JSON array", certDecode),
 		cli.ColorCommand(hue.Convert, hue.JSON),
 		cli.CSVToJSONCommand(format.CSVToJSON),
 		cli.FiletypeCommand(filetypePlain, filetypeJSON),
+		cli.ConvertCommand("gif2png", "convert a GIF image to PNG (first frame of an animation)", img.GIFToPNG),
 		cli.HashCommand(digest.Sum),
 		cli.EncodeCommand("hex", "hex-encode or -decode input (-d to decode)", encode.Hex, encode.HexDecode),
 		cli.ImgResizeCommand(imgResize),
@@ -97,15 +112,20 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 		cli.TransformCommand("jwt-decode", "decode a JWT's header and payload (does not verify the signature)", encode.JWTDecode),
 		cli.PNGToJPEGCommand(img.PNGToJPEG),
 		cli.LoremCommand(generate.LoremWords, generate.LoremParagraphs),
+		cli.MarkdownTableCommand(text.MarkdownTable, text.MarkdownTableCSV),
 		cli.PasswordCommand(generate.Password),
 		cli.QRCommand(img.QR, img.QRDecode),
 		cli.SemverCommand(semver.Sort, semver.CompareStrings, semverCheck),
 		cli.StringTransformCommand("slugify", "turn text into a lowercase hyphenated slug", text.Slugify),
+		cli.ConvertCommand("strip-ansi", "remove ANSI escape sequences (colors, cursor movement, OSC) from text", text.StripANSI),
 		cli.TimeCommand(time.Now, clock.Parse, clock.Format, clock.JSON),
+		cli.ConvertCommand("tiff2png", "convert a TIFF image to PNG (first page of a multi-page file)", img.TIFFToPNG),
 		cli.TransformCommand("toml2json", "convert a TOML document to pretty-printed JSON", format.TOMLToJSON),
 		cli.UUIDCommand(generate.UUID),
 		cli.VersionCommand(resolveVersion()),
 		cli.VideoCommand(download.Video),
+		cli.ConvertCommand("webp2png", "convert a WebP image to PNG", img.WebPToPNG),
+		cli.TransformCommand("xml2json", "convert an XML document to pretty-printed JSON", format.XMLToJSON),
 		cli.TransformCommand("yaml2json", "convert a YAML document to pretty-printed JSON", format.YAMLToJSON),
 	} {
 		commands[cmd.Name] = cmd
