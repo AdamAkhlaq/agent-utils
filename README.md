@@ -75,6 +75,7 @@ Commands read input from the file argument when one is given, otherwise from `st
 | Image | [`qr`](#qr) | Generate or decode QR code PNGs |
 | Image | [`png2jpeg`](#png2jpeg) | Convert PNG to JPEG |
 | Image | [`jpeg2png`](#jpeg2png) | Convert JPEG to PNG |
+| Image | [`img-resize`](#img-resize) | Resize a PNG or JPEG, keeping its format |
 | Inspect | [`filetype`](#filetype) | Identify a file's MIME type and image dimensions |
 | Inspect | [`hash`](#hash) | Checksum data with sha256/sha1/sha512/md5, or verify one |
 | Generate | [`uuid`](#uuid) | Generate random v4 UUIDs |
@@ -224,6 +225,25 @@ printf "hi" | agent-utils hex         # 6869
 echo "6869" | agent-utils hex -d      # hi
 ```
 
+### `img-resize`
+
+Resize a PNG or JPEG image. The input format is auto-detected and the output keeps the same format.
+
+| Flag           | Description                                                                        |
+| -------------- | ---------------------------------------------------------------------------------- |
+| `-width <n>`   | Target width in pixels. Alone, the height follows the aspect ratio.                |
+| `-height <n>`  | Target height in pixels. Alone, the width follows the aspect ratio.                |
+| `-max <n>`     | Scale down so the longest side fits within `n` pixels. Never upscales.             |
+| `-quality <n>` | JPEG quality, 1-100 (default 75). Applies when the output is JPEG; ignored for PNG. |
+
+Exactly one sizing mode is required: `-width` and/or `-height`, or `-max`. Giving both `-width` and `-height` forces those exact dimensions (the aspect ratio may change). `-max` only shrinks: an image that already fits is re-encoded at its original size. Scaling uses the Catmull-Rom resampler for high-quality results, and PNG transparency is preserved. Takes an optional input file and output file, like `jpeg2png`.
+
+```sh
+agent-utils img-resize -width 800 photo.jpg thumb.jpg
+agent-utils img-resize -max 512 icon.png > icon-small.png
+agent-utils img-resize -width 100 -height 100 -quality 90 < in.jpg > avatar.jpg
+```
+
 ### `jpeg2png`
 
 Convert a JPEG image to PNG.
@@ -347,15 +367,16 @@ agent-utils password -no-symbols
 
 Convert a PNG image to JPEG.
 
-| Flag         | Description                        |
-| ------------ | ---------------------------------- |
-| `-q <1-100>` | JPEG quality (default 85).         |
+| Flag               | Description                       |
+| ------------------ | --------------------------------- |
+| `-quality <1-100>` | JPEG quality (default 85).        |
+| `-q <1-100>`       | Alias for `-quality`.             |
 
 Takes an optional input file and output file, like `jpeg2png`. Transparent and semi-transparent pixels are composited onto a white background, since JPEG has no transparency.
 
 ```sh
 agent-utils png2jpeg in.png out.jpg
-agent-utils png2jpeg -q 95 in.png out.jpg
+agent-utils png2jpeg -quality 95 in.png out.jpg
 agent-utils png2jpeg < in.png > out.jpg
 ```
 
