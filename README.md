@@ -82,6 +82,7 @@ Commands read input from the file argument when one is given, otherwise from `st
 | Generate | [`lorem`](#lorem) | Generate deterministic lorem ipsum filler text |
 | Text | [`slugify`](#slugify) | Turn text into a lowercase hyphenated slug |
 | Text | [`case`](#case) | Convert between snake, camel, pascal, kebab, screaming case |
+| Text | [`strip-ansi`](#strip-ansi) | Remove ANSI escape sequences from text |
 | Color | [`color`](#color) | Convert a color between hex, rgb, and hsl |
 | Time | [`time`](#time) | Print or convert timestamps across formats and timezones |
 | Version | [`semver`](#semver) | Sort, compare, or constraint-check SemVer 2.0.0 versions |
@@ -412,6 +413,19 @@ Unicode letters are kept and lowercased, not transliterated (`Café` becomes `ca
 printf "Hello, World!" | agent-utils slugify   # hello-world
 printf "A -- Messy___Title (2024)" | agent-utils slugify   # a-messy-title-2024
 agent-utils slugify title.txt
+```
+
+### `strip-ansi`
+
+Remove ANSI escape sequences from text: the classic cleanup for CI logs and captured terminal output before parsing them. Strips CSI sequences (colors including 256-color and truecolor, cursor movement, erase-line as used by progress bars, private `?`-prefixed modes), OSC strings terminated by BEL or ST (window titles, OSC 8 hyperlinks), the other ECMA-48 strings (DCS, SOS, PM, APC), and short ESC sequences such as `ESC ( B` and `ESC =`.
+
+Only escape sequences are removed: `\r`, `\n`, `\t`, and all plain text, including multi-byte UTF-8, pass through untouched, so input with no escapes comes out byte-identical. The input is streamed in constant memory, so arbitrarily large logs are fine. A sequence truncated at EOF is dropped silently rather than emitted half-stripped. Reads stdin or an input-file positional; an optional second positional names an output file.
+
+```sh
+printf '\033[31mred\033[0m plain\n' | agent-utils strip-ansi   # red plain
+agent-utils strip-ansi ci-log.txt
+agent-utils strip-ansi raw.log clean.log
+npm test 2>&1 | agent-utils strip-ansi | grep FAIL
 ```
 
 ### `time`
