@@ -68,6 +68,18 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 		}
 		return inspect.JSON(info)
 	}
+	certDecode := func(w io.Writer, r io.Reader) error {
+		certs, err := inspect.Certificates(r, time.Now())
+		if err != nil {
+			return err
+		}
+		out, err := inspect.CertJSON(certs)
+		if err != nil {
+			return err
+		}
+		_, err = io.WriteString(w, out)
+		return err
+	}
 	semverCheck := func(constraint string) (func(version string) (bool, error), error) {
 		c, err := semver.ParseConstraint(constraint)
 		if err != nil {
@@ -80,6 +92,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 		cli.EncodeCommand("base64", "base64-encode or -decode input (-d to decode)", encode.Base64, encode.Base64Decode),
 		cli.ConvertCommand("bmp2png", "convert a BMP image to PNG", img.BMPToPNG),
 		cli.CaseCommand(text.Case),
+		cli.TransformCommand("cert-decode", "decode X.509 certificates (PEM or DER) to a JSON array", certDecode),
 		cli.ColorCommand(hue.Convert, hue.JSON),
 		cli.CSVToJSONCommand(format.CSVToJSON),
 		cli.FiletypeCommand(filetypePlain, filetypeJSON),
