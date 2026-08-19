@@ -96,9 +96,10 @@ func TestPNGToJPEGCommand(t *testing.T) {
 		wantUsage   bool
 	}{
 		{name: "default quality", args: nil, wantQuality: 85},
-		{name: "custom quality", args: []string{"-q", "95"}, wantQuality: 95},
+		{name: "custom quality via -q", args: []string{"-q", "95"}, wantQuality: 95},
+		{name: "custom quality via -quality", args: []string{"-quality", "40"}, wantQuality: 40},
 		{name: "quality too low", args: []string{"-q", "0"}, wantErr: true, wantUsage: true},
-		{name: "quality too high", args: []string{"-q", "101"}, wantErr: true, wantUsage: true},
+		{name: "quality too high", args: []string{"-quality", "101"}, wantErr: true, wantUsage: true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
