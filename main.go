@@ -12,6 +12,7 @@ import (
 	// so embed Go's (the binary must behave identically on every platform).
 	_ "time/tzdata"
 
+	"github.com/adamakhlaq/agent-utils/internal/chars"
 	"github.com/adamakhlaq/agent-utils/internal/cli"
 	"github.com/adamakhlaq/agent-utils/internal/clock"
 	"github.com/adamakhlaq/agent-utils/internal/digest"
@@ -99,6 +100,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 		cli.StringTransformCommand("slugify", "turn text into a lowercase hyphenated slug", text.Slugify),
 		cli.TimeCommand(time.Now, clock.Parse, clock.Format, clock.JSON),
 		cli.TransformCommand("toml2json", "convert a TOML document to pretty-printed JSON", format.TOMLToJSON),
+		cli.UnicodeCommand(chars.InspectJSON, chars.CheckJSON, chars.NFC, chars.NFD),
 		cli.UUIDCommand(generate.UUID),
 		cli.VersionCommand(resolveVersion()),
 		cli.VideoCommand(download.Video),
