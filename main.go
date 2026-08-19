@@ -68,6 +68,13 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 		}
 		return inspect.JSON(info)
 	}
+	urlparseJSON := func(raw string) (string, error) {
+		info, err := inspect.ParseURL(raw)
+		if err != nil {
+			return "", err
+		}
+		return inspect.URLJSON(info)
+	}
 	semverCheck := func(constraint string) (func(version string) (bool, error), error) {
 		c, err := semver.ParseConstraint(constraint)
 		if err != nil {
@@ -85,6 +92,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 		cli.HashCommand(digest.Sum),
 		cli.EncodeCommand("hex", "hex-encode or -decode input (-d to decode)", encode.Hex, encode.HexDecode),
 		cli.EncodeCommand("url", "URL-encode or -decode input (-d to decode)", encode.URL, encode.URLDecode),
+		cli.URLParseCommand(urlparseJSON),
 		cli.ConvertCommand("jpeg2png", "convert a JPEG image to PNG", img.JPEGToPNG),
 		cli.JSONFmtCommand(format.JSON, format.JSONCompact, format.JSONValid),
 		cli.JSONToCSVCommand(format.JSONToCSV),
