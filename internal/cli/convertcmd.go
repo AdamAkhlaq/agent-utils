@@ -32,11 +32,12 @@ func ConvertCommand(name, summary string, convert func(w io.Writer, r io.Reader)
 func PNGToJPEGCommand(convert func(w io.Writer, r io.Reader, quality int) error) Command {
 	return Command{
 		Name:    "png2jpeg",
-		Summary: "convert a PNG image to JPEG (-q quality)",
+		Summary: "convert a PNG image to JPEG (-quality)",
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 			fs := flag.NewFlagSet("png2jpeg", flag.ContinueOnError)
 			fs.SetOutput(stderr)
-			quality := fs.Int("q", 85, "JPEG quality, 1-100")
+			quality := fs.Int("quality", 85, "JPEG quality, 1-100")
+			fs.IntVar(quality, "q", 85, "alias for -quality")
 			if err := fs.Parse(args); err != nil {
 				if errors.Is(err, flag.ErrHelp) {
 					return nil

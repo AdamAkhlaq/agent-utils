@@ -1,5 +1,5 @@
-// Package inspect identifies what a file is from its content, so a caller
-// (typically an agent) can learn about a file without reading it themselves.
+// Package inspect examines content (file types, certificates), so a caller
+// (typically an agent) can learn about it without decoding it themselves.
 package inspect
 
 import (
