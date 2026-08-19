@@ -22,6 +22,7 @@ import (
 	"github.com/adamakhlaq/agent-utils/internal/hue"
 	"github.com/adamakhlaq/agent-utils/internal/img"
 	"github.com/adamakhlaq/agent-utils/internal/inspect"
+	"github.com/adamakhlaq/agent-utils/internal/netcalc"
 	"github.com/adamakhlaq/agent-utils/internal/semver"
 	"github.com/adamakhlaq/agent-utils/internal/text"
 )
@@ -68,6 +69,13 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 		}
 		return inspect.JSON(info)
 	}
+	cidrInfoJSON := func(prefix string) (string, error) {
+		d, err := netcalc.Info(prefix)
+		if err != nil {
+			return "", err
+		}
+		return netcalc.JSON(d)
+	}
 	semverCheck := func(constraint string) (func(version string) (bool, error), error) {
 		c, err := semver.ParseConstraint(constraint)
 		if err != nil {
@@ -79,6 +87,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 	for _, cmd := range []cli.Command{
 		cli.EncodeCommand("base64", "base64-encode or -decode input (-d to decode)", encode.Base64, encode.Base64Decode),
 		cli.CaseCommand(text.Case),
+		cli.CIDRCommand(cidrInfoJSON, netcalc.Contains, netcalc.Overlaps, netcalc.Split),
 		cli.ColorCommand(hue.Convert, hue.JSON),
 		cli.CSVToJSONCommand(format.CSVToJSON),
 		cli.FiletypeCommand(filetypePlain, filetypeJSON),
