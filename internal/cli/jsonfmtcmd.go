@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -20,16 +19,12 @@ func JSONFmtCommand(
 		Name:    "json-fmt",
 		Summary: "pretty-print, minify (-c), or validate (-check) JSON",
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
-			fs := flag.NewFlagSet("json-fmt", flag.ContinueOnError)
-			fs.SetOutput(stderr)
+			fs := newFlagSet("json-fmt")
 			indent := fs.Int("indent", 2, "spaces per indentation level")
 			minify := fs.Bool("c", false, "compact (minify) instead of pretty-print")
 			check := fs.Bool("check", false, "validate only: no output, exit 0 if valid, 1 if not")
-			if err := fs.Parse(args); err != nil {
-				if errors.Is(err, flag.ErrHelp) {
-					return nil
-				}
-				return &UsageError{Err: err}
+			if err := parseFlags(fs, args); err != nil {
+				return err
 			}
 			if *minify && *check {
 				return &UsageError{Err: fmt.Errorf("json-fmt: -c and -check are mutually exclusive")}

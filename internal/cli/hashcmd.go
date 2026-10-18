@@ -2,7 +2,6 @@ package cli
 
 import (
 	"encoding/hex"
-	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -17,15 +16,11 @@ func HashCommand(sum func(algo string, r io.Reader) (string, error)) Command {
 		Name:    "hash",
 		Summary: "hash input with sha256/sha1/sha512/md5 (-a algo, -c verify)",
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
-			fs := flag.NewFlagSet("hash", flag.ContinueOnError)
-			fs.SetOutput(stderr)
+			fs := newFlagSet("hash")
 			algo := fs.String("a", "sha256", "hash algorithm: sha256, sha1, sha512, or md5")
 			check := fs.String("c", "", "verify: compare the digest to this hex checksum, print nothing on match")
-			if err := fs.Parse(args); err != nil {
-				if errors.Is(err, flag.ErrHelp) {
-					return nil
-				}
-				return &UsageError{Err: err}
+			if err := parseFlags(fs, args); err != nil {
+				return err
 			}
 
 			// Hashing empty input both validates -a and yields the digest

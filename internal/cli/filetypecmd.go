@@ -1,8 +1,6 @@
 package cli
 
 import (
-	"errors"
-	"flag"
 	"fmt"
 	"io"
 )
@@ -15,14 +13,10 @@ func FiletypeCommand(plain, asJSON func(r io.Reader) (string, error)) Command {
 		Name:    "filetype",
 		Summary: "identify a file's MIME type and image dimensions (-json)",
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
-			fs := flag.NewFlagSet("filetype", flag.ContinueOnError)
-			fs.SetOutput(stderr)
+			fs := newFlagSet("filetype")
 			jsonOut := fs.Bool("json", false, "print a JSON object with mime, bytes, and image dimensions")
-			if err := fs.Parse(args); err != nil {
-				if errors.Is(err, flag.ErrHelp) {
-					return nil
-				}
-				return &UsageError{Err: err}
+			if err := parseFlags(fs, args); err != nil {
+				return err
 			}
 			in, err := openInput(fs, stdin)
 			if err != nil {

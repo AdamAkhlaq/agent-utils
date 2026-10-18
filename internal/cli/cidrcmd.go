@@ -1,8 +1,6 @@
 package cli
 
 import (
-	"errors"
-	"flag"
 	"fmt"
 	"io"
 	"strconv"
@@ -23,23 +21,14 @@ func CIDRCommand(
 	return Command{
 		Name:    "cidr",
 		Summary: "CIDR subnet math: info <prefix>, contains <prefix> <ip>, overlaps <a> <b>, split <prefix> <len>",
+		Usage: `agent-utils cidr info <prefix>                print the network's details as JSON
+agent-utils cidr contains <prefix> <ip>       print true/false, exit 0/1
+agent-utils cidr overlaps <prefix> <prefix>   print true/false, exit 0/1
+agent-utils cidr split <prefix> <new-length>  print the subnets of the new length, one per line`,
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
-			fs := flag.NewFlagSet("cidr", flag.ContinueOnError)
-			fs.SetOutput(stderr)
-			fs.Usage = func() {
-				fmt.Fprintln(stderr, "usage: agent-utils cidr <mode> <args>")
-				fmt.Fprintln(stderr)
-				fmt.Fprintln(stderr, "Modes:")
-				fmt.Fprintln(stderr, "  info <prefix>                print the network's details as JSON")
-				fmt.Fprintln(stderr, "  contains <prefix> <ip>       print true/false, exit 0/1")
-				fmt.Fprintln(stderr, "  overlaps <prefix> <prefix>   print true/false, exit 0/1")
-				fmt.Fprintln(stderr, "  split <prefix> <new-length>  print the subnets of the new length, one per line")
-			}
-			if err := fs.Parse(args); err != nil {
-				if errors.Is(err, flag.ErrHelp) {
-					return nil
-				}
-				return &UsageError{Err: err}
+			fs := newFlagSet("cidr")
+			if err := parseFlags(fs, args); err != nil {
+				return err
 			}
 			if fs.NArg() == 0 {
 				return &UsageError{Err: fmt.Errorf("cidr: expected a mode: info, contains, overlaps, or split")}

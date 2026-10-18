@@ -1,8 +1,6 @@
 package cli
 
 import (
-	"errors"
-	"flag"
 	"fmt"
 	"io"
 	"strings"
@@ -17,13 +15,9 @@ func URLParseCommand(parseJSON func(raw string) (string, error)) Command {
 		Name:    "urlparse",
 		Summary: "parse a URL into its components as JSON",
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
-			fs := flag.NewFlagSet("urlparse", flag.ContinueOnError)
-			fs.SetOutput(stderr)
-			if err := fs.Parse(args); err != nil {
-				if errors.Is(err, flag.ErrHelp) {
-					return nil
-				}
-				return &UsageError{Err: err}
+			fs := newFlagSet("urlparse")
+			if err := parseFlags(fs, args); err != nil {
+				return err
 			}
 			if fs.NArg() > 1 {
 				return &UsageError{Err: fmt.Errorf("urlparse: expected at most one URL argument, got %d", fs.NArg())}

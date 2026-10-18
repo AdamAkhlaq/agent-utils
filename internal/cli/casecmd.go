@@ -1,8 +1,6 @@
 package cli
 
 import (
-	"errors"
-	"flag"
 	"fmt"
 	"io"
 	"strings"
@@ -16,14 +14,10 @@ func CaseCommand(convert func(s, target string) (string, error)) Command {
 		Name:    "case",
 		Summary: "convert text between snake, camel, pascal, kebab, screaming case (-to target)",
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
-			fs := flag.NewFlagSet("case", flag.ContinueOnError)
-			fs.SetOutput(stderr)
+			fs := newFlagSet("case")
 			target := fs.String("to", "", "target casing: snake, camel, pascal, kebab, or screaming")
-			if err := fs.Parse(args); err != nil {
-				if errors.Is(err, flag.ErrHelp) {
-					return nil
-				}
-				return &UsageError{Err: err}
+			if err := parseFlags(fs, args); err != nil {
+				return err
 			}
 			if *target == "" {
 				return &UsageError{Err: fmt.Errorf("case: -to <target> is required (snake, camel, pascal, kebab, or screaming)")}

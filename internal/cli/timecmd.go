@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -21,17 +20,13 @@ func TimeCommand(
 		Name:    "time",
 		Summary: "print or convert a timestamp (-z zone, -f format, -json all forms)",
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
-			fs := flag.NewFlagSet("time", flag.ContinueOnError)
-			fs.SetOutput(stderr)
+			fs := newFlagSet("time")
 			zone := fs.String("z", "UTC", "output timezone: IANA name, UTC, or local")
 			name := fs.String("f", "rfc3339", "output format: rfc3339, unix, unix-ms, date, time")
 			layout := fs.String("layout", "", "custom Go time layout, e.g. 2006-01-02 15:04")
 			jsonOut := fs.Bool("json", false, "print every representation as JSON")
-			if err := fs.Parse(args); err != nil {
-				if errors.Is(err, flag.ErrHelp) {
-					return nil
-				}
-				return &UsageError{Err: err}
+			if err := parseFlags(fs, args); err != nil {
+				return err
 			}
 			if fs.NArg() > 1 {
 				return &UsageError{Err: fmt.Errorf("time: expected at most one timestamp argument, got %d", fs.NArg())}

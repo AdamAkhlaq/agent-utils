@@ -1,8 +1,6 @@
 package cli
 
 import (
-	"errors"
-	"flag"
 	"fmt"
 	"io"
 )
@@ -15,15 +13,11 @@ func VideoCommand(dl func(stdout, stderr io.Writer, url, dir string, audioOnly b
 		Name:    "video",
 		Summary: "download a video with yt-dlp (-audio for audio only)",
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
-			fs := flag.NewFlagSet("video", flag.ContinueOnError)
-			fs.SetOutput(stderr)
+			fs := newFlagSet("video")
 			dir := fs.String("o", ".", "output directory")
 			audio := fs.Bool("audio", false, "download audio only (extracted with ffmpeg)")
-			if err := fs.Parse(args); err != nil {
-				if errors.Is(err, flag.ErrHelp) {
-					return nil
-				}
-				return &UsageError{Err: err}
+			if err := parseFlags(fs, args); err != nil {
+				return err
 			}
 			if fs.NArg() != 1 {
 				return &UsageError{Err: fmt.Errorf("video: expected exactly one URL argument")}

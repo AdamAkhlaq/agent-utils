@@ -2,8 +2,6 @@ package cli
 
 import (
 	"encoding/json"
-	"errors"
-	"flag"
 	"fmt"
 	"io"
 	"sort"
@@ -19,13 +17,9 @@ func CommandsCommand(commands map[string]Command) Command {
 		Name:    "commands",
 		Summary: "list every command as JSON (machine-readable tool discovery)",
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
-			fs := flag.NewFlagSet("commands", flag.ContinueOnError)
-			fs.SetOutput(stderr)
-			if err := fs.Parse(args); err != nil {
-				if errors.Is(err, flag.ErrHelp) {
-					return nil
-				}
-				return &UsageError{Err: err}
+			fs := newFlagSet("commands")
+			if err := parseFlags(fs, args); err != nil {
+				return err
 			}
 			if fs.NArg() > 0 {
 				return &UsageError{Err: fmt.Errorf("commands: unexpected argument %q", fs.Arg(0))}

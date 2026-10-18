@@ -1,8 +1,6 @@
 package cli
 
 import (
-	"errors"
-	"flag"
 	"fmt"
 	"io"
 )
@@ -16,14 +14,10 @@ func EncodeCommand(name, summary string, enc, dec func(w io.Writer, r io.Reader)
 		Name:    name,
 		Summary: summary,
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
-			fs := flag.NewFlagSet(name, flag.ContinueOnError)
-			fs.SetOutput(stderr)
+			fs := newFlagSet(name)
 			decode := fs.Bool("d", false, "decode instead of encode")
-			if err := fs.Parse(args); err != nil {
-				if errors.Is(err, flag.ErrHelp) {
-					return nil
-				}
-				return &UsageError{Err: err}
+			if err := parseFlags(fs, args); err != nil {
+				return err
 			}
 			in, err := openInput(fs, stdin)
 			if err != nil {

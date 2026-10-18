@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -15,13 +14,9 @@ func ConvertCommand(name, summary string, convert func(w io.Writer, r io.Reader)
 		Name:    name,
 		Summary: summary,
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
-			fs := flag.NewFlagSet(name, flag.ContinueOnError)
-			fs.SetOutput(stderr)
-			if err := fs.Parse(args); err != nil {
-				if errors.Is(err, flag.ErrHelp) {
-					return nil
-				}
-				return &UsageError{Err: err}
+			fs := newFlagSet(name)
+			if err := parseFlags(fs, args); err != nil {
+				return err
 			}
 			return runConvert(fs, stdin, stdout, convert)
 		},
@@ -34,15 +29,11 @@ func PNGToJPEGCommand(convert func(w io.Writer, r io.Reader, quality int) error)
 		Name:    "png2jpeg",
 		Summary: "convert a PNG image to JPEG (-quality)",
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
-			fs := flag.NewFlagSet("png2jpeg", flag.ContinueOnError)
-			fs.SetOutput(stderr)
+			fs := newFlagSet("png2jpeg")
 			quality := fs.Int("quality", 85, "JPEG quality, 1-100")
 			fs.IntVar(quality, "q", 85, "alias for -quality")
-			if err := fs.Parse(args); err != nil {
-				if errors.Is(err, flag.ErrHelp) {
-					return nil
-				}
-				return &UsageError{Err: err}
+			if err := parseFlags(fs, args); err != nil {
+				return err
 			}
 			if *quality < 1 || *quality > 100 {
 				return &UsageError{Err: fmt.Errorf("png2jpeg: quality must be between 1 and 100, got %d", *quality)}

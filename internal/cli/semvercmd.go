@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -22,16 +21,12 @@ func SemverCommand(
 		Name:    "semver",
 		Summary: "sort SemVer versions (-r desc), compare two (-compare), or test a constraint (-check)",
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
-			fs := flag.NewFlagSet("semver", flag.ContinueOnError)
-			fs.SetOutput(stderr)
+			fs := newFlagSet("semver")
 			desc := fs.Bool("r", false, "sort in descending order")
 			compareMode := fs.Bool("compare", false, "compare two version arguments: print -1, 0, or 1")
 			constraint := fs.String("check", "", `test a version against a constraint like ">=1.2.0 <2.0.0": print true/false, exit 0/1`)
-			if err := fs.Parse(args); err != nil {
-				if errors.Is(err, flag.ErrHelp) {
-					return nil
-				}
-				return &UsageError{Err: err}
+			if err := parseFlags(fs, args); err != nil {
+				return err
 			}
 			// An empty -check value must still select check mode (and then
 			// fail as an empty constraint), so mode detection has to look at
