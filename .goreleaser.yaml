@@ -28,6 +28,11 @@ archives:
 checksum:
   name_template: checksums.txt
 
+release:
+  # A tag like v2.1.0-rc.1 becomes a GitHub pre-release, so it is never what
+  # releases/latest (and the install one-liner) points at.
+  prerelease: auto
+
 changelog:
   sort: asc
   groups:
