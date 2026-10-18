@@ -50,6 +50,10 @@ func JSONCompact(w io.Writer, r io.Reader) error {
 	return nil
 }
 
+// ErrInvalidJSON is wrapped by every error that reports malformed JSON, which
+// sets a bad document apart from a failure to read it.
+var ErrInvalidJSON = errors.New("invalid JSON")
+
 // JSONValid checks that r holds a single syntactically valid JSON document,
 // returning nil or an error pinpointing the first problem.
 func JSONValid(r io.Reader) error {
@@ -72,10 +76,10 @@ func readInput(r io.Reader) ([]byte, error) {
 func syntaxError(data []byte, err error) error {
 	var syn *json.SyntaxError
 	if !errors.As(err, &syn) {
-		return fmt.Errorf("invalid JSON: %w", err)
+		return fmt.Errorf("%w: %w", ErrInvalidJSON, err)
 	}
 	line, col := lineCol(data, syn.Offset)
-	return fmt.Errorf("invalid JSON at line %d, column %d: %w", line, col, err)
+	return fmt.Errorf("%w at line %d, column %d: %w", ErrInvalidJSON, line, col, err)
 }
 
 func lineCol(data []byte, offset int64) (line, col int) {

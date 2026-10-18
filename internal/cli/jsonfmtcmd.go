@@ -9,7 +9,8 @@ import (
 
 // JSONFmtCommand builds the json-fmt command around the format package's pure
 // functions, keeping this package independent of it; main wires the layers
-// together.
+// together. valid reports invalid JSON as a *FalseError, so that a read
+// failure still exits 1.
 func JSONFmtCommand(
 	pretty func(w io.Writer, r io.Reader, indent string) error,
 	compact func(w io.Writer, r io.Reader) error,
@@ -22,7 +23,7 @@ func JSONFmtCommand(
 			fs := newFlagSet("json-fmt")
 			indent := fs.Int("indent", 2, "spaces per indentation level")
 			minify := fs.Bool("c", false, "compact (minify) instead of pretty-print")
-			check := fs.Bool("check", false, "validate only: no output, exit 0 if valid, 1 if not")
+			check := fs.Bool("check", false, "validate only: no output, exit 0 if valid, 3 if not")
 			if err := parseFlags(fs, args); err != nil {
 				return err
 			}

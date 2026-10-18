@@ -70,6 +70,7 @@ func TestSemverCommand(t *testing.T) {
 		wantOut   string
 		wantErr   string
 		wantUsage bool
+		wantFalse bool
 		wantCalls func(t *testing.T, c *semverCalls)
 	}{
 		{
@@ -116,7 +117,7 @@ func TestSemverCommand(t *testing.T) {
 				}
 			},
 		},
-		{name: "check unsatisfied prints false and fails", args: []string{"-check", ">=1.0.0", "0.1.0"}, wantOut: "false\n", wantErr: `semver: 0.1.0 does not satisfy ">=1.0.0"`, wantUsage: false},
+		{name: "check unsatisfied prints false and answers false", args: []string{"-check", ">=1.0.0", "0.1.0"}, wantOut: "false\n", wantErr: `semver: 0.1.0 does not satisfy ">=1.0.0"`, wantFalse: true},
 		{name: "check invalid version is runtime error", args: []string{"-check", ">=1.0.0", "bad"}, wantErr: `semver: invalid version "bad"`, wantUsage: false},
 		{name: "check bad constraint is usage error", args: []string{"-check", "^1.0.0"}, wantErr: `semver: unsupported constraint "^1.0.0"`, wantUsage: true},
 		{name: "check empty constraint is usage error", args: []string{"-check", ""}, wantErr: `semver: unsupported constraint ""`, wantUsage: true},
@@ -146,6 +147,10 @@ func TestSemverCommand(t *testing.T) {
 				var usageErr *UsageError
 				if got := errors.As(err, &usageErr); got != tt.wantUsage {
 					t.Fatalf("Run() usage error = %v (err = %v), want %v", got, err, tt.wantUsage)
+				}
+				var falseErr *FalseError
+				if got := errors.As(err, &falseErr); got != tt.wantFalse {
+					t.Fatalf("Run() false answer = %v (err = %v), want %v", got, err, tt.wantFalse)
 				}
 				return
 			}

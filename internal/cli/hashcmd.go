@@ -18,7 +18,7 @@ func HashCommand(sum func(algo string, r io.Reader) (string, error)) Command {
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 			fs := newFlagSet("hash")
 			algo := fs.String("a", "sha256", "hash algorithm: sha256, sha1, sha512, or md5")
-			check := fs.String("c", "", "verify: compare the digest to this hex checksum, print nothing on match")
+			check := fs.String("c", "", "verify: compare the digest to this hex checksum: print nothing, exit 0 on match, 3 on mismatch")
 			if err := parseFlags(fs, args); err != nil {
 				return err
 			}
@@ -54,7 +54,7 @@ func HashCommand(sum func(algo string, r io.Reader) (string, error)) Command {
 			}
 			if verify {
 				if got != expected {
-					return fmt.Errorf("hash: checksum mismatch: expected %s, got %s", expected, got)
+					return &FalseError{Err: fmt.Errorf("hash: checksum mismatch: expected %s, got %s", expected, got)}
 				}
 				return nil
 			}

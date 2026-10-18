@@ -24,7 +24,7 @@ func SemverCommand(
 			fs := newFlagSet("semver")
 			desc := fs.Bool("r", false, "sort in descending order")
 			compareMode := fs.Bool("compare", false, "compare two version arguments: print -1, 0, or 1")
-			constraint := fs.String("check", "", `test a version against a constraint like ">=1.2.0 <2.0.0": print true/false, exit 0/1`)
+			constraint := fs.String("check", "", `test a version against a constraint like ">=1.2.0 <2.0.0": print true/false, exit 0/3`)
 			if err := parseFlags(fs, args); err != nil {
 				return err
 			}
@@ -81,7 +81,7 @@ func SemverCommand(
 					if _, err := fmt.Fprintln(stdout, "false"); err != nil {
 						return err
 					}
-					return fmt.Errorf("semver: %s does not satisfy %q", version, *constraint)
+					return &FalseError{Err: fmt.Errorf("semver: %s does not satisfy %q", version, *constraint)}
 				}
 				_, err = fmt.Fprintln(stdout, "true")
 				return err

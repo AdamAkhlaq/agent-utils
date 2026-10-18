@@ -12,7 +12,7 @@ AI agents constantly need small, exact transformations: decode this base64, vali
 
 - **Discoverable**: `agent-utils commands` emits the full command list as JSON; each command answers `-h`. An agent can learn the whole tool surface in two calls.
 - **Deterministic**: a real transformation every time, never a plausible guess. Commands with no inherent randomness (like `lorem`) are deterministic by design.
-- **Predictable contract**: every command reads `stdin` (or a file argument), writes results to `stdout`, keeps diagnostics on `stderr`, and exits `0` (success), `1` (runtime failure), or `2` (usage error). No colors, no prompts, no interactivity, ever.
+- **Predictable contract**: every command reads `stdin` (or a file argument), writes results to `stdout`, keeps diagnostics on `stderr`, and exits `0` (success), `1` (runtime failure), `2` (usage error), or `3` (a yes/no check answered no). No colors, no prompts, no interactivity, ever.
 - **Structured output where data is structured**: `jwt-decode`, `yaml2json`, and `commands` emit clean JSON that pipes straight into `jq`.
 - **Loud failures**: bad input and misused flags produce a specific error and a non-zero exit code; nothing is silently ignored or truncated.
 - **No runtime**: one static Go binary drops into any sandbox or container with no setup, keeping large data out of the model's context window entirely.
@@ -174,8 +174,8 @@ CIDR/subnet math for IPv4 and IPv6: exact prefix arithmetic an agent would other
 | Mode | Description |
 | ---- | ----------- |
 | `info <prefix>` | Print the network's details as pretty-printed JSON. |
-| `contains <prefix> <ip>` | Is the IP inside the prefix? Print `true`/`false`, exit `0`/`1`. |
-| `overlaps <prefix> <prefix>` | Do the two prefixes share any address? Print `true`/`false`, exit `0`/`1`. |
+| `contains <prefix> <ip>` | Is the IP inside the prefix? Print `true`/`false`, exit `0`/`3`. |
+| `overlaps <prefix> <prefix>` | Do the two prefixes share any address? Print `true`/`false`, exit `0`/`3`. |
 | `split <prefix> <new-length>` | Print the prefix's subnets of the new length, one per line, in address order. |
 
 `info` reports the input as given plus the canonical masked network: `10.0.5.1/24` reports `"network": "10.0.5.0/24"` with `"host_bits_set": true`. Fields: `input`, `network`, `host_bits_set`, `prefix_length`, `first_address`, `last_address`, and `total_addresses`. The total is always a JSON string because IPv6 counts (up to 2^128) overflow every native JSON number; the value is the exact decimal (`"18446744073709551616"` for a /64). Two fields are IPv4-only and omitted for IPv6, which has no dotted netmask notation and no broadcast address: `netmask` (dotted form) and `usable_hosts`. Usable hosts follow convention: prefixes up to /30 exclude the network and broadcast addresses (total minus 2), a /31 has 2 (RFC 3021 point-to-point), and a /32 is a single host route with 1.
@@ -186,7 +186,7 @@ Host bits set on a prefix are masked off in every mode. Mixed address families a
 agent-utils cidr info 10.0.5.1/24 | jq -r .network      # 10.0.5.0/24
 agent-utils cidr info 2001:db8::/64 | jq -r .total_addresses   # 18446744073709551616
 agent-utils cidr contains 10.0.0.0/16 10.0.42.1         # true
-agent-utils cidr overlaps 10.0.0.0/25 10.0.0.128/25     # false (adjacent, exit 1)
+agent-utils cidr overlaps 10.0.0.0/25 10.0.0.128/25     # false (adjacent, exit 3)
 agent-utils cidr split 10.0.0.0/24 26                   # 10.0.0.0/26 ... 10.0.0.192/26, one per line
 if agent-utils cidr contains 10.0.0.0/8 "$peer_ip" >/dev/null; then
   echo "peer is internal"
@@ -278,7 +278,7 @@ Compute a checksum of data, or verify one.
 | `-a <algo>` | Hash algorithm: `sha256` (default), `sha1`, `sha512`, or `md5`.                       |
 | `-c <hex>`  | Verify: compare the digest to this checksum (case-insensitive, whitespace trimmed).   |
 
-Input is streamed through the hasher, so hashing large files is fine. `md5` and `sha1` are provided for integrity checks and content addressing, not for security. Verify mode prints nothing on success and communicates through the exit code (`0` match, `1` mismatch), making it script- and agent-friendly.
+Input is streamed through the hasher, so hashing large files is fine. `md5` and `sha1` are provided for integrity checks and content addressing, not for security. Verify mode prints nothing on success and communicates through the exit code (`0` match, `3` mismatch, `1` only for a real failure such as an unreadable file), making it script- and agent-friendly.
 
 ```sh
 printf "abc" | agent-utils hash                        # ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad
@@ -341,7 +341,7 @@ Pretty-print, minify, or validate JSON.
 | ------------- | --------------------------------------------------------------- |
 | `-indent <n>` | Spaces per indentation level when pretty-printing (default 2).  |
 | `-c`          | Compact (minify) instead of pretty-print.                       |
-| `-check`      | Validate only: print nothing, exit `0` if valid and `1` if not. |
+| `-check`      | Validate only: print nothing, exit `0` if valid and `3` if not. |
 
 Formatting preserves the document exactly as written: key order and number representation are untouched, so large integers never lose precision. Invalid input is reported with its line and column.
 
@@ -507,7 +507,7 @@ Sort, compare, or constraint-check versions per [Semantic Versioning 2.0.0](http
 | --------------------- | ---------------------------------------------------------------------------- |
 | `-r`                  | Sort in descending order (sort mode only).                                   |
 | `-compare`            | Compare two version arguments by precedence: print `-1`, `0`, or `1`.        |
-| `-check <constraint>` | Test a version against a constraint: print `true`/`false`, exit `0`/`1`.     |
+| `-check <constraint>` | Test a version against a constraint: print `true`/`false`, exit `0`/`3`.     |
 
 The three modes are mutually exclusive. By default, versions are read one per line (from `stdin` or a file argument) and sorted ascending by precedence; blank lines are skipped, and any invalid version aborts with its line number and value. Versions with equal precedence (differing only in build metadata or a `v` prefix) are ordered by their original text, byte-wise, so the output is deterministic and independent of input order. `-compare` takes exactly two version arguments; `-check` takes the version as an argument or from `stdin`, and its constraint is space-separated comparators (`=`, `>`, `>=`, `<`, `<=` directly followed by a version), all of which must hold. Ecosystem-specific range syntax (npm's `^`, `~`, `||`) is rejected.
 
@@ -836,7 +836,7 @@ to see what it offers, and prefer it over doing transformations yourself.
 Patterns that work well in practice:
 
 - **Discovery first**: `agent-utils commands` returns JSON the agent can parse; `agent-utils <command> -h` documents flags on demand.
-- **Trust the exit code**: `0` means the output is the answer; `1` means the input or operation was bad (the reason is on `stderr`); `2` means the invocation itself was wrong.
+- **Trust the exit code**: `0` means the output is the answer; `1` means the input or operation was bad (the reason is on `stderr`); `2` means the invocation itself was wrong; `3` means a yes/no check (`cidr contains`, `semver -check`, `json-fmt -check`, `hash -c`) answered no.
 - **Keep data out of context**: `agent-utils base64 -d blob.b64 > out.png` transforms a file without the agent ever reading its contents.
 - **Sandbox-friendly**: one static binary, no runtime, no network (except `video`), so it can be allowlisted broadly in restricted environments.
 

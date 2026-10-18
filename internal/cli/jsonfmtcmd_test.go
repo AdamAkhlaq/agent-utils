@@ -85,8 +85,8 @@ func TestJSONFmtCommand(t *testing.T) {
 	}
 }
 
-func TestJSONFmtCommandCheckFailureIsRuntimeError(t *testing.T) {
-	invalid := errors.New("invalid JSON at line 1, column 1")
+func TestJSONFmtCommandCheckReturnsValidatorError(t *testing.T) {
+	invalid := &FalseError{Err: errors.New("invalid JSON at line 1, column 1")}
 	cmd := JSONFmtCommand(
 		func(w io.Writer, r io.Reader, indent string) error { return nil },
 		func(w io.Writer, r io.Reader) error { return nil },
@@ -99,7 +99,7 @@ func TestJSONFmtCommandCheckFailureIsRuntimeError(t *testing.T) {
 	}
 	var usageErr *UsageError
 	if errors.As(err, &usageErr) {
-		t.Error("Run() returned a usage error; an invalid document must exit 1, not 2")
+		t.Error("Run() returned a usage error; an invalid document must exit 3, not 2")
 	}
 	if stdout.Len() != 0 {
 		t.Errorf("Run() stdout = %q, want empty", stdout.String())

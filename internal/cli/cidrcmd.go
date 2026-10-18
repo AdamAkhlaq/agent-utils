@@ -11,7 +11,7 @@ import (
 // together. Every error the injected functions return stems from the caller's
 // arguments (malformed prefix or address, prefix length out of range, a split
 // too large to print), so they are all reported as usage errors; contains and
-// overlaps mirror semver -check by printing true/false and exiting 0/1.
+// overlaps mirror semver -check by printing true/false and exiting 0/3.
 func CIDRCommand(
 	infoJSON func(prefix string) (string, error),
 	contains func(prefix, ip string) (bool, error),
@@ -22,8 +22,8 @@ func CIDRCommand(
 		Name:    "cidr",
 		Summary: "CIDR subnet math: info <prefix>, contains <prefix> <ip>, overlaps <a> <b>, split <prefix> <len>",
 		Usage: `agent-utils cidr info <prefix>                print the network's details as JSON
-agent-utils cidr contains <prefix> <ip>       print true/false, exit 0/1
-agent-utils cidr overlaps <prefix> <prefix>   print true/false, exit 0/1
+agent-utils cidr contains <prefix> <ip>       print true/false, exit 0/3
+agent-utils cidr overlaps <prefix> <prefix>   print true/false, exit 0/3
 agent-utils cidr split <prefix> <new-length>  print the subnets of the new length, one per line`,
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 			fs := newFlagSet("cidr")
@@ -57,7 +57,7 @@ agent-utils cidr split <prefix> <new-length>  print the subnets of the new lengt
 					if _, err := fmt.Fprintln(stdout, "false"); err != nil {
 						return err
 					}
-					return fmt.Errorf("cidr: %s does not contain %s", rest[0], rest[1])
+					return &FalseError{Err: fmt.Errorf("cidr: %s does not contain %s", rest[0], rest[1])}
 				}
 				_, err = fmt.Fprintln(stdout, "true")
 				return err
@@ -73,7 +73,7 @@ agent-utils cidr split <prefix> <new-length>  print the subnets of the new lengt
 					if _, err := fmt.Fprintln(stdout, "false"); err != nil {
 						return err
 					}
-					return fmt.Errorf("cidr: %s and %s do not overlap", rest[0], rest[1])
+					return &FalseError{Err: fmt.Errorf("cidr: %s and %s do not overlap", rest[0], rest[1])}
 				}
 				_, err = fmt.Fprintln(stdout, "true")
 				return err

@@ -26,6 +26,7 @@ func TestHashCommand(t *testing.T) {
 		wantAlgo  string
 		wantErr   string
 		wantUsage bool
+		wantFalse bool
 	}{
 		{name: "default sha256", args: nil, stdin: "abc", want: digest + "\n", wantAlgo: "sha256"},
 		{name: "explicit algorithm", args: []string{"-a", "md5"}, stdin: "abc", want: digest + "\n", wantAlgo: "md5"},
@@ -33,7 +34,7 @@ func TestHashCommand(t *testing.T) {
 		{name: "verify match prints nothing", args: []string{"-c", digest}, stdin: "abc", want: "", wantAlgo: "sha256"},
 		{name: "verify is case-insensitive", args: []string{"-c", "DEADBEEF"}, stdin: "abc", want: "", wantAlgo: "sha256"},
 		{name: "verify trims whitespace", args: []string{"-c", " deadbeef\n"}, stdin: "abc", want: "", wantAlgo: "sha256"},
-		{name: "verify mismatch is runtime error", args: []string{"-c", "deadbee0"}, stdin: "abc", wantErr: "hash: checksum mismatch: expected deadbee0, got deadbeef", wantUsage: false},
+		{name: "verify mismatch answers false", args: []string{"-c", "deadbee0"}, stdin: "abc", wantErr: "hash: checksum mismatch: expected deadbee0, got deadbeef", wantFalse: true},
 		{name: "verify value not hex", args: []string{"-c", "zzzzzzzz"}, wantErr: "hash: -c value must be 8 hex characters", wantUsage: true},
 		{name: "verify value wrong length", args: []string{"-c", "dead"}, wantErr: "hash: -c value must be 8 hex characters", wantUsage: true},
 		{name: "verify value empty", args: []string{"-c", ""}, wantErr: "hash: -c value must be 8 hex characters", wantUsage: true},
@@ -68,6 +69,10 @@ func TestHashCommand(t *testing.T) {
 				var usageErr *UsageError
 				if got := errors.As(err, &usageErr); got != tt.wantUsage {
 					t.Fatalf("Run() usage error = %v (err = %v), want %v", got, err, tt.wantUsage)
+				}
+				var falseErr *FalseError
+				if got := errors.As(err, &falseErr); got != tt.wantFalse {
+					t.Fatalf("Run() false answer = %v (err = %v), want %v", got, err, tt.wantFalse)
 				}
 				return
 			}
