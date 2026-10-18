@@ -7,8 +7,13 @@ import (
 	"image/gif"
 	"image/jpeg"
 	"image/png"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
+
+	"golang.org/x/image/bmp"
+	"golang.org/x/image/tiff"
 )
 
 func solidNRGBA(w, h int) *image.NRGBA {
@@ -30,6 +35,10 @@ func encodeImage(t *testing.T, format string, m image.Image) []byte {
 		err = jpeg.Encode(&buf, m, nil)
 	case "gif":
 		err = gif.Encode(&buf, m, nil)
+	case "bmp":
+		err = bmp.Encode(&buf, m)
+	case "tiff":
+		err = tiff.Encode(&buf, m, nil)
 	}
 	if err != nil {
 		t.Fatalf("encoding test %s: %v", format, err)
@@ -53,6 +62,27 @@ func TestDetect(t *testing.T) {
 			name:     "jpeg with dimensions",
 			input:    func(t *testing.T) []byte { return encodeImage(t, "jpeg", solidNRGBA(5, 3)) },
 			wantMIME: "image/jpeg", wantWidth: 5, wantHeight: 3,
+		},
+		{
+			name:     "bmp with dimensions",
+			input:    func(t *testing.T) []byte { return encodeImage(t, "bmp", solidNRGBA(3, 2)) },
+			wantMIME: "image/bmp", wantWidth: 3, wantHeight: 2,
+		},
+		{
+			name:     "tiff with dimensions",
+			input:    func(t *testing.T) []byte { return encodeImage(t, "tiff", solidNRGBA(5, 7)) },
+			wantMIME: "image/tiff", wantWidth: 5, wantHeight: 7,
+		},
+		{
+			name: "webp with dimensions",
+			input: func(t *testing.T) []byte {
+				data, err := os.ReadFile(filepath.Join("..", "img", "testdata", "lossless.webp"))
+				if err != nil {
+					t.Fatal(err)
+				}
+				return data
+			},
+			wantMIME: "image/webp", wantWidth: 8, wantHeight: 8,
 		},
 		{
 			name:     "gif with dimensions",
