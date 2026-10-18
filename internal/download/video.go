@@ -25,14 +25,17 @@ func Video(stdout, stderr io.Writer, url, dir string, audioOnly bool) error {
 	return nil
 }
 
-// videoArgs builds the yt-dlp argument list. --print implies --quiet, so
+// videoArgs builds the yt-dlp argument list. --ignore-config stops yt-dlp
+// loading a yt-dlp.conf from the output or current directory, which could
+// otherwise add --exec commands or change what is printed. --print implies
+// --quiet, so
 // yt-dlp's stdout carries only the final paths (after_move is the stage after
 // post-processing, so -x reports the extracted audio file) and its progress
 // bar is suppressed. The URL goes after "--" so one starting with "-" can't
 // be read as a flag; there is no shell involved, so no other quoting or
 // injection concerns exist.
 func videoArgs(url, dir string, audioOnly bool) []string {
-	args := []string{"-P", dir, "--print", "after_move:filepath", "--color", "never"}
+	args := []string{"--ignore-config", "-P", dir, "--print", "after_move:filepath", "--color", "never"}
 	if audioOnly {
 		args = append(args, "-x")
 	}
