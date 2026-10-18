@@ -1,63 +1,127 @@
 # agent-utils
 
-> An agent-first toolbox: small, deterministic command-line utilities an AI agent can call instead of doing the work itself, bundled into a single Go binary.
+> Small, exact command-line utilities that AI agents call instead of doing the work in the model, bundled into one static Go binary.
 
-[![Made with Go](https://img.shields.io/badge/made%20with-Go-00ADD8.svg)](https://go.dev)
-[![Go Version](https://img.shields.io/badge/go-1.25%2B-00ADD8.svg)](https://go.dev/dl/)
+[![CI](https://github.com/AdamAkhlaq/agent-utils/actions/workflows/ci.yml/badge.svg)](https://github.com/AdamAkhlaq/agent-utils/actions/workflows/ci.yml)
+[![Latest release](https://img.shields.io/github/v/release/AdamAkhlaq/agent-utils)](https://github.com/AdamAkhlaq/agent-utils/releases/latest)
+[![Go 1.25+](https://img.shields.io/badge/go-1.25%2B-00ADD8.svg)](https://go.dev/dl/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-AI agents constantly need small, exact transformations: decode this base64, validate this JSON, convert this config, generate a UUID. Doing these "by hand" in the model is slow, token-expensive, and probabilistic; a purpose-built tool is instant, free, and exact. `agent-utils` packages those operations behind one consistent, machine-friendly CLI. Humans and shell scripts get the same benefits, but every design decision starts from the question: *what makes this trivially usable by an agent?*
+Agents constantly need small, exact transformations: decode this JWT, convert this YAML, check whether an IP is in a subnet, find the invisible character that breaks a string comparison. Done "by hand" in the model, these are slow, cost tokens, and are sometimes subtly wrong. `agent-utils` does them instantly and exactly, behind one predictable CLI contract built for agents first and equally usable from scripts and by hand.
 
-## Agent-first design
+## Quick start
 
-- **Discoverable**: `agent-utils commands` emits the full command list as JSON; each command answers `-h`. An agent can learn the whole tool surface in two calls.
-- **Deterministic**: a real transformation every time, never a plausible guess. Commands with no inherent randomness (like `lorem`) are deterministic by design.
-- **Predictable contract**: every command reads `stdin` (or a file argument), writes results to `stdout`, keeps diagnostics on `stderr`, and exits `0` (success), `1` (runtime failure), `2` (usage error), or `3` (a yes/no check answered no). No colors, no prompts, no interactivity, ever.
-- **Structured output where data is structured**: `jwt-decode`, `yaml2json`, and `commands` emit clean JSON that pipes straight into `jq`.
-- **Loud failures**: bad input and misused flags produce a specific error and a non-zero exit code; nothing is silently ignored or truncated.
-- **No runtime**: one static Go binary drops into any sandbox or container with no setup, keeping large data out of the model's context window entirely.
-- **Local-first**: everything except `video` runs fully offline; nothing is sent anywhere.
+```sh
+# macOS or Linux, amd64 or arm64: download the latest release into the current directory
+curl -fsSL "https://github.com/AdamAkhlaq/agent-utils/releases/latest/download/agent-utils_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar -xz agent-utils
+sudo mv agent-utils /usr/local/bin/
+```
 
-## Installation
+```sh
+$ openssl s_client -connect example.com:443 -showcerts </dev/null 2>/dev/null \
+    | agent-utils cert-decode | jq -c '.[0] | {subject, notAfter, expired}'
+{"subject":"CN=example.com","notAfter":"2026-12-25T22:56:35Z","expired":false}
 
-### Download a release binary
+$ printf 'caf\xc3\xa9 \xe2\x80\x8bbar' | agent-utils unicode -check | jq -c '.findings[] | {codepoint, name}'
+{"codepoint":"U+200B","name":"ZERO WIDTH SPACE"}
 
-Grab the archive for your platform from the [latest release](https://github.com/AdamAkhlaq/agent-utils/releases/latest) (macOS, Linux, and Windows; amd64 and arm64), unpack it, and put `agent-utils` on your `PATH`. Checksums ship alongside the archives.
+$ agent-utils cidr contains 10.0.0.0/16 10.0.42.1
+true
 
-### Install with `go install`
+$ agent-utils semver -check '>=1.28.0' v1.27.4; echo "exit $?"
+false
+agent-utils: semver: v1.27.4 does not satisfy ">=1.28.0"
+exit 3
+```
 
-**Requirements:** Go 1.25 or newer; install it with `brew install go` or from [go.dev/dl](https://go.dev/dl/).
+Then run `agent-utils help` for the full command list, or `agent-utils <command> -h` for any command's usage, flags, and examples.
+
+## Why agent-utils
+
+**Instead of the model doing it.** A model asked to decode base64, compute a subnet's broadcast address, or convert epoch milliseconds to Tokyo time produces a plausible answer. A tool produces the right one, without spending tokens on the work or pulling a large file into the context window: `agent-utils base64 -d blob.b64 > out.png` never shows the agent a single byte.
+
+**Instead of jq, yq, openssl, date, and friends.** `agent-utils` fills the gaps between the classic tools rather than replacing them; most of its JSON output is meant to be piped into `jq`. What it adds:
+
+- **One contract for every operation.** Input from `stdin` or a file argument, results on `stdout`, diagnostics on `stderr`, and the [same exit codes](#the-contract) everywhere. An agent learns the pattern once instead of learning a dozen tools' flags, output formats, and exit-code conventions.
+- **Structured output where the classic tool prints prose.** `cert-decode` emits JSON where `openssl x509 -text` emits a report; `cidr info` emits JSON fields where subnet calculators print tables.
+- **Identical everywhere.** One static binary with no runtime dependencies behaves the same on macOS, Linux, and Windows, with none of the GNU-versus-BSD differences in `date`, `sed`, or `stat`, and an embedded timezone database.
+- **Strict instead of forgiving.** Ambiguous input fails loudly with a specific message: multi-document YAML, partial SemVer versions, colors with alpha, CSV with duplicate headers. Nothing is silently guessed, defaulted, or truncated.
+- **Safe to allowlist.** Every command except `video` runs fully offline and only touches the files you name, so an agent can be given blanket permission to run it.
+
+## Install
+
+### Release binary
+
+Download the archive for your platform from the [latest release](https://github.com/AdamAkhlaq/agent-utils/releases/latest): macOS, Linux, and Windows, each for amd64 and arm64. Archive names are stable (`agent-utils_<os>_<arch>.tar.gz`, `.zip` on Windows), so `releases/latest/download/<name>` always points at the newest build, as in the [quick start](#quick-start).
+
+To verify a download, fetch `checksums.txt` from the same release and check it:
+
+```sh
+curl -fsSLO https://github.com/AdamAkhlaq/agent-utils/releases/latest/download/agent-utils_linux_amd64.tar.gz \
+     -O https://github.com/AdamAkhlaq/agent-utils/releases/latest/download/checksums.txt
+shasum -a 256 --check --ignore-missing checksums.txt   # agent-utils_linux_amd64.tar.gz: OK
+```
+
+On macOS, a binary downloaded through a browser is quarantined by Gatekeeper because it is not notarized. Clear the flag with `xattr -d com.apple.quarantine ./agent-utils`; downloads made with `curl` are not affected.
+
+### `go install`
+
+Requires Go 1.25 or newer.
 
 ```sh
 go install github.com/adamakhlaq/agent-utils@latest
 ```
 
-This puts a `agent-utils` binary on your `PATH` (in `$(go env GOPATH)/bin`).
+This puts an `agent-utils` binary in `$(go env GOPATH)/bin`.
 
-### Build from source
+### From source
 
 ```sh
-git clone https://github.com/adamakhlaq/agent-utils.git
+git clone https://github.com/AdamAkhlaq/agent-utils.git
 cd agent-utils
 go build -o agent-utils .
-./agent-utils
 ```
 
-> **Tip:** if you use it interactively a lot, alias it to something shorter, e.g. `alias au=agent-utils`.
+## Use it with your agent
 
-## Usage
+The tool documents itself, so an agent only needs to know it exists and that it should prefer it. `agent-utils help` prints the command list in about 45 lines, and `agent-utils <command> -h` prints one command's usage, flags, and examples.
 
-```sh
-agent-utils <command> [flags] [file]
+### Claude Code
+
+Add this to your project's `CLAUDE.md` (or `~/.claude/CLAUDE.md` for every project):
+
+```markdown
+## agent-utils
+
+`agent-utils` is installed: exact, deterministic CLI utilities for encoding and
+decoding, converting JSON/YAML/TOML/XML/CSV, hashes, UUIDs, CIDR and SemVer math,
+timestamps, X.509 and JWT decoding, Unicode inspection, and image conversion.
+Prefer it over doing these transformations yourself. Run `agent-utils help` for the
+command list and `agent-utils <command> -h` for usage. Exit codes: 0 success,
+1 failure, 2 usage error, 3 a yes/no check answered no.
 ```
 
-Commands read input from the file argument when one is given, otherwise from `stdin`, and write results to `stdout`. Flags go before the filename. Run `agent-utils` with no arguments for a human-readable command list, or `agent-utils commands` for the same list as JSON.
+To let Claude Code run it without asking each time, allow it in `.claude/settings.json` (or `~/.claude/settings.json`):
+
+```json
+{
+  "permissions": {
+    "allow": ["Bash(agent-utils *)"]
+  }
+}
+```
+
+Claude Code checks each command in a pipeline separately, so `agent-utils yaml2json a.yaml | jq .` still needs `jq` to be allowed on its own.
+
+### Codex, Cursor, and other agents
+
+Put the same snippet in `AGENTS.md`, which these agents read. Claude Code reads `AGENTS.md` only when there is no `CLAUDE.md`; to share one file between both, keep the snippet in `AGENTS.md` and add the line `@AGENTS.md` to `CLAUDE.md`.
+
+### Building an integration
+
+`agent-utils commands` emits a JSON manifest of every command with its usage lines, flags (name, type, default, description), and examples: everything needed to generate tool definitions for an agent framework. See [`commands`](docs/commands/commands.md).
 
 ## Commands
-
-> This project is under active development; the command set below grows with each release.
-
-### At a glance
 
 | Category | Command | What it does |
 | -------- | ------- | ------------ |
@@ -98,42 +162,45 @@ Commands read input from the file argument when one is given, otherwise from `st
 | Time | [`time`](docs/commands/time.md) | Print or convert timestamps across formats and timezones |
 | Version | [`semver`](docs/commands/semver.md) | Sort, compare, or constraint-check SemVer 2.0.0 versions |
 | Download | [`video`](docs/commands/video.md) | Download a video via yt-dlp, printing the saved file path |
-| Meta | [`commands`](docs/commands/commands.md) | List every command as JSON for tool discovery |
+| Meta | [`commands`](docs/commands/commands.md) | List every command with its usage, flags, and examples as JSON |
 | Meta | [`version`](docs/commands/version.md) | Print the binary's version |
 
-Each command links to its full reference in [`docs/commands`](docs/commands), and `agent-utils <command> -h` prints its usage, flags, and examples.
+Each command links to its full reference in [`docs/commands`](docs/commands).
 
-## Scripting and automation
+## The contract
 
-Every command follows the same contract (`stdin` in, `stdout` out, diagnostics on `stderr`, meaningful exit codes), so `agent-utils` composes naturally with the rest of the shell:
+Every command follows the same rules, so a caller that has learned one command can drive them all.
+
+- **Input** comes from the file named as the argument, or from `stdin` when there is none. A few commands take literal arguments instead (`cidr`, `color`, `qr`, `semver -compare`, `time`, `urlparse`), and the conversion commands accept an optional output file as a second argument; each command's `-h` shows its exact form.
+- **Results** go to `stdout` and nothing else does; diagnostics go to `stderr`. There are no colors, prompts, progress bars, or interactive modes.
+- **Structured results are JSON**, pretty-printed and ready for `jq`.
+- **Output is deterministic**: the same input gives byte-identical output. The exceptions are the commands whose job is randomness (`uuid`, `password`, drawn from the OS's secure random source) or the present moment (`time` with no argument, and `cert-decode`'s `expired` field).
+- **Exit codes** mean the same thing everywhere:
+
+| Code | Meaning |
+| ---- | ------- |
+| `0`  | Success. `stdout` holds the answer; for a yes/no check, the answer is yes. |
+| `1`  | Runtime failure: invalid input data, an unreadable file, a failed download. The reason is on `stderr`. |
+| `2`  | Usage error: unknown command, unknown flag, or a malformed argument. |
+| `3`  | A yes/no check answered no: `cidr contains`, `cidr overlaps`, `semver -check`, `json-fmt -check`, and `hash -c`. |
+
+`unicode -check` is a report rather than a yes/no check: it exits `0` and its JSON lists what it found.
+
+The exit codes make the commands natural building blocks for shell scripts, `Makefile`s, pre-commit hooks, and CI steps:
 
 ```sh
-# Pipe anything through a utility
-cat photo.png | agent-utils base64 > photo.b64
-
-# Use exit codes for control flow
-if agent-utils base64 -d < input.b64 > /dev/null; then
-  echo "valid base64"
+if agent-utils cidr contains 10.0.0.0/8 "$peer_ip" >/dev/null; then
+  echo "peer is internal"
 fi
+
+agent-utils json-fmt -check config.json || exit 1
 ```
 
-That makes it easy to drop into shell scripts, `Makefile`s, pre-commit hooks, or CI steps.
+The examples here and in the docs assume a POSIX shell. On Windows, use Git Bash or WSL, or note that Windows PowerShell 5.1 re-encodes data passed through pipes, so pass binary files as arguments rather than piping them.
 
-## Wiring it into an agent
+### Stability
 
-Give an agent access to the binary and one line of instruction; the tool teaches itself from there:
-
-```
-You have `agent-utils`, a CLI of exact local utilities. Run `agent-utils commands`
-to see what it offers, and prefer it over doing transformations yourself.
-```
-
-Patterns that work well in practice:
-
-- **Discovery first**: `agent-utils commands` returns JSON the agent can parse; `agent-utils <command> -h` documents flags on demand.
-- **Trust the exit code**: `0` means the output is the answer; `1` means the input or operation was bad (the reason is on `stderr`); `2` means the invocation itself was wrong; `3` means a yes/no check (`cidr contains`, `semver -check`, `json-fmt -check`, `hash -c`) answered no.
-- **Keep data out of context**: `agent-utils base64 -d blob.b64 > out.png` transforms a file without the agent ever reading its contents.
-- **Sandbox-friendly**: one static binary, no runtime, no network (except `video`), so it can be allowlisted broadly in restricted environments.
+`agent-utils` follows [Semantic Versioning](https://semver.org) for its CLI contract. Command names, flags, JSON output shapes, and exit-code meanings change only in a major release. New commands, new flags, and new JSON fields arrive in minor releases, so scripts should ignore fields they don't know.
 
 ## Architecture
 
