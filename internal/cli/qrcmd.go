@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"flag"
 	"fmt"
 	"io"
 )
@@ -13,7 +14,7 @@ func QRCommand(enc func(w io.Writer, text string, size int) error, dec func(r io
 		Summary: "generate a QR code PNG from text, or decode one (-d)",
 		Usage: `agent-utils qr [-s px] [-o file] <text>
 agent-utils qr -d [-o file] [image]`,
-		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) (err error) {
+		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 			fs := newFlagSet("qr")
 			decode := fs.Bool("d", false, "decode a QR code image to its text")
 			size := fs.Int("s", 256, "image size in pixels when encoding")
@@ -21,20 +22,17 @@ agent-utils qr -d [-o file] [image]`,
 			if err := parseFlags(fs, args); err != nil {
 				return err
 			}
-			out, err := openOutput(*outPath, stdout)
-			if err != nil {
-				return err
-			}
-			// A write error can surface at Close (buffered file data is
-			// flushed then), so a plain deferred Close would swallow it.
-			// The named return lets this defer report it.
-			defer func() {
-				if cerr := out.Close(); cerr != nil && err == nil {
-					err = fmt.Errorf("closing output: %w", cerr)
+			sizeSet := false
+			fs.Visit(func(f *flag.Flag) {
+				if f.Name == "s" {
+					sizeSet = true
 				}
-			}()
+			})
 
 			if *decode {
+				if sizeSet {
+					return &UsageError{Err: fmt.Errorf("qr: -s only applies when encoding")}
+				}
 				in, err := openInput(fs, stdin)
 				if err != nil {
 					return err
@@ -44,8 +42,10 @@ agent-utils qr -d [-o file] [image]`,
 				if err != nil {
 					return err
 				}
-				_, err = fmt.Fprintln(out, text)
-				return err
+				return writeOutput(*outPath, stdout, func(w io.Writer) error {
+					_, err := fmt.Fprintln(w, text)
+					return err
+				})
 			}
 
 			if fs.NArg() != 1 {
@@ -54,7 +54,9 @@ agent-utils qr -d [-o file] [image]`,
 			if *size <= 0 {
 				return &UsageError{Err: fmt.Errorf("qr: size must be positive, got %d", *size)}
 			}
-			return enc(out, fs.Arg(0), *size)
+			return writeOutput(*outPath, stdout, func(w io.Writer) error {
+				return enc(w, fs.Arg(0), *size)
+			})
 		},
 	}
 }

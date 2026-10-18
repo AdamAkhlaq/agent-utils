@@ -40,6 +40,7 @@ func TestQRCommand(t *testing.T) {
 		{name: "two text arguments", args: []string{"a", "b"}, wantErr: true, wantUsage: true},
 		{name: "zero size", args: []string{"-s", "0", "hello"}, wantErr: true, wantUsage: true},
 		{name: "bad flag", args: []string{"-x"}, wantErr: true, wantUsage: true},
+		{name: "size with decode", args: []string{"-d", "-s", "100"}, stdin: "img", wantErr: true, wantUsage: true},
 	}
 	cmd := QRCommand(stubQREncode, stubQRDecode)
 	for _, tt := range tests {
@@ -82,6 +83,29 @@ func TestQRCommandWritesOutputFile(t *testing.T) {
 	}
 	if stdout.Len() != 0 {
 		t.Errorf("expected empty stdout with -o, got %q", stdout.String())
+	}
+}
+
+func TestQRCommandFailureLeavesOutputFileUntouched(t *testing.T) {
+	cmd := QRCommand(stubQREncode, stubQRDecode)
+	for name, args := range map[string][]string{
+		"missing text":          {},
+		"zero size":             {"-s", "0", "hello"},
+		"missing decode input":  {"-d", "no-such-file.png"},
+		"size with decode mode": {"-d", "-s", "100"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			path := filepath.Join(t.TempDir(), "keep.png")
+			if err := os.WriteFile(path, []byte("precious"), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			if err := cmd.Run(append([]string{"-o", path}, args...), strings.NewReader("img"), io.Discard, io.Discard); err == nil {
+				t.Fatal("Run() expected an error, got nil")
+			}
+			if data, _ := os.ReadFile(path); string(data) != "precious" {
+				t.Errorf("output file = %q after a failed run, want it untouched", data)
+			}
+		})
 	}
 }
 

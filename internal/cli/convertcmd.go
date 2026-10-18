@@ -47,19 +47,15 @@ func PNGToJPEGCommand(convert func(w io.Writer, r io.Reader, quality int) error)
 	}
 }
 
-func runConvert(fs *flag.FlagSet, stdin io.Reader, stdout io.Writer, convert func(w io.Writer, r io.Reader) error) (err error) {
+func runConvert(fs *flag.FlagSet, stdin io.Reader, stdout io.Writer, convert func(w io.Writer, r io.Reader) error) error {
 	in, out, err := openInOut(fs, stdin, stdout)
 	if err != nil {
 		return err
 	}
 	defer in.Close()
-	// A write error can surface at Close (buffered file data is flushed then),
-	// so a plain deferred Close would swallow it. The named return lets this
-	// defer report it.
-	defer func() {
-		if cerr := out.Close(); cerr != nil && err == nil {
-			err = fmt.Errorf("closing output: %w", cerr)
-		}
-	}()
-	return convert(out, in)
+	if err := convert(out, in); err != nil {
+		out.Abort()
+		return err
+	}
+	return out.Commit()
 }
