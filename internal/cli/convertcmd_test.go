@@ -67,7 +67,6 @@ func TestConvertCommand(t *testing.T) {
 			wantUsage bool
 		}{
 			{name: "three arguments", args: []string{"a", "b", "c"}, wantUsage: true},
-			{name: "same input and output", args: []string{"x.png", "./x.png"}, wantUsage: true},
 			{name: "bad flag", args: []string{"-x"}, wantUsage: true},
 			{name: "missing input file", args: []string{"no-such-file"}, wantUsage: false},
 		}
@@ -83,6 +82,104 @@ func TestConvertCommand(t *testing.T) {
 					t.Fatalf("Run() usage error = %v (err = %v), want %v", got, err, tt.wantUsage)
 				}
 			})
+		}
+	})
+}
+
+func TestConvertCommandOutputFile(t *testing.T) {
+	failing := ConvertCommand("fail2nothing", "always fails", func(w io.Writer, r io.Reader) error {
+		if _, err := io.WriteString(w, "partial"); err != nil {
+			return err
+		}
+		return errors.New("decode failed")
+	})
+	shout := ConvertCommand("shout2whisper", "test converter", lower)
+	write := func(t *testing.T, path, data string, perm os.FileMode) {
+		t.Helper()
+		if err := os.WriteFile(path, []byte(data), perm); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.Chmod(path, perm); err != nil {
+			t.Fatal(err)
+		}
+	}
+	read := func(t *testing.T, path string) string {
+		t.Helper()
+		data, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return string(data)
+	}
+
+	t.Run("failure leaves an existing output untouched", func(t *testing.T) {
+		dir := t.TempDir()
+		in, out := filepath.Join(dir, "in"), filepath.Join(dir, "keep")
+		write(t, in, "HI", 0o644)
+		write(t, out, "precious", 0o644)
+		if err := failing.Run([]string{in, out}, strings.NewReader(""), io.Discard, io.Discard); err == nil {
+			t.Fatal("Run() expected an error, got nil")
+		}
+		if got := read(t, out); got != "precious" {
+			t.Errorf("output after failure = %q, want it untouched", got)
+		}
+		if entries, _ := os.ReadDir(dir); len(entries) != 2 {
+			t.Errorf("temporary file left behind: %v", entries)
+		}
+	})
+
+	t.Run("failure creates no new output", func(t *testing.T) {
+		dir := t.TempDir()
+		in, out := filepath.Join(dir, "in"), filepath.Join(dir, "new")
+		write(t, in, "HI", 0o644)
+		if err := failing.Run([]string{in, out}, strings.NewReader(""), io.Discard, io.Discard); err == nil {
+			t.Fatal("Run() expected an error, got nil")
+		}
+		if _, err := os.Stat(out); !errors.Is(err, os.ErrNotExist) {
+			t.Errorf("output exists after failure (stat err = %v)", err)
+		}
+	})
+
+	t.Run("output may be the input file", func(t *testing.T) {
+		path := filepath.Join(t.TempDir(), "same")
+		write(t, path, "HI", 0o644)
+		if err := shout.Run([]string{path, path}, strings.NewReader(""), io.Discard, io.Discard); err != nil {
+			t.Fatalf("Run() error = %v", err)
+		}
+		if got := read(t, path); got != "hi" {
+			t.Errorf("in-place result = %q, want %q", got, "hi")
+		}
+	})
+
+	t.Run("replacing an output keeps its permissions", func(t *testing.T) {
+		dir := t.TempDir()
+		in, out := filepath.Join(dir, "in"), filepath.Join(dir, "out")
+		write(t, in, "HI", 0o644)
+		write(t, out, "old", 0o600)
+		if err := shout.Run([]string{in, out}, strings.NewReader(""), io.Discard, io.Discard); err != nil {
+			t.Fatalf("Run() error = %v", err)
+		}
+		info, err := os.Stat(out)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got := info.Mode().Perm(); got != 0o600 {
+			t.Errorf("output mode = %v, want 0600", got)
+		}
+	})
+
+	t.Run("special files are written directly", func(t *testing.T) {
+		if _, err := os.Stat(os.DevNull); err != nil {
+			t.Skip(os.DevNull, "unavailable")
+		}
+		dir := t.TempDir()
+		in := filepath.Join(dir, "in")
+		write(t, in, "HI", 0o644)
+		if err := shout.Run([]string{in, os.DevNull}, strings.NewReader(""), io.Discard, io.Discard); err != nil {
+			t.Fatalf("Run() error = %v", err)
+		}
+		if _, err := os.Stat(os.DevNull); err != nil {
+			t.Errorf("%s gone after writing to it: %v", os.DevNull, err)
 		}
 	})
 }
