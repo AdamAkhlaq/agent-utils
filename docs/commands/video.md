@@ -22,7 +22,7 @@ Requires `yt-dlp` 2023.06.21 or newer on your `PATH` ([installation](https://git
 ```sh
 agent-utils video "https://www.youtube.com/watch?v=..."
 agent-utils video -audio -o ~/Music "https://www.youtube.com/watch?v=..."   # e.g. ~/Music/Title [id].opus
-agent-utils filetype "$(agent-utils video "$URL")"                           # e.g. video/mp4
+agent-utils filetype "$(agent-utils video "$URL")"                           # e.g. video/mp4, for a URL that saves one file
 ```
 
 ---

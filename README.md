@@ -13,14 +13,14 @@ Agents constantly need small, exact transformations: decode this JWT, convert th
 
 ```sh
 # macOS or Linux, amd64 or arm64: download the latest release into the current directory
-curl -fsSL "https://github.com/AdamAkhlaq/agent-utils/releases/latest/download/agent-utils_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar -xz agent-utils
+curl -fsSL "https://github.com/AdamAkhlaq/agent-utils/releases/latest/download/agent-utils_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar -xzf - agent-utils
 sudo mv agent-utils /usr/local/bin/
 ```
 
 ```sh
 $ openssl s_client -connect example.com:443 -showcerts </dev/null 2>/dev/null \
-    | agent-utils cert-decode | jq -c '.[0] | {subject, notAfter, expired}'
-{"subject":"CN=example.com","notAfter":"2026-12-25T22:56:35Z","expired":false}
+    | agent-utils cert-decode | jq -c '.[0] | {subject, expired}'
+{"subject":"CN=example.com","expired":false}
 
 $ printf 'caf\xc3\xa9 \xe2\x80\x8bbar' | agent-utils unicode -check | jq -c '.findings[] | {codepoint, name}'
 {"codepoint":"U+200B","name":"ZERO WIDTH SPACE"}
@@ -40,13 +40,16 @@ Then run `agent-utils help` for the full command list, or `agent-utils <command>
 
 **Instead of the model doing it.** A model asked to decode base64, compute a subnet's broadcast address, or convert epoch milliseconds to Tokyo time produces a plausible answer. A tool produces the right one, without spending tokens on the work or pulling a large file into the context window: `agent-utils base64 -d blob.b64 > out.png` never shows the agent a single byte.
 
+**Instead of a throwaway script.** An agent can write `python3 -c 'import base64, sys; ...'`, but that is code to generate and debug, an interpreter that may be missing or a different version, and an improvised error path. `agent-utils base64 -d` costs a few tokens and fails the same way every time.
+
 **Instead of jq, yq, openssl, date, and friends.** `agent-utils` fills the gaps between the classic tools rather than replacing them; most of its JSON output is meant to be piped into `jq`. What it adds:
 
 - **One contract for every operation.** Input from `stdin` or a file argument, results on `stdout`, diagnostics on `stderr`, and the [same exit codes](#the-contract) everywhere. An agent learns the pattern once instead of learning a dozen tools' flags, output formats, and exit-code conventions.
 - **Structured output where the classic tool prints prose.** `cert-decode` emits JSON where `openssl x509 -text` emits a report; `cidr info` emits JSON fields where subnet calculators print tables.
-- **Identical everywhere.** One static binary with no runtime dependencies behaves the same on macOS, Linux, and Windows, with none of the GNU-versus-BSD differences in `date`, `sed`, or `stat`, and an embedded timezone database.
+- **Identical everywhere.** One static binary with no runtime dependencies behaves the same on macOS, Linux, and Windows, with an embedded timezone database and none of the GNU-versus-BSD differences that trip up scripts (GNU `base64` wraps its output at 76 columns and BSD's doesn't; GNU `date -d` is BSD `date -j -f`).
 - **Strict instead of forgiving.** Ambiguous input fails loudly with a specific message: multi-document YAML, partial SemVer versions, colors with alpha, CSV with duplicate headers. Nothing is silently guessed, defaulted, or truncated.
-- **Safe to allowlist.** Every command except `video` runs fully offline and only touches the files you name, so an agent can be given blanket permission to run it.
+- **Easy to allowlist.** Every command except `video` runs offline and writes only to `stdout` or to an output path you pass explicitly, replacing that file only when the command succeeds. An agent can be given blanket permission to run it.
+- **No server.** It is a plain CLI, so it works with any agent that can run a shell command, with no tool schemas taking up the context window.
 
 ## Install
 
@@ -54,12 +57,12 @@ Then run `agent-utils help` for the full command list, or `agent-utils <command>
 
 Download the archive for your platform from the [latest release](https://github.com/AdamAkhlaq/agent-utils/releases/latest): macOS, Linux, and Windows, each for amd64 and arm64. Archive names are stable (`agent-utils_<os>_<arch>.tar.gz`, `.zip` on Windows), so `releases/latest/download/<name>` always points at the newest build, as in the [quick start](#quick-start).
 
-To verify a download, fetch `checksums.txt` from the same release and check it:
+To verify a download, fetch `checksums.txt` from the same release and check it (on macOS, use `shasum -a 256` in place of `sha256sum`):
 
 ```sh
 curl -fsSLO https://github.com/AdamAkhlaq/agent-utils/releases/latest/download/agent-utils_linux_amd64.tar.gz \
      -O https://github.com/AdamAkhlaq/agent-utils/releases/latest/download/checksums.txt
-shasum -a 256 --check --ignore-missing checksums.txt   # agent-utils_linux_amd64.tar.gz: OK
+sha256sum --check --ignore-missing checksums.txt   # agent-utils_linux_amd64.tar.gz: OK
 ```
 
 On macOS, a binary downloaded through a browser is quarantined by Gatekeeper because it is not notarized. Clear the flag with `xattr -d com.apple.quarantine ./agent-utils`; downloads made with `curl` are not affected.
@@ -93,33 +96,36 @@ Add this to your project's `CLAUDE.md` (or `~/.claude/CLAUDE.md` for every proje
 ```markdown
 ## agent-utils
 
-`agent-utils` is installed: exact, deterministic CLI utilities for encoding and
-decoding, converting JSON/YAML/TOML/XML/CSV, hashes, UUIDs, CIDR and SemVer math,
-timestamps, X.509 and JWT decoding, Unicode inspection, and image conversion.
-Prefer it over doing these transformations yourself. Run `agent-utils help` for the
+`agent-utils` is installed: exact, deterministic CLI utilities for base64/hex/URL
+encoding, JSON/YAML/TOML/XML/CSV conversion, Markdown tables, hashes, UUIDs and
+passwords, CIDR and SemVer math, timestamps and timezones, X.509, JWT, and URL
+decoding, Unicode inspection, ANSI stripping, case and slug conversion, colors,
+QR codes, and image conversion. Prefer it over doing these transformations
+yourself. Run `agent-utils help` for the
 command list and `agent-utils <command> -h` for usage. Exit codes: 0 success,
 1 failure, 2 usage error, 3 a yes/no check answered no.
 ```
 
-To let Claude Code run it without asking each time, allow it in `.claude/settings.json` (or `~/.claude/settings.json`):
+To let Claude Code run it without asking each time, allow it in `.claude/settings.json` (or `~/.claude/settings.json`). The deny rule keeps `video`, the one command that reaches the network, behind a prompt; deny rules take precedence over allow rules.
 
 ```json
 {
   "permissions": {
-    "allow": ["Bash(agent-utils *)"]
+    "allow": ["Bash(agent-utils *)"],
+    "deny": ["Bash(agent-utils video *)"]
   }
 }
 ```
 
-Claude Code checks each command in a pipeline separately, so `agent-utils yaml2json a.yaml | jq .` still needs `jq` to be allowed on its own.
+Claude Code checks each command in a pipeline separately, so `agent-utils yaml2json a.yaml | jq .` still needs `jq` to be allowed on its own, and a redirect such as `> out.png` is checked against your file-editing rules.
 
 ### Codex, Cursor, and other agents
 
-Put the same snippet in `AGENTS.md`, which these agents read. Claude Code reads `AGENTS.md` only when there is no `CLAUDE.md`; to share one file between both, keep the snippet in `AGENTS.md` and add the line `@AGENTS.md` to `CLAUDE.md`.
+Put the same snippet in `AGENTS.md`, which these agents read. Recent versions of Claude Code read `AGENTS.md` too, but only when the project has no `CLAUDE.md`; to share one file, keep the snippet in `AGENTS.md` and add the line `@AGENTS.md` to `CLAUDE.md`.
 
 ### Building an integration
 
-`agent-utils commands` emits a JSON manifest of every command with its usage lines, flags (name, type, default, description), and examples: everything needed to generate tool definitions for an agent framework. See [`commands`](docs/commands/commands.md).
+`agent-utils commands` emits a JSON manifest of every command with its usage lines, flags (name, JSON Schema type, default, description), and examples, which is a starting point for generating tool definitions for an agent framework. It does not yet say which flags are required or mutually exclusive. See [`commands`](docs/commands/commands.md).
 
 ## Commands
 
@@ -160,7 +166,7 @@ Put the same snippet in `AGENTS.md`, which these agents read. Claude Code reads 
 | Color | [`color`](docs/commands/color.md) | Convert a color between hex, rgb, and hsl |
 | Network | [`cidr`](docs/commands/cidr.md) | CIDR/subnet math: describe, test, and split prefixes |
 | Time | [`time`](docs/commands/time.md) | Print or convert timestamps across formats and timezones |
-| Version | [`semver`](docs/commands/semver.md) | Sort, compare, or constraint-check SemVer 2.0.0 versions |
+| SemVer | [`semver`](docs/commands/semver.md) | Sort, compare, or constraint-check SemVer 2.0.0 versions |
 | Download | [`video`](docs/commands/video.md) | Download a video via yt-dlp, printing the saved file path |
 | Meta | [`commands`](docs/commands/commands.md) | List every command with its usage, flags, and examples as JSON |
 | Meta | [`version`](docs/commands/version.md) | Print the binary's version |
@@ -171,17 +177,18 @@ Each command links to its full reference in [`docs/commands`](docs/commands).
 
 Every command follows the same rules, so a caller that has learned one command can drive them all.
 
-- **Input** comes from the file named as the argument, or from `stdin` when there is none. A few commands take literal arguments instead (`cidr`, `color`, `qr`, `semver -compare`, `time`, `urlparse`), and the conversion commands accept an optional output file as a second argument; each command's `-h` shows its exact form.
+- **Input** comes from the file named as the argument, or from `stdin` when there is none. Some commands take values on the command line instead: `cidr`, `semver -compare`, `qr` (the text to encode), `time`, and `video` (the URL) take only literal values, and `time` never reads `stdin`; `color`, `urlparse`, and `semver -check` take a literal value or fall back to `stdin`. Each command's `-h` shows its exact form.
+- **Output files** are opt-in: the image commands and `strip-ansi` accept an output path as a second argument, and `qr` takes `-o`. The result is written to a temporary file beside it and renamed into place only on success, so a failed command never damages an existing file, and the output may be the input file.
 - **Results** go to `stdout` and nothing else does; diagnostics go to `stderr`. There are no colors, prompts, progress bars, or interactive modes.
 - **Structured results are JSON**, pretty-printed and ready for `jq`.
-- **Output is deterministic**: the same input gives byte-identical output. The exceptions are the commands whose job is randomness (`uuid`, `password`, drawn from the OS's secure random source) or the present moment (`time` with no argument, and `cert-decode`'s `expired` field).
+- **Output is deterministic**: the same input gives byte-identical output. The exceptions depend on something outside the input by design: randomness (`uuid` and `password`, drawn from the OS's secure random source), the clock (`time` with no argument or `now`, and `cert-decode`'s `expired` field), the machine (`time -z local`), or the network (`video`).
 - **Exit codes** mean the same thing everywhere:
 
 | Code | Meaning |
 | ---- | ------- |
 | `0`  | Success. `stdout` holds the answer; for a yes/no check, the answer is yes. |
-| `1`  | Runtime failure: invalid input data, an unreadable file, a failed download. The reason is on `stderr`. |
-| `2`  | Usage error: unknown command, unknown flag, or a malformed argument. |
+| `1`  | Runtime failure: invalid input data (from `stdin`, a file, or a value argument such as a version, prefix, color, URL, or timestamp), an unreadable file, a failed download. The reason is on `stderr`. |
+| `2`  | Usage error: unknown command or flag, a bad flag value, or the wrong number of arguments. |
 | `3`  | A yes/no check answered no: `cidr contains`, `cidr overlaps`, `semver -check`, `json-fmt -check`, and `hash -c`. |
 
 `unicode -check` is a report rather than a yes/no check: it exits `0` and its JSON lists what it found.
@@ -196,7 +203,7 @@ fi
 agent-utils json-fmt -check config.json || exit 1
 ```
 
-The examples here and in the docs assume a POSIX shell. On Windows, use Git Bash or WSL, or note that Windows PowerShell 5.1 re-encodes data passed through pipes, so pass binary files as arguments rather than piping them.
+The examples here and in the docs assume a POSIX shell (macOS, Linux, Git Bash, or WSL). Windows PowerShell 5.1 re-encodes pipes and `>` redirects as text, which corrupts binary data: pass files as arguments and use output-file arguments, or use PowerShell 7.4 or newer.
 
 ### Stability
 
@@ -207,8 +214,8 @@ The examples here and in the docs assume a POSIX shell. On Windows, use Git Bash
 A few deliberate choices shape the codebase:
 
 - **`main.go` at the root** keeps a single-binary project simple (the `cmd/` layout is for repositories that build several binaries).
-- **Utility logic lives under `internal/`**, using Go's import boundary: nothing outside this module can import these packages, signalling that this is an application rather than a reusable library.
-- **One package per category** (`encode`, `format`, `img`, ...). In Go the package is the unit of organisation; files within a package are split purely for readability.
+- **Utility logic lives under `internal/`**, using Go's import boundary: nothing outside this module can import these packages, signaling that this is an application rather than a reusable library.
+- **One package per category** (`encode`, `format`, `img`, ...). In Go the package is the unit of organization; files within a package are split purely for readability.
 - **Two layers.** Utility logic is a pure, CLI-agnostic core (typically `io.Reader` -> `io.Writer`) with a thin CLI layer for flags and dispatch, so core functions are easy to test and to call directly.
 
 ## Contributing
