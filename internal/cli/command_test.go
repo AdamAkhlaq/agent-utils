@@ -151,3 +151,19 @@ func TestDispatchBadFlagReportsOnce(t *testing.T) {
 		t.Errorf("flag package wrote output itself: stdout %q, stderr %q", stdout.String(), stderr.String())
 	}
 }
+
+func TestUsageAlignsSummaries(t *testing.T) {
+	var out bytes.Buffer
+	Usage(&out, map[string]Command{
+		"a":               {Name: "a", Summary: "short name"},
+		"much-longer-one": {Name: "much-longer-one", Summary: "long name"},
+	})
+	for _, want := range []string{
+		"  a                short name\n",
+		"  much-longer-one  long name\n",
+	} {
+		if !strings.Contains(out.String(), want) {
+			t.Errorf("usage missing aligned line %q in:\n%s", want, out.String())
+		}
+	}
+}
