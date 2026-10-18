@@ -1,0 +1,25 @@
+name: pr-title
+
+# Pull requests are squash-merged with the title as the commit message, so
+# the title becomes a changelog line and must be a Conventional Commit.
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions: {}
+
+jobs:
+  conventional:
+    runs-on: ubuntu-latest
+    steps:
+      - name: check title
+        env:
+          # Passed through the environment, never interpolated into the
+          # script, so a crafted title cannot inject shell commands.
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          if ! printf '%s' "$TITLE" | grep -Eq '^(feat|fix|docs|test|refactor|perf|build|ci|chore)(\([a-z0-9-]+\))?!?: [^ ].*'; then
+            echo "PR title must be a Conventional Commit, e.g. 'feat: add the hexdump command' or 'fix!: ...' for a breaking change."
+            echo "Got: $TITLE"
+            exit 1
+          fi
