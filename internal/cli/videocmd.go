@@ -11,7 +11,8 @@ import (
 func VideoCommand(dl func(stdout, stderr io.Writer, url, dir string, audioOnly bool) error) Command {
 	return Command{
 		Name:    "video",
-		Summary: "download a video with yt-dlp (-audio for audio only)",
+		Summary: "download a video with yt-dlp, printing the saved file path (-audio for audio only)",
+		Usage:   "agent-utils video [-o dir] [-audio] <url>",
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 			fs := newFlagSet("video")
 			dir := fs.String("o", ".", "output directory")

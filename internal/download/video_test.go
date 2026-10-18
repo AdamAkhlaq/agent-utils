@@ -17,9 +17,9 @@ func TestVideoArgs(t *testing.T) {
 		audioOnly bool
 		want      []string
 	}{
-		{name: "video into current dir", url: "https://example.com/v", dir: ".", want: []string{"-P", ".", "--", "https://example.com/v"}},
-		{name: "audio into named dir", url: "u", dir: "/tmp/music", audioOnly: true, want: []string{"-P", "/tmp/music", "-x", "--", "u"}},
-		{name: "url starting with dash stays an argument", url: "-rf", dir: ".", want: []string{"-P", ".", "--", "-rf"}},
+		{name: "video into current dir", url: "https://example.com/v", dir: ".", want: []string{"-P", ".", "--print", "after_move:filepath", "--color", "never", "--", "https://example.com/v"}},
+		{name: "audio into named dir", url: "u", dir: "/tmp/music", audioOnly: true, want: []string{"-P", "/tmp/music", "--print", "after_move:filepath", "--color", "never", "-x", "--", "u"}},
+		{name: "url starting with dash stays an argument", url: "-rf", dir: ".", want: []string{"-P", ".", "--print", "after_move:filepath", "--color", "never", "--", "-rf"}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -60,7 +60,7 @@ func TestVideo(t *testing.T) {
 		if err := Video(&stdout, &stderr, "https://example.com/v", "/tmp/out", true); err != nil {
 			t.Fatalf("Video() error = %v", err)
 		}
-		want := "-P\n/tmp/out\n-x\n--\nhttps://example.com/v\n"
+		want := "-P\n/tmp/out\n--print\nafter_move:filepath\n--color\nnever\n-x\n--\nhttps://example.com/v\n"
 		if got := stdout.String(); got != want {
 			t.Errorf("Video() streamed %q, want %q", got, want)
 		}
