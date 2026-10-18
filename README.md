@@ -209,28 +209,9 @@ The examples here and in the docs assume a POSIX shell (macOS, Linux, Git Bash, 
 
 `agent-utils` follows [Semantic Versioning](https://semver.org) for its CLI contract. Command names, flags, JSON output shapes, and exit-code meanings change only in a major release. New commands, new flags, and new JSON fields arrive in minor releases, so scripts should ignore fields they don't know.
 
-## Architecture
-
-A few deliberate choices shape the codebase:
-
-- **`main.go` at the root** keeps a single-binary project simple (the `cmd/` layout is for repositories that build several binaries).
-- **Utility logic lives under `internal/`**, using Go's import boundary: nothing outside this module can import these packages, signaling that this is an application rather than a reusable library.
-- **One package per category** (`encode`, `format`, `img`, ...). In Go the package is the unit of organization; files within a package are split purely for readability.
-- **Two layers.** Utility logic is a pure, CLI-agnostic core (typically `io.Reader` -> `io.Writer`) with a thin CLI layer for flags and dispatch, so core functions are easy to test and to call directly.
-
 ## Contributing
 
-Issues and pull requests are welcome. All changes land through pull requests: `main` is protected, and CI (gofmt, vet, tests, build) must pass before merging. Before submitting, run:
-
-```sh
-go fmt ./... && go vet ./... && go test ./...
-```
-
-Keep changes small and focused: one utility or fix per PR, tests alongside the code, and commit messages in [Conventional Commits](https://www.conventionalcommits.org) style (`feat:`, `fix:`, ...), which the release changelog is generated from.
-
-## Releases
-
-Releases follow [semantic versioning](https://semver.org). Pushing a `vX.Y.Z` tag triggers the release workflow, which cross-compiles the binaries, generates the changelog from commit messages, and publishes a GitHub Release.
+Bug reports, command proposals, and pull requests are welcome. [CONTRIBUTING.md](CONTRIBUTING.md) covers the development setup, how the code is organized, and the checklist for adding a command. Questions belong in [Discussions](https://github.com/AdamAkhlaq/agent-utils/discussions).
 
 ## License
 
