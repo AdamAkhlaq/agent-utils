@@ -38,7 +38,7 @@ func newCIDRStubs() (cmd Command, calls *cidrCalls) {
 		calls.splitPrefix = prefix
 		calls.splitLen = newLen
 		if newLen > 30 {
-			return nil, fmt.Errorf("would produce 131072 subnets; refusing to print more than 65536")
+			return nil, &UsageError{Err: fmt.Errorf("would produce 131072 subnets; refusing to print more than 65536")}
 		}
 		return []string{"10.0.0.0/25", "10.0.0.128/25"}, nil
 	}
@@ -73,7 +73,7 @@ func TestCIDRCommand(t *testing.T) {
 		},
 		{name: "info with no arguments", args: []string{"info"}, wantErr: "exactly one prefix argument, got 0", wantUsage: true},
 		{name: "info with two arguments", args: []string{"info", "a", "b"}, wantErr: "exactly one prefix argument, got 2", wantUsage: true},
-		{name: "info malformed prefix is usage error", args: []string{"info", "bad"}, wantErr: `cidr info: invalid prefix "bad"`, wantUsage: true},
+		{name: "info malformed prefix is bad data", args: []string{"info", "bad"}, wantErr: `cidr info: invalid prefix "bad"`},
 		{
 			name: "contains true", args: []string{"contains", "10.0.0.0/24", "10.0.0.1"}, wantOut: "true\n",
 			wantCalls: func(t *testing.T, c *cidrCalls) {
@@ -83,7 +83,7 @@ func TestCIDRCommand(t *testing.T) {
 			},
 		},
 		{name: "contains false prints false and answers false", args: []string{"contains", "10.0.0.0/24", "10.9.9.9"}, wantOut: "false\n", wantErr: "cidr: 10.0.0.0/24 does not contain 10.9.9.9", wantFalse: true},
-		{name: "contains malformed prefix is usage error", args: []string{"contains", "bad", "10.0.0.1"}, wantErr: `cidr contains: invalid prefix "bad"`, wantUsage: true},
+		{name: "contains malformed prefix is bad data", args: []string{"contains", "bad", "10.0.0.1"}, wantErr: `cidr contains: invalid prefix "bad"`},
 		{name: "contains with one argument", args: []string{"contains", "10.0.0.0/24"}, wantErr: "a prefix and an IP argument, got 1", wantUsage: true},
 		{name: "contains with three arguments", args: []string{"contains", "a", "b", "c"}, wantErr: "a prefix and an IP argument, got 3", wantUsage: true},
 		{
@@ -95,7 +95,7 @@ func TestCIDRCommand(t *testing.T) {
 			},
 		},
 		{name: "overlaps false prints false and answers false", args: []string{"overlaps", "10.0.0.0/24", "10.0.1.0/24"}, wantOut: "false\n", wantErr: "cidr: 10.0.0.0/24 and 10.0.1.0/24 do not overlap", wantFalse: true},
-		{name: "overlaps malformed prefix is usage error", args: []string{"overlaps", "bad", "10.0.0.0/24"}, wantErr: `cidr overlaps: first prefix: invalid prefix "bad"`, wantUsage: true},
+		{name: "overlaps malformed prefix is bad data", args: []string{"overlaps", "bad", "10.0.0.0/24"}, wantErr: `cidr overlaps: first prefix: invalid prefix "bad"`},
 		{name: "overlaps with one argument", args: []string{"overlaps", "10.0.0.0/24"}, wantErr: "exactly two prefix arguments, got 1", wantUsage: true},
 		{
 			name: "split prints one subnet per line", args: []string{"split", "10.0.0.0/24", "25"}, wantOut: "10.0.0.0/25\n10.0.0.128/25\n",

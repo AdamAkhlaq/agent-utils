@@ -2,6 +2,7 @@ package netcalc
 
 import (
 	"encoding/json"
+	"errors"
 	"strings"
 	"testing"
 )
@@ -327,6 +328,31 @@ func TestSplit(t *testing.T) {
 				if got[i] != tt.want[i] {
 					t.Errorf("Split(%q, %d)[%d] = %q, want %q", tt.prefix, tt.newLen, i, got[i], tt.want[i])
 				}
+			}
+		})
+	}
+}
+
+func TestSplitErrorKinds(t *testing.T) {
+	tests := []struct {
+		name       string
+		prefix     string
+		newLen     int
+		wantLength bool
+	}{
+		{name: "malformed prefix", prefix: "bad", newLen: 24, wantLength: false},
+		{name: "length shorter than prefix", prefix: "10.0.0.0/24", newLen: 20, wantLength: true},
+		{name: "length longer than family", prefix: "10.0.0.0/24", newLen: 33, wantLength: true},
+		{name: "too many subnets", prefix: "10.0.0.0/8", newLen: 31, wantLength: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := Split(tt.prefix, tt.newLen)
+			if err == nil {
+				t.Fatal("Split() expected an error, got nil")
+			}
+			if got := errors.Is(err, ErrSplitLength); got != tt.wantLength {
+				t.Errorf("errors.Is(%v, ErrSplitLength) = %v, want %v", err, got, tt.wantLength)
 			}
 		})
 	}

@@ -10,6 +10,7 @@ package netcalc
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math/big"
 	"net/netip"
@@ -102,6 +103,17 @@ func Overlaps(a, b string) (bool, error) {
 	return pa.Masked().Overlaps(pb.Masked()), nil
 }
 
+// ErrSplitLength matches Split's errors about the requested length (out of
+// range, or producing too many subnets), which set a bad request apart from
+// a malformed prefix.
+var ErrSplitLength = errors.New("invalid split length")
+
+type splitLengthError struct{ msg string }
+
+func (e splitLengthError) Error() string { return e.msg }
+
+func (splitLengthError) Is(target error) bool { return target == ErrSplitLength }
+
 // splitLimit caps how many subnets Split will produce. 65536 lines is
 // already generous for terminal or pipe output; anything larger is almost
 // certainly a mistyped prefix length, and printing it would bury the caller.
@@ -119,11 +131,11 @@ func Split(prefix string, newLen int) ([]string, error) {
 	masked := p.Masked()
 	width := p.Addr().BitLen()
 	if newLen < p.Bits() || newLen > width {
-		return nil, fmt.Errorf("new prefix length %d is out of range: must be between %d (the prefix's own length) and %d", newLen, p.Bits(), width)
+		return nil, splitLengthError{fmt.Sprintf("new prefix length %d is out of range: must be between %d (the prefix's own length) and %d", newLen, p.Bits(), width)}
 	}
 	extraBits := newLen - p.Bits()
 	if count := new(big.Int).Lsh(big.NewInt(1), uint(extraBits)); count.Cmp(big.NewInt(splitLimit)) > 0 {
-		return nil, fmt.Errorf("splitting %s into /%d would produce %s subnets; refusing to print more than %d", masked, newLen, count, splitLimit)
+		return nil, splitLengthError{fmt.Sprintf("splitting %s into /%d would produce %s subnets; refusing to print more than %d", masked, newLen, count, splitLimit)}
 	}
 	count := 1 << extraBits
 	subnets := make([]string, 0, count)

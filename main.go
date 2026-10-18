@@ -138,6 +138,13 @@ func registry() map[string]cli.Command {
 		}
 		return c.MatchString, nil
 	}
+	cidrSplit := func(prefix string, newLen int) ([]string, error) {
+		subnets, err := netcalc.Split(prefix, newLen)
+		if errors.Is(err, netcalc.ErrSplitLength) {
+			return nil, &cli.UsageError{Err: err}
+		}
+		return subnets, err
+	}
 	jsonValid := func(r io.Reader) error {
 		err := format.JSONValid(r)
 		if errors.Is(err, format.ErrInvalidJSON) {
@@ -151,7 +158,7 @@ func registry() map[string]cli.Command {
 		cli.ConvertCommand("bmp2png", "convert a BMP image to PNG", img.BMPToPNG),
 		cli.CaseCommand(text.Case),
 		cli.TransformCommand("cert-decode", "decode X.509 certificates (PEM or DER) to a JSON array", certDecode),
-		cli.CIDRCommand(cidrInfoJSON, netcalc.Contains, netcalc.Overlaps, netcalc.Split),
+		cli.CIDRCommand(cidrInfoJSON, netcalc.Contains, netcalc.Overlaps, cidrSplit),
 		cli.ColorCommand(hue.Convert, hue.JSON),
 		cli.CSVToJSONCommand(format.CSVToJSON),
 		cli.FiletypeCommand(filetypePlain, filetypeJSON),
