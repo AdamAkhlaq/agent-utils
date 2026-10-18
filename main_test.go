@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"path/filepath"
 	"strings"
@@ -49,5 +50,19 @@ func TestExitCodes(t *testing.T) {
 				t.Errorf("exit code = %d (err = %v), want %d", got, err, tt.want)
 			}
 		})
+	}
+}
+
+func TestRecoverPanic(t *testing.T) {
+	err := recoverPanic(func() error { panic("boom") })
+	if err == nil || !strings.Contains(err.Error(), "internal error") || !strings.Contains(err.Error(), "boom") {
+		t.Fatalf("recoverPanic() error = %v, want an internal error carrying the panic value", err)
+	}
+	if got := exitCode(err); got != 1 {
+		t.Errorf("exit code = %d, want 1", got)
+	}
+	want := errors.New("plain")
+	if got := recoverPanic(func() error { return want }); got != want {
+		t.Errorf("recoverPanic() = %v, want the function's own error %v", got, want)
 	}
 }
