@@ -37,6 +37,15 @@ func PNGToJPEGCommand(convert func(w io.Writer, r io.Reader, quality int) error)
 			if err := parseFlags(fs, args); err != nil {
 				return err
 			}
+			passed := 0
+			fs.Visit(func(f *flag.Flag) {
+				if f.Name == "q" || f.Name == "quality" {
+					passed++
+				}
+			})
+			if passed > 1 {
+				return &UsageError{Err: fmt.Errorf("png2jpeg: -q is an alias for -quality; give only one")}
+			}
 			if *quality < 1 || *quality > 100 {
 				return &UsageError{Err: fmt.Errorf("png2jpeg: quality must be between 1 and 100, got %d", *quality)}
 			}
