@@ -16,10 +16,10 @@ func TestImgResizeCommand(t *testing.T) {
 		wantErr   bool
 		wantUsage bool
 	}{
-		{name: "width alone", args: []string{"-width", "40"}, want: [4]int{40, 0, 0, 75}},
-		{name: "height alone", args: []string{"-height", "25"}, want: [4]int{0, 25, 0, 75}},
-		{name: "width and height together", args: []string{"-width", "30", "-height", "30"}, want: [4]int{30, 30, 0, 75}},
-		{name: "max alone", args: []string{"-max", "512"}, want: [4]int{0, 0, 512, 75}},
+		{name: "width alone", args: []string{"-width", "40"}, want: [4]int{40, 0, 0, 85}},
+		{name: "height alone", args: []string{"-height", "25"}, want: [4]int{0, 25, 0, 85}},
+		{name: "width and height together", args: []string{"-width", "30", "-height", "30"}, want: [4]int{30, 30, 0, 85}},
+		{name: "max alone", args: []string{"-max", "512"}, want: [4]int{0, 0, 512, 85}},
 		{name: "custom quality", args: []string{"-max", "512", "-quality", "90"}, want: [4]int{0, 0, 512, 90}},
 		{name: "no sizing flag", args: nil, wantErr: true, wantUsage: true},
 		{name: "quality without a sizing flag", args: []string{"-quality", "90"}, wantErr: true, wantUsage: true},
