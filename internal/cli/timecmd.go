@@ -19,6 +19,7 @@ func TimeCommand(
 	return Command{
 		Name:    "time",
 		Summary: "print or convert a timestamp (-z zone, -f format, -json all forms)",
+		Usage:   "agent-utils time [-z zone] [-f format | -layout layout | -json] [timestamp]",
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 			fs := newFlagSet("time")
 			zone := fs.String("z", "UTC", "output timezone: IANA name, UTC, or local")

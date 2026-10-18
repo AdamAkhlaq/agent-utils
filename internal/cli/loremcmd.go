@@ -13,6 +13,8 @@ func LoremCommand(words, paragraphs func(n int) string) Command {
 	return Command{
 		Name:    "lorem",
 		Summary: "generate lorem ipsum filler text (-w words or -p paragraphs)",
+		Usage: `agent-utils lorem [-p paragraphs]
+agent-utils lorem -w words`,
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 			fs := newFlagSet("lorem")
 			w := fs.Int("w", 0, "number of words")

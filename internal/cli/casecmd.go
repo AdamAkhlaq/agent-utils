@@ -13,6 +13,7 @@ func CaseCommand(convert func(s, target string) (string, error)) Command {
 	return Command{
 		Name:    "case",
 		Summary: "convert text between snake, camel, pascal, kebab, screaming case (-to target)",
+		Usage:   "agent-utils case -to <snake|camel|pascal|kebab|screaming> [file]",
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 			fs := newFlagSet("case")
 			target := fs.String("to", "", "target casing: snake, camel, pascal, kebab, or screaming")

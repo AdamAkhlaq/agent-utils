@@ -15,6 +15,8 @@ func HashCommand(sum func(algo string, r io.Reader) (string, error)) Command {
 	return Command{
 		Name:    "hash",
 		Summary: "hash input with sha256/sha1/sha512/md5 (-a algo, -c verify)",
+		Usage: `agent-utils hash [-a algo] [file]
+agent-utils hash [-a algo] -c <hex> [file]`,
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 			fs := newFlagSet("hash")
 			algo := fs.String("a", "sha256", "hash algorithm: sha256, sha1, sha512, or md5")

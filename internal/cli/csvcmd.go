@@ -34,6 +34,7 @@ func sepConvertCommand(name, summary string, convert func(w io.Writer, r io.Read
 	return Command{
 		Name:    name,
 		Summary: summary,
+		Usage:   "agent-utils " + name + " [-sep s] [file]",
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 			fs := newFlagSet(name)
 			sepFlag := fs.String("sep", ",", `field separator: one character, or \t for tab`)

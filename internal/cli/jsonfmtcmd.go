@@ -19,6 +19,9 @@ func JSONFmtCommand(
 	return Command{
 		Name:    "json-fmt",
 		Summary: "pretty-print, minify (-c), or validate (-check) JSON",
+		Usage: `agent-utils json-fmt [-indent n] [file]
+agent-utils json-fmt -c [file]
+agent-utils json-fmt -check [file]`,
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 			fs := newFlagSet("json-fmt")
 			indent := fs.Int("indent", 2, "spaces per indentation level")

@@ -13,6 +13,8 @@ func ImgResizeCommand(resize func(w io.Writer, r io.Reader, width, height, max, 
 	return Command{
 		Name:    "img-resize",
 		Summary: "resize a PNG or JPEG (-width/-height exact, or -max to fit; -quality for JPEG)",
+		Usage: `agent-utils img-resize [-width n] [-height n] [-quality n] [input [output]]
+agent-utils img-resize -max n [-quality n] [input [output]]`,
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 			fs := newFlagSet("img-resize")
 			width := fs.Int("width", 0, "target width in pixels (alone, height follows the aspect ratio)")

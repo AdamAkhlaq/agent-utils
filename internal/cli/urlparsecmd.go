@@ -14,6 +14,7 @@ func URLParseCommand(parseJSON func(raw string) (string, error)) Command {
 	return Command{
 		Name:    "urlparse",
 		Summary: "parse a URL into its components as JSON",
+		Usage:   "agent-utils urlparse [url]",
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 			fs := newFlagSet("urlparse")
 			if err := parseFlags(fs, args); err != nil {

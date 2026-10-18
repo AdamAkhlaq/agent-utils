@@ -86,6 +86,11 @@ func exitCode(err error) int {
 }
 
 func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
+	return cli.Dispatch(registry(), args, stdin, stdout, stderr)
+}
+
+// registry builds every command, wiring each CLI layer to its pure core.
+func registry() map[string]cli.Command {
 	filetypePlain := func(r io.Reader) (string, error) {
 		info, err := inspect.Detect(r)
 		return info.MIME, err
@@ -181,9 +186,11 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 		cli.TransformCommand("xml2json", "convert an XML document to pretty-printed JSON", format.XMLToJSON),
 		cli.TransformCommand("yaml2json", "convert a YAML document to pretty-printed JSON", format.YAMLToJSON),
 	} {
+		cmd.Examples = examples[cmd.Name]
 		commands[cmd.Name] = cmd
 	}
 	meta := cli.CommandsCommand(commands)
+	meta.Examples = examples[meta.Name]
 	commands[meta.Name] = meta
-	return cli.Dispatch(commands, args, stdin, stdout, stderr)
+	return commands
 }
