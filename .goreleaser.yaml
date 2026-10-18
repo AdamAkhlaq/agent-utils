@@ -17,7 +17,10 @@ builds:
       - -s -w -X main.version=v{{ .Version }}
 
 archives:
-  - formats: [tar.gz]
+  # No version in the name, so releases/latest/download/<name> is a stable
+  # URL that install instructions and scripts can rely on.
+  - name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+    formats: [tar.gz]
     format_overrides:
       - goos: windows
         formats: [zip]
