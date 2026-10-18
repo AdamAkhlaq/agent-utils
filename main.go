@@ -28,9 +28,10 @@ import (
 	"github.com/adamakhlaq/agent-utils/v2/internal/text"
 )
 
-// version is stamped by GoReleaser via ldflags for release binaries; builds
-// installed with `go install ...@vX.Y.Z` get their version from build info
-// instead, and local `go build` reports "dev".
+// version is stamped by GoReleaser via ldflags for release binaries. Other
+// builds report their build info instead: the module version for `go install
+// ...@vX.Y.Z`, a VCS pseudo-version for `go build` in a git checkout, and
+// "dev" only when the toolchain recorded neither.
 var version = "dev"
 
 func resolveVersion() string {
