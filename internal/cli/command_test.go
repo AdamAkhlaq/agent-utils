@@ -17,25 +17,62 @@ func testCommands() map[string]Command {
 }
 
 func TestDispatch(t *testing.T) {
+	const list = "usage: agent-utils"
 	tests := []struct {
-		name      string
-		args      []string
-		wantUsage bool
+		name       string
+		args       []string
+		wantUsage  bool
+		wantErr    string
+		wantStdout string
+		wantStderr string
 	}{
-		{name: "no command", args: nil, wantUsage: true},
-		{name: "unknown command", args: []string{"nonsense"}, wantUsage: true},
-		{name: "known command", args: []string{"alpha"}, wantUsage: false},
+		{name: "no command lists commands on stderr", args: nil, wantUsage: true, wantErr: "no command given", wantStderr: list},
+		{name: "unknown command hints at help", args: []string{"nonsense"}, wantUsage: true, wantErr: `unknown command "nonsense" (run 'agent-utils help' for the command list)`},
+		{name: "known command", args: []string{"alpha"}},
+		{name: "help lists commands on stdout", args: []string{"help"}, wantStdout: list},
+		{name: "-h lists commands", args: []string{"-h"}, wantStdout: list},
+		{name: "-help lists commands", args: []string{"-help"}, wantStdout: list},
+		{name: "--help lists commands", args: []string{"--help"}, wantStdout: list},
+		{name: "help command shows its help", args: []string{"help", "demo"}, wantStdout: "agent-utils demo: demonstrate help rendering"},
+		{name: "help unknown command", args: []string{"help", "nonsense"}, wantUsage: true, wantErr: `unknown command "nonsense"`},
+		{name: "help with two names", args: []string{"help", "alpha", "zeta"}, wantUsage: true, wantErr: "help: takes at most one command name, got 2"},
+		{name: "-h with two names names the word typed", args: []string{"-h", "alpha", "zeta"}, wantUsage: true, wantErr: "-h: takes at most one command name, got 2"},
+		{name: "help help lists commands", args: []string{"help", "help"}, wantStdout: list},
+		{name: "help -h lists commands", args: []string{"help", "-h"}, wantStdout: list},
+		{name: "-h --help lists commands", args: []string{"-h", "--help"}, wantStdout: list},
+		{name: "help --version shows version help", args: []string{"help", "--version"}, wantStdout: "agent-utils version:"},
+		{name: "--version runs version", args: []string{"--version"}, wantStdout: "v9.9.9"},
+		{name: "-version runs version", args: []string{"-version"}, wantStdout: "v9.9.9"},
+		{name: "--version passes extra args on", args: []string{"--version", "x"}, wantUsage: true, wantErr: `version: unexpected argument "x"`},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			commands := testCommands()
+			commands["demo"] = flagCommand()
+			commands["version"] = VersionCommand("v9.9.9")
 			var stdout, stderr bytes.Buffer
-			err := Dispatch(testCommands(), tt.args, strings.NewReader(""), &stdout, &stderr)
+			err := Dispatch(commands, tt.args, strings.NewReader(""), &stdout, &stderr)
 			var usageErr *UsageError
 			if got := errors.As(err, &usageErr); got != tt.wantUsage {
 				t.Fatalf("Dispatch() usage error = %v (err = %v), want %v", got, err, tt.wantUsage)
 			}
-			if tt.wantUsage && !strings.Contains(stderr.String(), "usage: agent-utils") {
-				t.Errorf("expected usage on stderr, got %q", stderr.String())
+			if tt.wantErr == "" && err != nil {
+				t.Fatalf("Dispatch() error = %v, want nil", err)
+			}
+			if tt.wantErr != "" && (err == nil || !strings.Contains(err.Error(), tt.wantErr)) {
+				t.Errorf("Dispatch() error = %v, want containing %q", err, tt.wantErr)
+			}
+			if tt.wantStdout == "" && stdout.Len() != 0 {
+				t.Errorf("stdout = %q, want empty", stdout.String())
+			}
+			if !strings.Contains(stdout.String(), tt.wantStdout) {
+				t.Errorf("stdout = %q, want containing %q", stdout.String(), tt.wantStdout)
+			}
+			if tt.wantStderr == "" && stderr.Len() != 0 {
+				t.Errorf("stderr = %q, want empty", stderr.String())
+			}
+			if !strings.Contains(stderr.String(), tt.wantStderr) {
+				t.Errorf("stderr = %q, want containing %q", stderr.String(), tt.wantStderr)
 			}
 		})
 	}
