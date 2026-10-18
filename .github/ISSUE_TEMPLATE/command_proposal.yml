@@ -1,0 +1,30 @@
+name: Command proposal
+description: Propose a new command or a new flag for an existing one.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Good commands are exact transformations that an agent would otherwise do by hand in the model, or get subtly wrong. Names, flags, and output shapes become part of the public contract, so they are agreed here before any code is written.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What should it do, and why does an agent need it?
+      description: The transformation, and what an agent or script does today without it.
+    validations:
+      required: true
+  - type: textarea
+    id: interface
+    attributes:
+      label: Proposed interface
+      description: Command name (`x2y` for conversions, `noun` or `noun-verb` otherwise), flags, input, output shape, and exit codes.
+      render: sh
+      placeholder: |
+        agent-utils cron-next "*/15 * * * *"   # 2026-10-18T20:15:00Z
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Existing tools
+      description: How you would do this today with other tools, and why that falls short.

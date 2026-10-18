@@ -1,0 +1,43 @@
+name: Bug report
+description: A command printed the wrong thing, exited with the wrong code, or crashed.
+labels: [bug]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Output of `agent-utils version`.
+      placeholder: v2.0.0
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Operating system and architecture
+      placeholder: macOS 15 arm64
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Command and input
+      description: The exact command line, plus the input it read. Use a minimal input that still shows the problem, with any secrets removed.
+      render: sh
+      placeholder: |
+        printf 'a: 1\n---\nb: 2\n' | agent-utils yaml2json
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened
+      description: What it printed on stdout and stderr, and its exit code (`echo $?`).
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
