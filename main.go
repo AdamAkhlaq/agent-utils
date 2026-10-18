@@ -46,12 +46,26 @@ func resolveVersion() string {
 }
 
 func main() {
-	err := run(os.Args[1:], os.Stdin, os.Stdout, os.Stderr)
+	err := recoverPanic(func() error {
+		return run(os.Args[1:], os.Stdin, os.Stdout, os.Stderr)
+	})
 	if err == nil {
 		return
 	}
 	fmt.Fprintln(os.Stderr, "agent-utils:", err)
 	os.Exit(exitCode(err))
+}
+
+// recoverPanic turns a panic in fn into an error carrying the stack. An
+// unrecovered panic exits 2, which an agent would read as its own usage
+// mistake; as an error it exits 1 like any other runtime failure.
+func recoverPanic(fn func() error) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("internal error (please report it at https://github.com/AdamAkhlaq/agent-utils/issues): %v\n%s", r, debug.Stack())
+		}
+	}()
+	return fn()
 }
 
 // exitCode maps an error to the exit-code contract: 1 runtime failure, 2
