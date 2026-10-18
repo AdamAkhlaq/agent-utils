@@ -1,6 +1,6 @@
 # `time`
 
-Print or convert a timestamp. With no argument, prints the current time; with one, parses it from any accepted form: `now`, epoch seconds or milliseconds (told apart by magnitude), RFC 3339, RFC 1123, or `2006-01-02` with an optional `15:04[:05]`.
+Print or convert a timestamp. With no argument, prints the current time; with one, parses it from any accepted form: `now`, epoch seconds or milliseconds (told apart by magnitude), RFC 3339, RFC 1123, or `2006-01-02` with an optional `15:04[:05]`. The timestamp is always an argument: `time` never reads `stdin`, so `echo 1755459000 | agent-utils time` prints the current time. Pass piped values with `agent-utils time "$(cat ts.txt)"`.
 
 ## Usage
 
@@ -22,7 +22,7 @@ Output defaults to RFC 3339 in UTC, deliberately: local-zone defaults would make
 ## Examples
 
 ```sh
-agent-utils time                              # 2026-08-17T19:45:20Z
+agent-utils time                              # e.g. 2026-08-17T19:45:20Z
 agent-utils time 1755459000                   # epoch seconds to RFC 3339
 agent-utils time -z Asia/Tokyo 1755459000     # same instant, Tokyo wall clock
 agent-utils time -f unix "2026-08-17T19:45:20Z"   # RFC 3339 to epoch

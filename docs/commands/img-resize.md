@@ -18,7 +18,7 @@ agent-utils img-resize -max n [-quality n] [input [output]]
 | `-max <n>`     | Scale down so the longest side fits within `n` pixels. Never upscales.             |
 | `-quality <n>` | JPEG quality, 1-100 (default 85, as for `png2jpeg`). Applies when the output is JPEG; ignored for PNG. |
 
-Exactly one sizing mode is required: `-width` and/or `-height`, or `-max`. Giving both `-width` and `-height` forces those exact dimensions (the aspect ratio may change). `-max` only shrinks: an image that already fits is re-encoded at its original size. Scaling uses the Catmull-Rom resampler for high-quality results, and PNG transparency is preserved. Takes an optional input file and output file, like [`jpeg2png`](jpeg2png.md).
+Exactly one sizing mode is required: `-width` and/or `-height`, or `-max`. Giving both `-width` and `-height` forces those exact dimensions (the aspect ratio may change). `-max` only shrinks: an image that already fits is re-encoded at its original size. Scaling uses the Catmull-Rom resampler for high-quality results, and PNG transparency is preserved. Takes an optional input file and output file, like [`jpeg2png`](jpeg2png.md). The output may be the input file, which resizes in place (`agent-utils img-resize -max 512 photo.jpg photo.jpg`); the result replaces it only once resizing has succeeded.
 
 ## Examples
 
