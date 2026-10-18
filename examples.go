@@ -1,6 +1,6 @@
 package main
 
-import "github.com/adamakhlaq/agent-utils/internal/cli"
+import "github.com/adamakhlaq/agent-utils/v2/internal/cli"
 
 // examples maps each command to the invocations its -h output and the
 // commands manifest show. Output, when set, is exactly what the command
