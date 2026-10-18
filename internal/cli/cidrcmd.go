@@ -8,10 +8,10 @@ import (
 
 // CIDRCommand builds the cidr command around the netcalc package's pure
 // functions, keeping this package independent of it; main wires the layers
-// together. Every error the injected functions return stems from the caller's
-// arguments (malformed prefix or address, prefix length out of range, a split
-// too large to print), so they are all reported as usage errors; contains and
-// overlaps mirror semver -check by printing true/false and exiting 0/3.
+// together. A malformed prefix or address is bad data and exits 1, like a bad
+// version in semver; split marks a bad requested length as a *UsageError
+// itself. contains and overlaps mirror semver -check by printing true/false
+// and exiting 0/3.
 func CIDRCommand(
 	infoJSON func(prefix string) (string, error),
 	contains func(prefix, ip string) (bool, error),
@@ -41,7 +41,7 @@ agent-utils cidr split <prefix> <new-length>`,
 				}
 				out, err := infoJSON(rest[0])
 				if err != nil {
-					return &UsageError{Err: fmt.Errorf("cidr info: %w", err)}
+					return fmt.Errorf("cidr info: %w", err)
 				}
 				_, err = fmt.Fprintln(stdout, out)
 				return err
@@ -51,7 +51,7 @@ agent-utils cidr split <prefix> <new-length>`,
 				}
 				ok, err := contains(rest[0], rest[1])
 				if err != nil {
-					return &UsageError{Err: fmt.Errorf("cidr contains: %w", err)}
+					return fmt.Errorf("cidr contains: %w", err)
 				}
 				if !ok {
 					if _, err := fmt.Fprintln(stdout, "false"); err != nil {
@@ -67,7 +67,7 @@ agent-utils cidr split <prefix> <new-length>`,
 				}
 				ok, err := overlaps(rest[0], rest[1])
 				if err != nil {
-					return &UsageError{Err: fmt.Errorf("cidr overlaps: %w", err)}
+					return fmt.Errorf("cidr overlaps: %w", err)
 				}
 				if !ok {
 					if _, err := fmt.Fprintln(stdout, "false"); err != nil {
@@ -87,7 +87,7 @@ agent-utils cidr split <prefix> <new-length>`,
 				}
 				subnets, err := split(rest[0], newLen)
 				if err != nil {
-					return &UsageError{Err: fmt.Errorf("cidr split: %w", err)}
+					return fmt.Errorf("cidr split: %w", err)
 				}
 				for _, s := range subnets {
 					if _, err := fmt.Fprintln(stdout, s); err != nil {
