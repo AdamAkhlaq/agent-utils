@@ -1,8 +1,6 @@
 package cli
 
 import (
-	"errors"
-	"flag"
 	"fmt"
 	"io"
 )
@@ -15,16 +13,12 @@ func PasswordCommand(gen func(length int, symbols bool) (string, error)) Command
 		Name:    "password",
 		Summary: "generate random passwords (-l length, -n count, -no-symbols)",
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
-			fs := flag.NewFlagSet("password", flag.ContinueOnError)
-			fs.SetOutput(stderr)
+			fs := newFlagSet("password")
 			length := fs.Int("l", 20, "password length")
 			n := fs.Int("n", 1, "how many passwords to generate")
 			noSymbols := fs.Bool("no-symbols", false, "letters and digits only")
-			if err := fs.Parse(args); err != nil {
-				if errors.Is(err, flag.ErrHelp) {
-					return nil
-				}
-				return &UsageError{Err: err}
+			if err := parseFlags(fs, args); err != nil {
+				return err
 			}
 			if fs.NArg() > 0 {
 				return &UsageError{Err: fmt.Errorf("password: unexpected argument %q", fs.Arg(0))}

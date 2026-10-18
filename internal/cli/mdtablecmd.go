@@ -1,8 +1,6 @@
 package cli
 
 import (
-	"errors"
-	"flag"
 	"io"
 )
 
@@ -14,14 +12,10 @@ func MarkdownTableCommand(fromJSON, fromCSV func(w io.Writer, r io.Reader) error
 		Name:    "md-table",
 		Summary: "render a JSON array or CSV (-csv) as a GitHub-flavored Markdown table",
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
-			fs := flag.NewFlagSet("md-table", flag.ContinueOnError)
-			fs.SetOutput(stderr)
+			fs := newFlagSet("md-table")
 			csvFlag := fs.Bool("csv", false, "input is CSV with a header row instead of JSON")
-			if err := fs.Parse(args); err != nil {
-				if errors.Is(err, flag.ErrHelp) {
-					return nil
-				}
-				return &UsageError{Err: err}
+			if err := parseFlags(fs, args); err != nil {
+				return err
 			}
 			in, err := openInput(fs, stdin)
 			if err != nil {

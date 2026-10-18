@@ -1,8 +1,6 @@
 package cli
 
 import (
-	"errors"
-	"flag"
 	"fmt"
 	"io"
 )
@@ -15,13 +13,9 @@ func VersionCommand(version string) Command {
 		Name:    "version",
 		Summary: "print the agent-utils version",
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
-			fs := flag.NewFlagSet("version", flag.ContinueOnError)
-			fs.SetOutput(stderr)
-			if err := fs.Parse(args); err != nil {
-				if errors.Is(err, flag.ErrHelp) {
-					return nil
-				}
-				return &UsageError{Err: err}
+			fs := newFlagSet("version")
+			if err := parseFlags(fs, args); err != nil {
+				return err
 			}
 			if fs.NArg() > 0 {
 				return &UsageError{Err: fmt.Errorf("version: unexpected argument %q", fs.Arg(0))}

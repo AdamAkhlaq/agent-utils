@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -15,15 +14,11 @@ func LoremCommand(words, paragraphs func(n int) string) Command {
 		Name:    "lorem",
 		Summary: "generate lorem ipsum filler text (-w words or -p paragraphs)",
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
-			fs := flag.NewFlagSet("lorem", flag.ContinueOnError)
-			fs.SetOutput(stderr)
+			fs := newFlagSet("lorem")
 			w := fs.Int("w", 0, "number of words")
 			p := fs.Int("p", 1, "number of paragraphs")
-			if err := fs.Parse(args); err != nil {
-				if errors.Is(err, flag.ErrHelp) {
-					return nil
-				}
-				return &UsageError{Err: err}
+			if err := parseFlags(fs, args); err != nil {
+				return err
 			}
 			if fs.NArg() > 0 {
 				return &UsageError{Err: fmt.Errorf("lorem: unexpected argument %q", fs.Arg(0))}

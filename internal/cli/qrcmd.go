@@ -1,8 +1,6 @@
 package cli
 
 import (
-	"errors"
-	"flag"
 	"fmt"
 	"io"
 )
@@ -14,16 +12,12 @@ func QRCommand(enc func(w io.Writer, text string, size int) error, dec func(r io
 		Name:    "qr",
 		Summary: "generate a QR code PNG from text, or decode one (-d)",
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) (err error) {
-			fs := flag.NewFlagSet("qr", flag.ContinueOnError)
-			fs.SetOutput(stderr)
+			fs := newFlagSet("qr")
 			decode := fs.Bool("d", false, "decode a QR code image to its text")
 			size := fs.Int("s", 256, "image size in pixels when encoding")
 			outPath := fs.String("o", "", "write output to a file instead of stdout")
-			if err := fs.Parse(args); err != nil {
-				if errors.Is(err, flag.ErrHelp) {
-					return nil
-				}
-				return &UsageError{Err: err}
+			if err := parseFlags(fs, args); err != nil {
+				return err
 			}
 			out, err := openOutput(*outPath, stdout)
 			if err != nil {

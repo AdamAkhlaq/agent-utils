@@ -1,8 +1,6 @@
 package cli
 
 import (
-	"errors"
-	"flag"
 	"fmt"
 	"io"
 	"strings"
@@ -17,15 +15,11 @@ func ColorCommand(convert func(input, to string) (string, error), jsonRepr func(
 		Name:    "color",
 		Summary: "convert a color between hex, rgb, and hsl (-to form, -json all forms)",
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
-			fs := flag.NewFlagSet("color", flag.ContinueOnError)
-			fs.SetOutput(stderr)
+			fs := newFlagSet("color")
 			to := fs.String("to", "", "output form: hex, rgb, or hsl")
 			jsonOut := fs.Bool("json", false, "print all three forms as JSON")
-			if err := fs.Parse(args); err != nil {
-				if errors.Is(err, flag.ErrHelp) {
-					return nil
-				}
-				return &UsageError{Err: err}
+			if err := parseFlags(fs, args); err != nil {
+				return err
 			}
 			if *jsonOut && *to != "" {
 				return &UsageError{Err: fmt.Errorf("color: -to and -json are mutually exclusive")}

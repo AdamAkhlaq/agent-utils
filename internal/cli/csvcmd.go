@@ -1,8 +1,6 @@
 package cli
 
 import (
-	"errors"
-	"flag"
 	"fmt"
 	"io"
 	"unicode/utf8"
@@ -37,14 +35,10 @@ func sepConvertCommand(name, summary string, convert func(w io.Writer, r io.Read
 		Name:    name,
 		Summary: summary,
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
-			fs := flag.NewFlagSet(name, flag.ContinueOnError)
-			fs.SetOutput(stderr)
+			fs := newFlagSet(name)
 			sepFlag := fs.String("sep", ",", `field separator: one character, or \t for tab`)
-			if err := fs.Parse(args); err != nil {
-				if errors.Is(err, flag.ErrHelp) {
-					return nil
-				}
-				return &UsageError{Err: err}
+			if err := parseFlags(fs, args); err != nil {
+				return err
 			}
 			sep, err := parseSep(name, *sepFlag)
 			if err != nil {

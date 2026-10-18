@@ -1,8 +1,6 @@
 package cli
 
 import (
-	"errors"
-	"flag"
 	"fmt"
 	"io"
 	"strings"
@@ -18,13 +16,9 @@ func StringTransformCommand(name, summary string, fn func(string) string) Comman
 		Name:    name,
 		Summary: summary,
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
-			fs := flag.NewFlagSet(name, flag.ContinueOnError)
-			fs.SetOutput(stderr)
-			if err := fs.Parse(args); err != nil {
-				if errors.Is(err, flag.ErrHelp) {
-					return nil
-				}
-				return &UsageError{Err: err}
+			fs := newFlagSet(name)
+			if err := parseFlags(fs, args); err != nil {
+				return err
 			}
 			in, err := openInput(fs, stdin)
 			if err != nil {

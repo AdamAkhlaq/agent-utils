@@ -1,8 +1,6 @@
 package cli
 
 import (
-	"errors"
-	"flag"
 	"fmt"
 	"io"
 )
@@ -21,16 +19,12 @@ func UnicodeCommand(
 		Name:    "unicode",
 		Summary: "inspect text codepoints as JSON (-check suspicious chars, -nfc/-nfd normalize)",
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
-			fs := flag.NewFlagSet("unicode", flag.ContinueOnError)
-			fs.SetOutput(stderr)
+			fs := newFlagSet("unicode")
 			nfcMode := fs.Bool("nfc", false, "write the input normalized to NFC (composed) instead of inspecting")
 			nfdMode := fs.Bool("nfd", false, "write the input normalized to NFD (decomposed) instead of inspecting")
 			checkMode := fs.Bool("check", false, "report only suspicious characters and NFC status as JSON")
-			if err := fs.Parse(args); err != nil {
-				if errors.Is(err, flag.ErrHelp) {
-					return nil
-				}
-				return &UsageError{Err: err}
+			if err := parseFlags(fs, args); err != nil {
+				return err
 			}
 			modes := 0
 			for _, set := range []bool{*nfcMode, *nfdMode, *checkMode} {
