@@ -14,6 +14,10 @@ import (
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
+
+	_ "golang.org/x/image/bmp"
+	_ "golang.org/x/image/tiff"
+	_ "golang.org/x/image/webp"
 )
 
 // Info describes a file's content. Width and Height are zero for non-images.
@@ -38,7 +42,7 @@ func Detect(r io.Reader) (Info, error) {
 		return Info{}, fmt.Errorf("empty input")
 	}
 	info := Info{
-		MIME:  http.DetectContentType(data),
+		MIME:  sniff(data),
 		Bytes: int64(len(data)),
 	}
 	if strings.HasPrefix(info.MIME, "image/") {
@@ -49,6 +53,15 @@ func Detect(r io.Reader) (Info, error) {
 		}
 	}
 	return info, nil
+}
+
+// sniff extends http.DetectContentType, which follows the WHATWG sniffing
+// standard and so does not recognize TIFF.
+func sniff(data []byte) string {
+	if bytes.HasPrefix(data, []byte("II*\x00")) || bytes.HasPrefix(data, []byte("MM\x00*")) {
+		return "image/tiff"
+	}
+	return http.DetectContentType(data)
 }
 
 // JSON renders info as an indented JSON object; width and height are omitted
