@@ -15,13 +15,24 @@ import (
 type Command struct {
 	Name    string
 	Summary string
-	// Usage is the synopsis shown by -h, one invocation form per line,
-	// optionally followed by a description column.
-	Usage string
-	// Examples are complete invocations, optionally ending in a "# comment"
-	// that states the output.
-	Examples []string
+	// Usage is the synopsis shown by -h, one invocation form per line.
+	Usage    string
+	Examples []Example
 	Run      func(args []string, stdin io.Reader, stdout, stderr io.Writer) error
+}
+
+// Example is a complete shell invocation and, when it is stated, exactly what
+// the invocation prints.
+type Example struct {
+	Command string `json:"command"`
+	Output  string `json:"output,omitempty"`
+}
+
+func (c Command) usageLines() []string {
+	if c.Usage == "" {
+		return []string{}
+	}
+	return strings.Split(strings.TrimRight(c.Usage, "\n"), "\n")
 }
 
 // UsageError marks misuse of the CLI (unknown command, bad flags) so main can
@@ -99,9 +110,9 @@ func isHelpWord(arg string) bool {
 func writeHelp(w io.Writer, cmd Command, fs *flag.FlagSet) error {
 	var b strings.Builder
 	fmt.Fprintf(&b, "agent-utils %s: %s\n", cmd.Name, cmd.Summary)
-	if cmd.Usage != "" {
+	if lines := cmd.usageLines(); len(lines) > 0 {
 		b.WriteString("\nUsage:\n")
-		for _, line := range strings.Split(strings.TrimRight(cmd.Usage, "\n"), "\n") {
+		for _, line := range lines {
 			fmt.Fprintf(&b, "  %s\n", line)
 		}
 	}
@@ -115,8 +126,18 @@ func writeHelp(w io.Writer, cmd Command, fs *flag.FlagSet) error {
 	}
 	if len(cmd.Examples) > 0 {
 		b.WriteString("\nExamples:\n")
+		width := 0
 		for _, ex := range cmd.Examples {
-			fmt.Fprintf(&b, "  %s\n", ex)
+			if ex.Output != "" {
+				width = max(width, len(ex.Command))
+			}
+		}
+		for _, ex := range cmd.Examples {
+			if ex.Output == "" {
+				fmt.Fprintf(&b, "  %s\n", ex.Command)
+				continue
+			}
+			fmt.Fprintf(&b, "  %-*s  # %s\n", width, ex.Command, ex.Output)
 		}
 	}
 	_, err := io.WriteString(w, b.String())
