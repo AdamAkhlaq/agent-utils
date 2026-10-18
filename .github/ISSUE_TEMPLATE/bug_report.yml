@@ -1,5 +1,5 @@
 name: Bug report
-description: A command printed the wrong thing, exited with the wrong code, or crashed.
+description: A command printed the wrong thing, exited with the wrong code, or crashed, or the docs describe something it doesn't do.
 labels: [bug]
 body:
   - type: input

@@ -1,7 +1,7 @@
 blank_issues_enabled: false
 contact_links:
   - name: Question or idea
-    url: https://github.com/AdamAkhlaq/agent-utils/discussions
+    url: https://github.com/AdamAkhlaq/agent-utils/discussions/categories/q-a
     about: Ask how to do something, or float an idea before writing a proposal.
   - name: Security vulnerability
     url: https://github.com/AdamAkhlaq/agent-utils/security/advisories/new
