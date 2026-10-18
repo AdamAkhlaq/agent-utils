@@ -8,6 +8,11 @@ on:
 permissions:
   contents: read
 
+env:
+  # Release binaries are built without cgo; CI must catch a dependency that
+  # needs it before a release does.
+  CGO_ENABLED: "0"
+
 jobs:
   check:
     name: check (${{ matrix.toolchain }})
@@ -23,8 +28,8 @@ jobs:
           - toolchain: stable
             go-version: stable
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-go@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: ${{ matrix.go-version-file }}
           go-version: ${{ matrix.go-version }}
@@ -34,12 +39,25 @@ jobs:
           if [ -n "$unformatted" ]; then
             echo "files need gofmt:" && echo "$unformatted" && exit 1
           fi
+      - name: go mod tidy
+        run: go mod tidy -diff
       - name: go vet
         run: go vet ./...
       - name: go test
         run: go test ./...
       - name: go build
         run: go build .
+      # Only meaningful on the latest Go: the minimum leg would always report
+      # standard library fixes that shipped in later patch releases.
+      - name: govulncheck
+        if: matrix.toolchain == 'stable'
+        run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
+      - name: cross-build release targets
+        if: matrix.toolchain == 'stable'
+        run: |
+          for target in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 windows/arm64; do
+            GOOS=${target%/*} GOARCH=${target#*/} go build -o /dev/null . || exit 1
+          done
 
   # The branch protection's required check: one stable name whatever the
   # matrix holds. always() matters, because a skipped required job counts as
