@@ -4,12 +4,15 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/adamakhlaq/agent-utils/v2/internal/img"
 )
 
 // These tests pin the exit-code contract end to end through the real command
@@ -182,4 +185,83 @@ func TestCommandDocs(t *testing.T) {
 			t.Errorf("%s documents %q, which is not a command", p, name)
 		}
 	}
+}
+
+// TestExamples runs every example that states its output and needs no shell
+// (no pipes, redirects, or variables), so the outputs shown by -h and the
+// manifest cannot drift from what the binary prints.
+func TestExamples(t *testing.T) {
+	t.Chdir(t.TempDir())
+	var qrPNG bytes.Buffer
+	if err := img.QR(&qrPNG, "https://example.com", 256); err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"qr.png", "photo.png"} {
+		if err := os.WriteFile(name, qrPNG.Bytes(), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	quoted := regexp.MustCompile(`'[^']*'|"[^"]*"`)
+	ran := 0
+	for name, exs := range examples {
+		for _, ex := range exs {
+			if ex.Output == "" || strings.ContainsAny(quoted.ReplaceAllString(ex.Command, ""), "|<>$;&") {
+				continue
+			}
+			ran++
+			t.Run(name+"/"+ex.Command, func(t *testing.T) {
+				words, err := shellWords(ex.Command)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if len(words) == 0 || words[0] != "agent-utils" {
+					t.Fatalf("example does not start with agent-utils: %q", ex.Command)
+				}
+				var stdout bytes.Buffer
+				if err := run(words[1:], strings.NewReader(""), &stdout, io.Discard); err != nil {
+					t.Fatalf("example failed: %v", err)
+				}
+				if got := strings.TrimSuffix(stdout.String(), "\n"); got != ex.Output {
+					t.Errorf("example prints %q, its stated output is %q", got, ex.Output)
+				}
+			})
+		}
+	}
+	if ran == 0 {
+		t.Fatal("no example was runnable; the filter is broken")
+	}
+}
+
+// shellWords splits a command line the way a POSIX shell would for the
+// subset the examples use: whitespace-separated words, single quotes, and
+// double quotes without escapes.
+func shellWords(line string) ([]string, error) {
+	var words []string
+	var word strings.Builder
+	inWord := false
+	for i := 0; i < len(line); i++ {
+		switch c := line[i]; {
+		case c == '\'' || c == '"':
+			end := strings.IndexByte(line[i+1:], c)
+			if end == -1 {
+				return nil, fmt.Errorf("unterminated %c quote in %q", c, line)
+			}
+			word.WriteString(line[i+1 : i+1+end])
+			i += end + 1
+			inWord = true
+		case c == ' ' || c == '\t':
+			if inWord {
+				words = append(words, word.String())
+				word.Reset()
+				inWord = false
+			}
+		default:
+			word.WriteByte(c)
+			inWord = true
+		}
+	}
+	if inWord {
+		words = append(words, word.String())
+	}
+	return words, nil
 }
