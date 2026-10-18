@@ -17,10 +17,11 @@ body:
     id: interface
     attributes:
       label: Proposed interface
-      description: Command name (`x2y` for conversions, `noun` or `noun-verb` otherwise), flags, input, output shape, and exit codes.
-      render: sh
+      description: Command name (`x2y` for conversions, `noun` or `noun-verb` otherwise), flags, input, output shape, and exit codes. Example invocations help.
       placeholder: |
-        agent-utils cron-next "*/15 * * * *"   # 2026-10-18T20:15:00Z
+        agent-utils roman 2026        # MMXXVI
+        agent-utils roman -d MMXXVI   # 2026
+        Exits 1 for a value that has no Roman numeral form.
     validations:
       required: true
   - type: textarea

@@ -191,7 +191,7 @@ Every command follows the same rules, so a caller that has learned one command c
 | `2`  | Usage error: unknown command or flag, a bad flag value, or the wrong number of arguments. |
 | `3`  | A yes/no check answered no: `cidr contains`, `cidr overlaps`, `semver -check`, `json-fmt -check`, and `hash -c`. |
 
-`unicode -check` is a report rather than a yes/no check: it exits `0` and its JSON lists what it found.
+`unicode -check` is a report rather than a yes/no check: it exits `0` and its JSON lists what it found. A command stopped by `SIGINT` or `SIGTERM` (Ctrl-C, or an agent's tool timeout) removes any unfinished output file and exits `130` or `143`, the shell convention.
 
 The exit codes make the commands natural building blocks for shell scripts, `Makefile`s, pre-commit hooks, and CI steps:
 
@@ -211,7 +211,7 @@ The examples here and in the docs assume a POSIX shell (macOS, Linux, Git Bash, 
 
 ## Contributing
 
-Bug reports, command proposals, and pull requests are welcome. [CONTRIBUTING.md](CONTRIBUTING.md) covers the development setup, how the code is organized, and the checklist for adding a command. Questions belong in [Discussions](https://github.com/AdamAkhlaq/agent-utils/discussions).
+Bug reports, command proposals, and pull requests are welcome. [CONTRIBUTING.md](CONTRIBUTING.md) covers the development setup, how the code is organized, and the checklist for adding a command. Questions belong in [Discussions](https://github.com/AdamAkhlaq/agent-utils/discussions). To report a vulnerability, follow the [security policy](SECURITY.md); everyone taking part is expected to follow the [code of conduct](CODE_OF_CONDUCT.md).
 
 ## License
 
