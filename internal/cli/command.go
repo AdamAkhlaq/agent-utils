@@ -91,10 +91,16 @@ func Dispatch(commands map[string]Command, args []string, stdin io.Reader, stdou
 	}
 	err := cmd.Run(rest, stdin, stdout, stderr)
 	var help *helpRequest
-	if errors.As(err, &help) {
+	switch {
+	case err == nil:
+		return nil
+	case errors.As(err, &help):
 		return writeHelp(stdout, cmd, help.flags)
+	case strings.HasPrefix(err.Error(), name+":"), strings.HasPrefix(err.Error(), name+" "):
+		return err
+	default:
+		return fmt.Errorf("%s: %w", name, err)
 	}
-	return err
 }
 
 func isHelpWord(arg string) bool {
