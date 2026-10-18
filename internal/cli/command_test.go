@@ -172,3 +172,32 @@ func TestUsageAlignsSummaries(t *testing.T) {
 		}
 	}
 }
+
+func TestDispatchNamesTheCommandInErrors(t *testing.T) {
+	tests := []struct {
+		name    string
+		err     error
+		want    string
+		wantUse bool
+	}{
+		{name: "bare message gains the name", err: errors.New("duplicate header"), want: "fail: duplicate header"},
+		{name: "already named", err: errors.New("fail: duplicate header"), want: "fail: duplicate header"},
+		{name: "named with a mode", err: errors.New("fail split: too long"), want: "fail split: too long"},
+		{name: "usage error keeps its kind", err: &UsageError{Err: errors.New("bad count")}, want: "fail: bad count", wantUse: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cmd := Command{Name: "fail", Summary: "fails", Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
+				return tt.err
+			}}
+			err := Dispatch(map[string]Command{"fail": cmd}, []string{"fail"}, strings.NewReader(""), io.Discard, io.Discard)
+			if err == nil || err.Error() != tt.want {
+				t.Fatalf("Dispatch() error = %v, want %q", err, tt.want)
+			}
+			var usageErr *UsageError
+			if got := errors.As(err, &usageErr); got != tt.wantUse {
+				t.Errorf("usage error = %v, want %v", got, tt.wantUse)
+			}
+		})
+	}
+}
