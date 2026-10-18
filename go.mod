@@ -1,4 +1,4 @@
-module github.com/adamakhlaq/agent-utils
+module github.com/adamakhlaq/agent-utils/v2
 
 go 1.25.0
 

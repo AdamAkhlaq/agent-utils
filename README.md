@@ -69,7 +69,7 @@ On macOS, a binary downloaded through a browser is quarantined by Gatekeeper bec
 Requires Go 1.25 or newer.
 
 ```sh
-go install github.com/adamakhlaq/agent-utils@latest
+go install github.com/adamakhlaq/agent-utils/v2@latest
 ```
 
 This puts an `agent-utils` binary in `$(go env GOPATH)/bin`.
