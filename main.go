@@ -51,11 +51,24 @@ func main() {
 		return
 	}
 	fmt.Fprintln(os.Stderr, "agent-utils:", err)
+	os.Exit(exitCode(err))
+}
+
+// exitCode maps an error to the exit-code contract: 1 runtime failure, 2
+// usage error, 3 a predicate that answered false.
+func exitCode(err error) int {
 	var usageErr *cli.UsageError
-	if errors.As(err, &usageErr) {
-		os.Exit(2)
+	var falseErr *cli.FalseError
+	switch {
+	case err == nil:
+		return 0
+	case errors.As(err, &usageErr):
+		return 2
+	case errors.As(err, &falseErr):
+		return 3
+	default:
+		return 1
 	}
-	os.Exit(1)
 }
 
 func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
@@ -106,6 +119,13 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 		}
 		return c.MatchString, nil
 	}
+	jsonValid := func(r io.Reader) error {
+		err := format.JSONValid(r)
+		if errors.Is(err, format.ErrInvalidJSON) {
+			return &cli.FalseError{Err: err}
+		}
+		return err
+	}
 	commands := make(map[string]cli.Command)
 	for _, cmd := range []cli.Command{
 		cli.EncodeCommand("base64", "base64-encode or -decode input (-d to decode)", encode.Base64, encode.Base64Decode),
@@ -123,7 +143,7 @@ func run(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 		cli.EncodeCommand("url", "URL-encode or -decode input (-d to decode)", encode.URL, encode.URLDecode),
 		cli.URLParseCommand(urlparseJSON),
 		cli.ConvertCommand("jpeg2png", "convert a JPEG image to PNG", img.JPEGToPNG),
-		cli.JSONFmtCommand(format.JSON, format.JSONCompact, format.JSONValid),
+		cli.JSONFmtCommand(format.JSON, format.JSONCompact, jsonValid),
 		cli.JSONToCSVCommand(format.JSONToCSV),
 		cli.TransformCommand("json2toml", "convert a JSON document to TOML", format.JSONToTOML),
 		cli.TransformCommand("json2yaml", "convert a JSON document to YAML", format.JSONToYAML),

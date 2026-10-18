@@ -31,6 +31,17 @@ func (e *UsageError) Error() string { return e.Err.Error() }
 
 func (e *UsageError) Unwrap() error { return e.Err }
 
+// FalseError marks a predicate that answered false (an address outside a
+// prefix, a checksum mismatch) so main can exit 3, keeping exit 1 for real
+// failures an agent must never mistake for a "no". Detect it with errors.As.
+type FalseError struct {
+	Err error
+}
+
+func (e *FalseError) Error() string { return e.Err.Error() }
+
+func (e *FalseError) Unwrap() error { return e.Err }
+
 // Dispatch looks up args[0] in commands and runs it, rendering the command's
 // help to stdout when it was asked for. It also answers the conventional entry
 // points (help, -h, --help, help <command>, --version), since they are the

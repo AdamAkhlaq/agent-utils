@@ -2,8 +2,10 @@ package format
 
 import (
 	"bytes"
+	"errors"
 	"strings"
 	"testing"
+	"testing/iotest"
 )
 
 func TestJSON(t *testing.T) {
@@ -152,7 +154,21 @@ func TestJSONValid(t *testing.T) {
 			if !strings.Contains(err.Error(), tt.wantErr) {
 				t.Errorf("JSONValid() error = %q, want it to contain %q", err, tt.wantErr)
 			}
+			if !errors.Is(err, ErrInvalidJSON) {
+				t.Errorf("JSONValid() error = %v, want it to wrap ErrInvalidJSON", err)
+			}
 		})
+	}
+}
+
+func TestJSONValidReadFailureIsNotInvalidJSON(t *testing.T) {
+	readErr := errors.New("disk on fire")
+	err := JSONValid(iotest.ErrReader(readErr))
+	if !errors.Is(err, readErr) {
+		t.Fatalf("JSONValid() error = %v, want it to wrap %v", err, readErr)
+	}
+	if errors.Is(err, ErrInvalidJSON) {
+		t.Errorf("JSONValid() error = %v wraps ErrInvalidJSON; a read failure is not a verdict on the document", err)
 	}
 }
 

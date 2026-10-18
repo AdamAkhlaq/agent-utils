@@ -60,6 +60,7 @@ func TestCIDRCommand(t *testing.T) {
 		wantOut   string
 		wantErr   string
 		wantUsage bool
+		wantFalse bool
 		wantCalls func(t *testing.T, c *cidrCalls)
 	}{
 		{
@@ -81,7 +82,7 @@ func TestCIDRCommand(t *testing.T) {
 				}
 			},
 		},
-		{name: "contains false prints false and fails", args: []string{"contains", "10.0.0.0/24", "10.9.9.9"}, wantOut: "false\n", wantErr: "cidr: 10.0.0.0/24 does not contain 10.9.9.9", wantUsage: false},
+		{name: "contains false prints false and answers false", args: []string{"contains", "10.0.0.0/24", "10.9.9.9"}, wantOut: "false\n", wantErr: "cidr: 10.0.0.0/24 does not contain 10.9.9.9", wantFalse: true},
 		{name: "contains malformed prefix is usage error", args: []string{"contains", "bad", "10.0.0.1"}, wantErr: `cidr contains: invalid prefix "bad"`, wantUsage: true},
 		{name: "contains with one argument", args: []string{"contains", "10.0.0.0/24"}, wantErr: "a prefix and an IP argument, got 1", wantUsage: true},
 		{name: "contains with three arguments", args: []string{"contains", "a", "b", "c"}, wantErr: "a prefix and an IP argument, got 3", wantUsage: true},
@@ -93,7 +94,7 @@ func TestCIDRCommand(t *testing.T) {
 				}
 			},
 		},
-		{name: "overlaps false prints false and fails", args: []string{"overlaps", "10.0.0.0/24", "10.0.1.0/24"}, wantOut: "false\n", wantErr: "cidr: 10.0.0.0/24 and 10.0.1.0/24 do not overlap", wantUsage: false},
+		{name: "overlaps false prints false and answers false", args: []string{"overlaps", "10.0.0.0/24", "10.0.1.0/24"}, wantOut: "false\n", wantErr: "cidr: 10.0.0.0/24 and 10.0.1.0/24 do not overlap", wantFalse: true},
 		{name: "overlaps malformed prefix is usage error", args: []string{"overlaps", "bad", "10.0.0.0/24"}, wantErr: `cidr overlaps: first prefix: invalid prefix "bad"`, wantUsage: true},
 		{name: "overlaps with one argument", args: []string{"overlaps", "10.0.0.0/24"}, wantErr: "exactly two prefix arguments, got 1", wantUsage: true},
 		{
@@ -130,6 +131,10 @@ func TestCIDRCommand(t *testing.T) {
 				var usageErr *UsageError
 				if got := errors.As(err, &usageErr); got != tt.wantUsage {
 					t.Fatalf("Run() usage error = %v (err = %v), want %v", got, err, tt.wantUsage)
+				}
+				var falseErr *FalseError
+				if got := errors.As(err, &falseErr); got != tt.wantFalse {
+					t.Fatalf("Run() false answer = %v (err = %v), want %v", got, err, tt.wantFalse)
 				}
 				return
 			}
