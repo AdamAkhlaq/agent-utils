@@ -36,12 +36,17 @@ release:
 changelog:
   sort: asc
   groups:
+    # Listed first so that a breaking change (type!: ...) is never buried
+    # among ordinary features and fixes.
+    - title: Breaking changes
+      regexp: '^\w+(\(.+\))?!:'
+      order: 0
     - title: Features
       regexp: '^feat'
-      order: 0
+      order: 1
     - title: Fixes
       regexp: '^fix'
-      order: 1
+      order: 2
     - title: Other
       order: 999
   filters:
