@@ -103,18 +103,20 @@ func writeHelp(w io.Writer, cmd Command, fs *flag.FlagSet) error {
 }
 
 // Usage writes the command list to w, sorted by name because map iteration
-// order is randomized.
+// order is randomized, with summaries aligned past the longest name.
 func Usage(w io.Writer, commands map[string]Command) {
 	fmt.Fprintln(w, "usage: agent-utils <command> [flags]")
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, "Commands:")
 	names := make([]string, 0, len(commands))
+	width := 0
 	for name := range commands {
 		names = append(names, name)
+		width = max(width, len(name))
 	}
 	sort.Strings(names)
 	for _, name := range names {
-		fmt.Fprintf(w, "  %-10s %s\n", name, commands[name].Summary)
+		fmt.Fprintf(w, "  %-*s  %s\n", width, name, commands[name].Summary)
 	}
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, "Run 'agent-utils <command> -h' for a command's usage, flags, and examples,")
