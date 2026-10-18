@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -121,6 +122,54 @@ func TestCommandsManifest(t *testing.T) {
 	for _, e := range entries {
 		if e.Name == "hash" && len(e.Flags) != 2 {
 			t.Errorf("hash flags = %+v, want -a and -c", e.Flags)
+		}
+	}
+}
+
+// docs/commands holds the long-form reference for each command; this keeps it
+// from drifting out of step with the binary as commands and flags change.
+func TestCommandDocs(t *testing.T) {
+	var stdout bytes.Buffer
+	if err := run([]string{"commands"}, strings.NewReader(""), &stdout, io.Discard); err != nil {
+		t.Fatalf("commands error = %v", err)
+	}
+	var entries []struct {
+		Name  string   `json:"name"`
+		Usage []string `json:"usage"`
+		Flags []struct {
+			Name string `json:"name"`
+		} `json:"flags"`
+	}
+	if err := json.Unmarshal(stdout.Bytes(), &entries); err != nil {
+		t.Fatalf("manifest is not valid JSON: %v", err)
+	}
+	documented := map[string]bool{}
+	for _, e := range entries {
+		documented[e.Name] = true
+		t.Run(e.Name, func(t *testing.T) {
+			page, err := os.ReadFile(filepath.Join("docs", "commands", e.Name+".md"))
+			if err != nil {
+				t.Fatalf("missing docs page: %v", err)
+			}
+			for _, line := range e.Usage {
+				if !strings.Contains(string(page), line) {
+					t.Errorf("page does not show usage line %q", line)
+				}
+			}
+			for _, f := range e.Flags {
+				if !strings.Contains(string(page), "`"+f.Name+"`") && !strings.Contains(string(page), "`"+f.Name+" ") {
+					t.Errorf("page does not document flag %s", f.Name)
+				}
+			}
+		})
+	}
+	pages, err := filepath.Glob(filepath.Join("docs", "commands", "*.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, p := range pages {
+		if name := strings.TrimSuffix(filepath.Base(p), ".md"); !documented[name] {
+			t.Errorf("%s documents %q, which is not a command", p, name)
 		}
 	}
 }
