@@ -62,8 +62,8 @@ func runConvert(fs *flag.FlagSet, stdin io.Reader, stdout io.Writer, convert fun
 		return err
 	}
 	defer in.Close()
+	defer out.Abort()
 	if err := convert(out, in); err != nil {
-		out.Abort()
 		return err
 	}
 	return out.Commit()

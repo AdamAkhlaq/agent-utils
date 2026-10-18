@@ -10,6 +10,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"sync"
 )
 
 // openInput returns the command's input source: the file named by the single
@@ -59,7 +60,8 @@ func openInOut(fs *flag.FlagSet, stdin io.Reader, stdout io.Writer) (io.ReadClos
 }
 
 // output is a command's result sink. Commit makes the written result final;
-// Abort discards it after a failure.
+// Abort discards it, and does nothing once Commit has run, so callers can
+// defer it to cover every path out, panics included.
 type output interface {
 	io.Writer
 	Commit() error
@@ -88,7 +90,7 @@ func openOutput(path string, stdout io.Writer) (output, error) {
 		if err != nil {
 			return nil, fmt.Errorf("opening output file: %w", err)
 		}
-		return &directOutput{f}, nil
+		return &directOutput{File: f}, nil
 	case err == nil:
 		perm = info.Mode().Perm()
 	case !errors.Is(err, fs.ErrNotExist):
@@ -111,7 +113,22 @@ func openOutput(path string, stdout io.Writer) (output, error) {
 			return nil, fmt.Errorf("creating output file: %w", err)
 		}
 	}
+	pendingOutputs.Store(tmp, struct{}{})
 	return &fileOutput{f: f, tmp: tmp, target: target}, nil
+}
+
+// pendingOutputs holds the temporary files of outputs not yet committed or
+// aborted, so RemovePendingOutputs can clean them up when a signal ends the
+// process before the command finishes.
+var pendingOutputs sync.Map
+
+// RemovePendingOutputs deletes every temporary output file still pending. It
+// is for a signal handler: the process is about to exit mid-command.
+func RemovePendingOutputs() {
+	pendingOutputs.Range(func(tmp, _ any) bool {
+		os.Remove(tmp.(string))
+		return true
+	})
 }
 
 // writeOutput runs write against the output named by path (stdout when
@@ -121,8 +138,8 @@ func writeOutput(path string, stdout io.Writer, write func(w io.Writer) error) e
 	if err != nil {
 		return err
 	}
+	defer out.Abort()
 	if err := write(out); err != nil {
-		out.Abort()
 		return err
 	}
 	return out.Commit()
@@ -133,20 +150,30 @@ type stdoutOutput struct{ io.Writer }
 func (stdoutOutput) Commit() error { return nil }
 func (stdoutOutput) Abort()        {}
 
-type directOutput struct{ *os.File }
+type directOutput struct {
+	*os.File
+	done bool
+}
 
 func (o *directOutput) Commit() error {
+	o.done = true
 	if err := o.Close(); err != nil {
 		return fmt.Errorf("writing output file: %w", err)
 	}
 	return nil
 }
 
-func (o *directOutput) Abort() { o.Close() }
+func (o *directOutput) Abort() {
+	if !o.done {
+		o.done = true
+		o.Close()
+	}
+}
 
 type fileOutput struct {
 	f           *os.File
 	tmp, target string
+	done        bool
 }
 
 func (o *fileOutput) Write(p []byte) (int, error) { return o.f.Write(p) }
@@ -154,6 +181,8 @@ func (o *fileOutput) Write(p []byte) (int, error) { return o.f.Write(p) }
 // Commit closes the temporary file, where buffered write errors surface,
 // before renaming it over the target.
 func (o *fileOutput) Commit() error {
+	o.done = true
+	defer pendingOutputs.Delete(o.tmp)
 	if err := o.f.Close(); err != nil {
 		os.Remove(o.tmp)
 		return fmt.Errorf("writing output file: %w", err)
@@ -166,6 +195,11 @@ func (o *fileOutput) Commit() error {
 }
 
 func (o *fileOutput) Abort() {
+	if o.done {
+		return
+	}
+	o.done = true
 	o.f.Close()
 	os.Remove(o.tmp)
+	pendingOutputs.Delete(o.tmp)
 }
