@@ -9,13 +9,25 @@ permissions:
   contents: read
 
 jobs:
-  test:
+  check:
+    name: check (${{ matrix.toolchain }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The go.mod minimum (what go install users may have) and the latest
+        # release (what release binaries are built with).
+        include:
+          - toolchain: minimum
+            go-version-file: go.mod
+          - toolchain: stable
+            go-version: stable
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
         with:
-          go-version-file: go.mod
+          go-version-file: ${{ matrix.go-version-file }}
+          go-version: ${{ matrix.go-version }}
       - name: gofmt
         run: |
           unformatted=$(gofmt -l .)
@@ -28,3 +40,13 @@ jobs:
         run: go test ./...
       - name: go build
         run: go build .
+
+  # The branch protection's required check: one stable name whatever the
+  # matrix holds. always() matters, because a skipped required job counts as
+  # passing, which would let a failed matrix leg merge.
+  test:
+    needs: check
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - run: test "${{ needs.check.result }}" = success

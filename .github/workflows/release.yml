@@ -16,7 +16,9 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-go@v7
         with:
-          go-version-file: go.mod
+          # Not go.mod's version: that is the minimum supported, while release
+          # binaries should carry the latest standard library security fixes.
+          go-version: stable
       - uses: goreleaser/goreleaser-action@v7
         with:
           distribution: goreleaser
