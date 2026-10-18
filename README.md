@@ -311,7 +311,7 @@ Resize a PNG or JPEG image. The input format is auto-detected and the output kee
 | `-width <n>`   | Target width in pixels. Alone, the height follows the aspect ratio.                |
 | `-height <n>`  | Target height in pixels. Alone, the width follows the aspect ratio.                |
 | `-max <n>`     | Scale down so the longest side fits within `n` pixels. Never upscales.             |
-| `-quality <n>` | JPEG quality, 1-100 (default 75). Applies when the output is JPEG; ignored for PNG. |
+| `-quality <n>` | JPEG quality, 1-100 (default 85, as for `png2jpeg`). Applies when the output is JPEG; ignored for PNG. |
 
 Exactly one sizing mode is required: `-width` and/or `-height`, or `-max`. Giving both `-width` and `-height` forces those exact dimensions (the aspect ratio may change). `-max` only shrinks: an image that already fits is re-encoded at its original size. Scaling uses the Catmull-Rom resampler for high-quality results, and PNG transparency is preserved. Takes an optional input file and output file, like `jpeg2png`.
 

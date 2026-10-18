@@ -18,7 +18,7 @@ func ImgResizeCommand(resize func(w io.Writer, r io.Reader, width, height, max, 
 			width := fs.Int("width", 0, "target width in pixels (alone, height follows the aspect ratio)")
 			height := fs.Int("height", 0, "target height in pixels (alone, width follows the aspect ratio)")
 			max := fs.Int("max", 0, "scale down so the longest side fits within this many pixels (never upscales)")
-			quality := fs.Int("quality", 75, "JPEG quality, 1-100 (applies when the output is JPEG)")
+			quality := fs.Int("quality", 85, "JPEG quality, 1-100 (applies when the output is JPEG)")
 			if err := parseFlags(fs, args); err != nil {
 				return err
 			}
