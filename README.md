@@ -97,7 +97,7 @@ Commands read input from the file argument when one is given, otherwise from `st
 | Network | [`cidr`](#cidr) | CIDR/subnet math: describe, test, and split prefixes |
 | Time | [`time`](#time) | Print or convert timestamps across formats and timezones |
 | Version | [`semver`](#semver) | Sort, compare, or constraint-check SemVer 2.0.0 versions |
-| Download | [`video`](#video) | Download a video via yt-dlp |
+| Download | [`video`](#video) | Download a video via yt-dlp, printing the saved file path |
 | Meta | [`commands`](#commands-1) | List every command as JSON for tool discovery |
 | Meta | [`version`](#version) | Print the binary's version |
 
@@ -720,18 +720,19 @@ agent-utils version     # v1.2.0
 
 ### `video`
 
-Download a video by driving [`yt-dlp`](https://github.com/yt-dlp/yt-dlp), streaming its progress output through to the terminal.
+Download a video by driving [`yt-dlp`](https://github.com/yt-dlp/yt-dlp) and print the path of each saved file on `stdout`, one per line, so the result can be piped straight into the next step.
 
 | Flag       | Description                                     |
 | ---------- | ----------------------------------------------- |
 | `-o <dir>` | Output directory (default: current directory).  |
 | `-audio`   | Download the audio track only.                  |
 
-Requires `yt-dlp` on your `PATH` (`brew install yt-dlp`); the command fails with a clear message if it's missing. `-audio` extraction, and merging of high-resolution formats, additionally use `ffmpeg` (`brew install ffmpeg`). Unlike the pure transforms above, this command talks to the network.
+Requires `yt-dlp` 2023.06.21 or newer on your `PATH` ([installation](https://github.com/yt-dlp/yt-dlp#installation)); the command fails with a clear message if it's missing. `-audio` extraction, and merging of high-resolution formats, additionally use `ffmpeg`. yt-dlp runs quietly: there is no progress bar, and its errors and warnings go to `stderr`. With `-audio` the printed path is the extracted audio file, not the intermediate download; its extension follows the source's audio codec. Unlike the pure transforms above, this command talks to the network.
 
 ```sh
 agent-utils video "https://www.youtube.com/watch?v=..."
-agent-utils video -audio -o ~/Music "https://www.youtube.com/watch?v=..."
+agent-utils video -audio -o ~/Music "https://www.youtube.com/watch?v=..."   # e.g. ~/Music/Title [id].opus
+agent-utils filetype "$(agent-utils video "$URL")"                           # e.g. video/mp4
 ```
 
 ### `webp2png`
