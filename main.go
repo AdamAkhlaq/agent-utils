@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/signal"
 	"runtime/debug"
+	"syscall"
 	"time"
 
 	// The time command resolves IANA zones; Windows has no OS tz database,
@@ -47,6 +49,20 @@ func resolveVersion() string {
 }
 
 func main() {
+	// A signal (an agent's tool timeout, Ctrl-C) would otherwise leave the
+	// temporary file of an unfinished output file behind.
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		sig := <-signals
+		cli.RemovePendingOutputs()
+		code := 1
+		if s, ok := sig.(syscall.Signal); ok {
+			code = 128 + int(s)
+		}
+		os.Exit(code)
+	}()
+
 	err := recoverPanic(func() error {
 		return run(os.Args[1:], os.Stdin, os.Stdout, os.Stderr)
 	})

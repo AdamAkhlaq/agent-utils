@@ -168,6 +168,39 @@ func TestConvertCommandOutputFile(t *testing.T) {
 		}
 	})
 
+	t.Run("panic leaves no temporary file", func(t *testing.T) {
+		dir := t.TempDir()
+		in, out := filepath.Join(dir, "in"), filepath.Join(dir, "out")
+		write(t, in, "HI", 0o644)
+		panicky := ConvertCommand("panic2png", "panics mid-write", func(w io.Writer, r io.Reader) error {
+			io.WriteString(w, "partial")
+			panic("decoder bug")
+		})
+		func() {
+			defer func() { recover() }()
+			panicky.Run([]string{in, out}, strings.NewReader(""), io.Discard, io.Discard)
+		}()
+		if entries, _ := os.ReadDir(dir); len(entries) != 1 {
+			t.Errorf("files after panic = %v, want only the input", entries)
+		}
+	})
+
+	t.Run("pending outputs are removed on request", func(t *testing.T) {
+		dir := t.TempDir()
+		out, err := openOutput(filepath.Join(dir, "out"), io.Discard)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := io.WriteString(out, "partial"); err != nil {
+			t.Fatal(err)
+		}
+		RemovePendingOutputs()
+		if entries, _ := os.ReadDir(dir); len(entries) != 0 {
+			t.Errorf("files after RemovePendingOutputs = %v, want none", entries)
+		}
+		out.Abort()
+	})
+
 	t.Run("special files are written directly", func(t *testing.T) {
 		if _, err := os.Stat(os.DevNull); err != nil {
 			t.Skip(os.DevNull, "unavailable")
