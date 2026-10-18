@@ -2,9 +2,11 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"io"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -82,9 +84,10 @@ func TestRegistryDocumentation(t *testing.T) {
 			if len(cmd.Examples) == 0 {
 				t.Error("no Examples")
 			}
+			invokes := regexp.MustCompile(`agent-utils ` + regexp.QuoteMeta(name) + `(\s|$)`)
 			for _, ex := range cmd.Examples {
-				if !strings.Contains(ex, "agent-utils "+name) {
-					t.Errorf("example %q does not invoke agent-utils %s", ex, name)
+				if !invokes.MatchString(ex.Command) {
+					t.Errorf("example %q does not invoke agent-utils %s", ex.Command, name)
 				}
 			}
 		})
@@ -92,6 +95,32 @@ func TestRegistryDocumentation(t *testing.T) {
 	for name := range examples {
 		if _, ok := commands[name]; !ok {
 			t.Errorf("examples has an entry for unknown command %q", name)
+		}
+	}
+}
+
+// The manifest asks every real command for -h with streams that fail if
+// touched, so this also proves no command does work before parsing flags.
+func TestCommandsManifest(t *testing.T) {
+	var stdout bytes.Buffer
+	if err := run([]string{"commands"}, strings.NewReader(""), &stdout, io.Discard); err != nil {
+		t.Fatalf("commands error = %v", err)
+	}
+	var entries []struct {
+		Name  string `json:"name"`
+		Flags []struct {
+			Name string `json:"name"`
+		} `json:"flags"`
+	}
+	if err := json.Unmarshal(stdout.Bytes(), &entries); err != nil {
+		t.Fatalf("manifest is not valid JSON: %v", err)
+	}
+	if len(entries) != len(registry()) {
+		t.Errorf("manifest lists %d commands, registry has %d", len(entries), len(registry()))
+	}
+	for _, e := range entries {
+		if e.Name == "hash" && len(e.Flags) != 2 {
+			t.Errorf("hash flags = %+v, want -a and -c", e.Flags)
 		}
 	}
 }

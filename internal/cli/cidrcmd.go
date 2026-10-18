@@ -21,10 +21,10 @@ func CIDRCommand(
 	return Command{
 		Name:    "cidr",
 		Summary: "CIDR subnet math: info <prefix>, contains <prefix> <ip>, overlaps <a> <b>, split <prefix> <len>",
-		Usage: `agent-utils cidr info <prefix>                print the network's details as JSON
-agent-utils cidr contains <prefix> <ip>       print true/false, exit 0/3
-agent-utils cidr overlaps <prefix> <prefix>   print true/false, exit 0/3
-agent-utils cidr split <prefix> <new-length>  print the subnets of the new length, one per line`,
+		Usage: `agent-utils cidr info <prefix>
+agent-utils cidr contains <prefix> <ip>
+agent-utils cidr overlaps <prefix> <prefix>
+agent-utils cidr split <prefix> <new-length>`,
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 			fs := newFlagSet("cidr")
 			if err := parseFlags(fs, args); err != nil {
