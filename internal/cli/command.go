@@ -32,24 +32,52 @@ func (e *UsageError) Error() string { return e.Err.Error() }
 func (e *UsageError) Unwrap() error { return e.Err }
 
 // Dispatch looks up args[0] in commands and runs it, rendering the command's
-// help to stdout when it was asked for. On a missing or unknown command it
-// prints usage to stderr and returns a *UsageError.
+// help to stdout when it was asked for. It also answers the conventional entry
+// points (help, -h, --help, help <command>, --version), since they are the
+// first thing a human or agent tries. A missing command prints the command
+// list to stderr; every usage failure returns a *UsageError.
 func Dispatch(commands map[string]Command, args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 	if len(args) == 0 {
 		Usage(stderr, commands)
 		return &UsageError{Err: errors.New("no command given")}
 	}
-	cmd, ok := commands[args[0]]
-	if !ok {
-		Usage(stderr, commands)
-		return &UsageError{Err: fmt.Errorf("unknown command %q", args[0])}
+	name, rest := args[0], args[1:]
+	if isHelpWord(name) {
+		switch len(rest) {
+		case 0:
+			Usage(stdout, commands)
+			return nil
+		case 1:
+			name, rest = rest[0], []string{"-h"}
+		default:
+			return &UsageError{Err: fmt.Errorf("%s: takes at most one command name, got %d", name, len(rest))}
+		}
+		if isHelpWord(name) {
+			Usage(stdout, commands)
+			return nil
+		}
 	}
-	err := cmd.Run(args[1:], stdin, stdout, stderr)
+	if name == "-version" || name == "--version" {
+		name = "version"
+	}
+	cmd, ok := commands[name]
+	if !ok {
+		return &UsageError{Err: fmt.Errorf("unknown command %q (run 'agent-utils help' for the command list)", name)}
+	}
+	err := cmd.Run(rest, stdin, stdout, stderr)
 	var help *helpRequest
 	if errors.As(err, &help) {
 		return writeHelp(stdout, cmd, help.flags)
 	}
 	return err
+}
+
+func isHelpWord(arg string) bool {
+	switch arg {
+	case "help", "-h", "-help", "--help":
+		return true
+	}
+	return false
 }
 
 // writeHelp renders a command's -h output: summary, synopsis, and flags.
@@ -88,4 +116,7 @@ func Usage(w io.Writer, commands map[string]Command) {
 	for _, name := range names {
 		fmt.Fprintf(w, "  %-10s %s\n", name, commands[name].Summary)
 	}
+	fmt.Fprintln(w)
+	fmt.Fprintln(w, "Run 'agent-utils <command> -h' for a command's usage, flags, and examples,")
+	fmt.Fprintln(w, "or 'agent-utils commands' for all of it as JSON.")
 }
