@@ -13,6 +13,7 @@ func EncodeCommand(name, summary string, enc, dec func(w io.Writer, r io.Reader)
 	return Command{
 		Name:    name,
 		Summary: summary,
+		Usage:   "agent-utils " + name + " [-d] [file]",
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 			fs := newFlagSet(name)
 			decode := fs.Bool("d", false, "decode instead of encode")

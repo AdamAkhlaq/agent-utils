@@ -13,6 +13,7 @@ func ConvertCommand(name, summary string, convert func(w io.Writer, r io.Reader)
 	return Command{
 		Name:    name,
 		Summary: summary,
+		Usage:   "agent-utils " + name + " [input [output]]",
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 			fs := newFlagSet(name)
 			if err := parseFlags(fs, args); err != nil {
@@ -28,6 +29,7 @@ func PNGToJPEGCommand(convert func(w io.Writer, r io.Reader, quality int) error)
 	return Command{
 		Name:    "png2jpeg",
 		Summary: "convert a PNG image to JPEG (-quality)",
+		Usage:   "agent-utils png2jpeg [-quality n] [input [output]]",
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 			fs := newFlagSet("png2jpeg")
 			quality := fs.Int("quality", 85, "JPEG quality, 1-100")

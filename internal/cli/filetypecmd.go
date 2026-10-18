@@ -12,6 +12,7 @@ func FiletypeCommand(plain, asJSON func(r io.Reader) (string, error)) Command {
 	return Command{
 		Name:    "filetype",
 		Summary: "identify a file's MIME type and image dimensions (-json)",
+		Usage:   "agent-utils filetype [-json] [file]",
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 			fs := newFlagSet("filetype")
 			jsonOut := fs.Bool("json", false, "print a JSON object with mime, bytes, and image dimensions")

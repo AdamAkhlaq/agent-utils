@@ -14,6 +14,8 @@ func ColorCommand(convert func(input, to string) (string, error), jsonRepr func(
 	return Command{
 		Name:    "color",
 		Summary: "convert a color between hex, rgb, and hsl (-to form, -json all forms)",
+		Usage: `agent-utils color -to <hex|rgb|hsl> [color]
+agent-utils color -json [color]`,
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 			fs := newFlagSet("color")
 			to := fs.String("to", "", "output form: hex, rgb, or hsl")

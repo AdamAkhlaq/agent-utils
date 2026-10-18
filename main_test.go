@@ -66,3 +66,32 @@ func TestRecoverPanic(t *testing.T) {
 		t.Errorf("recoverPanic() = %v, want the function's own error %v", got, want)
 	}
 }
+
+// Every command must be documented well enough for an agent to use it from
+// -h alone, and examples may only name commands that exist.
+func TestRegistryDocumentation(t *testing.T) {
+	commands := registry()
+	for name, cmd := range commands {
+		t.Run(name, func(t *testing.T) {
+			if cmd.Summary == "" {
+				t.Error("missing Summary")
+			}
+			if !strings.HasPrefix(cmd.Usage, "agent-utils "+name) {
+				t.Errorf("Usage = %q, want it to start with %q", cmd.Usage, "agent-utils "+name)
+			}
+			if len(cmd.Examples) == 0 {
+				t.Error("no Examples")
+			}
+			for _, ex := range cmd.Examples {
+				if !strings.Contains(ex, "agent-utils "+name) {
+					t.Errorf("example %q does not invoke agent-utils %s", ex, name)
+				}
+			}
+		})
+	}
+	for name := range examples {
+		if _, ok := commands[name]; !ok {
+			t.Errorf("examples has an entry for unknown command %q", name)
+		}
+	}
+}

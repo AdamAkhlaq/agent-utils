@@ -15,6 +15,7 @@ func StringTransformCommand(name, summary string, fn func(string) string) Comman
 	return Command{
 		Name:    name,
 		Summary: summary,
+		Usage:   "agent-utils " + name + " [file]",
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 			fs := newFlagSet(name)
 			if err := parseFlags(fs, args); err != nil {

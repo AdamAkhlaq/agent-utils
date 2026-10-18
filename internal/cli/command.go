@@ -18,7 +18,10 @@ type Command struct {
 	// Usage is the synopsis shown by -h, one invocation form per line,
 	// optionally followed by a description column.
 	Usage string
-	Run   func(args []string, stdin io.Reader, stdout, stderr io.Writer) error
+	// Examples are complete invocations, optionally ending in a "# comment"
+	// that states the output.
+	Examples []string
+	Run      func(args []string, stdin io.Reader, stdout, stderr io.Writer) error
 }
 
 // UsageError marks misuse of the CLI (unknown command, bad flags) so main can
@@ -91,7 +94,8 @@ func isHelpWord(arg string) bool {
 	return false
 }
 
-// writeHelp renders a command's -h output: summary, synopsis, and flags.
+// writeHelp renders a command's -h output: summary, synopsis, flags, and
+// examples.
 func writeHelp(w io.Writer, cmd Command, fs *flag.FlagSet) error {
 	var b strings.Builder
 	fmt.Fprintf(&b, "agent-utils %s: %s\n", cmd.Name, cmd.Summary)
@@ -108,6 +112,12 @@ func writeHelp(w io.Writer, cmd Command, fs *flag.FlagSet) error {
 		fs.SetOutput(&b)
 		fs.PrintDefaults()
 		fs.SetOutput(io.Discard)
+	}
+	if len(cmd.Examples) > 0 {
+		b.WriteString("\nExamples:\n")
+		for _, ex := range cmd.Examples {
+			fmt.Fprintf(&b, "  %s\n", ex)
+		}
 	}
 	_, err := io.WriteString(w, b.String())
 	return err

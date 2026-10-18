@@ -18,6 +18,7 @@ func UnicodeCommand(
 	return Command{
 		Name:    "unicode",
 		Summary: "inspect text codepoints as JSON (-check suspicious chars, -nfc/-nfd normalize)",
+		Usage:   "agent-utils unicode [-check | -nfc | -nfd] [file]",
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 			fs := newFlagSet("unicode")
 			nfcMode := fs.Bool("nfc", false, "write the input normalized to NFC (composed) instead of inspecting")

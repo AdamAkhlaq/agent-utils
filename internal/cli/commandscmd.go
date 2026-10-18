@@ -16,6 +16,7 @@ func CommandsCommand(commands map[string]Command) Command {
 	return Command{
 		Name:    "commands",
 		Summary: "list every command as JSON (machine-readable tool discovery)",
+		Usage:   "agent-utils commands",
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 			fs := newFlagSet("commands")
 			if err := parseFlags(fs, args); err != nil {

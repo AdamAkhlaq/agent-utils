@@ -12,6 +12,7 @@ func VersionCommand(version string) Command {
 	return Command{
 		Name:    "version",
 		Summary: "print the agent-utils version",
+		Usage:   "agent-utils version",
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 			fs := newFlagSet("version")
 			if err := parseFlags(fs, args); err != nil {

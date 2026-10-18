@@ -94,9 +94,10 @@ func TestUsageSortsCommands(t *testing.T) {
 
 func flagCommand() Command {
 	return Command{
-		Name:    "demo",
-		Summary: "demonstrate help rendering",
-		Usage:   "agent-utils demo [-n count] [file]",
+		Name:     "demo",
+		Summary:  "demonstrate help rendering",
+		Usage:    "agent-utils demo [-n count] [file]",
+		Examples: []string{"agent-utils demo -n 2   # twice"},
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 			fs := newFlagSet("demo")
 			fs.Int("n", 1, "how many")
@@ -113,7 +114,7 @@ func TestDispatchCommandHelp(t *testing.T) {
 			if err := Dispatch(commands, []string{"demo", flag}, strings.NewReader(""), &stdout, &stderr); err != nil {
 				t.Fatalf("Dispatch() error = %v", err)
 			}
-			want := "agent-utils demo: demonstrate help rendering\n\nUsage:\n  agent-utils demo [-n count] [file]\n\nFlags:\n  -n int\n    \thow many (default 1)\n"
+			want := "agent-utils demo: demonstrate help rendering\n\nUsage:\n  agent-utils demo [-n count] [file]\n\nFlags:\n  -n int\n    \thow many (default 1)\n\nExamples:\n  agent-utils demo -n 2   # twice\n"
 			if stdout.String() != want {
 				t.Errorf("help = %q, want %q", stdout.String(), want)
 			}

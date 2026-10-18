@@ -12,6 +12,7 @@ func UUIDCommand(gen func() (string, error)) Command {
 	return Command{
 		Name:    "uuid",
 		Summary: "generate random (v4) UUIDs, one per line (-n for count)",
+		Usage:   "agent-utils uuid [-n count]",
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 			fs := newFlagSet("uuid")
 			n := fs.Int("n", 1, "how many UUIDs to generate")

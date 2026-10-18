@@ -20,6 +20,9 @@ func SemverCommand(
 	return Command{
 		Name:    "semver",
 		Summary: "sort SemVer versions (-r desc), compare two (-compare), or test a constraint (-check)",
+		Usage: `agent-utils semver [-r] [file]
+agent-utils semver -compare <a> <b>
+agent-utils semver -check <constraint> [version]`,
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 			fs := newFlagSet("semver")
 			desc := fs.Bool("r", false, "sort in descending order")

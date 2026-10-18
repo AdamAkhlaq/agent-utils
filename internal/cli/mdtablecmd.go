@@ -11,6 +11,7 @@ func MarkdownTableCommand(fromJSON, fromCSV func(w io.Writer, r io.Reader) error
 	return Command{
 		Name:    "md-table",
 		Summary: "render a JSON array or CSV (-csv) as a GitHub-flavored Markdown table",
+		Usage:   "agent-utils md-table [-csv] [file]",
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) error {
 			fs := newFlagSet("md-table")
 			csvFlag := fs.Bool("csv", false, "input is CSV with a header row instead of JSON")

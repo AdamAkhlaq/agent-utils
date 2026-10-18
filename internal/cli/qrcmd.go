@@ -11,6 +11,8 @@ func QRCommand(enc func(w io.Writer, text string, size int) error, dec func(r io
 	return Command{
 		Name:    "qr",
 		Summary: "generate a QR code PNG from text, or decode one (-d)",
+		Usage: `agent-utils qr [-s px] [-o file] <text>
+agent-utils qr -d [-o file] [image]`,
 		Run: func(args []string, stdin io.Reader, stdout, stderr io.Writer) (err error) {
 			fs := newFlagSet("qr")
 			decode := fs.Bool("d", false, "decode a QR code image to its text")
