@@ -131,6 +131,11 @@ var examples = map[string][]cli.Example{
 		{Command: `agent-utils time 1755459000`, Output: `2025-08-17T19:30:00Z`},
 		{Command: `agent-utils time -z Asia/Tokyo 1755459000`, Output: `2025-08-18T04:30:00+09:00`},
 		{Command: `agent-utils time -f unix 2025-08-17T19:30:00Z`, Output: `1755459000`},
+		{Command: `agent-utils time add 2024-01-31 P1M`, Output: `2024-02-29T00:00:00Z`},
+		{Command: `agent-utils time -z America/New_York add 2024-03-09T12:00:00-05:00 P1D`, Output: `2024-03-10T12:00:00-04:00`},
+		{Command: `agent-utils time diff 2024-01-31 2024-03-01T12:00:00Z`, Output: `P1M1DT12H`},
+		{Command: `agent-utils time -json diff 2026-01-01 2026-12-25 | jq .total_days`, Output: `358`},
+		{Command: `agent-utils time -json 2026-12-25 | jq -r .weekday`, Output: `Friday`},
 	},
 	"tiff2png": {
 		{Command: `agent-utils tiff2png scan.tiff scan.png`},
