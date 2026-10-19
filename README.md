@@ -4,7 +4,7 @@
 
 [![CI](https://github.com/AdamAkhlaq/agent-utils/actions/workflows/ci.yml/badge.svg)](https://github.com/AdamAkhlaq/agent-utils/actions/workflows/ci.yml)
 [![Latest release](https://img.shields.io/github/v/release/AdamAkhlaq/agent-utils)](https://github.com/AdamAkhlaq/agent-utils/releases/latest)
-[![Go 1.25+](https://img.shields.io/badge/go-1.25%2B-00ADD8.svg)](https://go.dev/dl/)
+[![Go 1.26+](https://img.shields.io/badge/go-1.26%2B-00ADD8.svg)](https://go.dev/dl/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 Agents constantly need small, exact transformations: decode this JWT, convert this YAML, check whether an IP is in a subnet, find the invisible character that breaks a string comparison. Done "by hand" in the model, these are slow, cost tokens, and are sometimes subtly wrong. `agent-utils` does them instantly and exactly, behind one predictable CLI contract built for agents first and equally usable from scripts and by hand.
@@ -69,7 +69,7 @@ On macOS, a binary downloaded through a browser is quarantined by Gatekeeper bec
 
 ### `go install`
 
-Requires Go 1.25 or newer.
+Requires Go 1.26 or newer.
 
 ```sh
 go install github.com/adamakhlaq/agent-utils/v2@latest

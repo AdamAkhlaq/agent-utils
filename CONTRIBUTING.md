@@ -11,7 +11,7 @@ New here? Issues labeled [`good first issue`](https://github.com/AdamAkhlaq/agen
 
 ## Development setup
 
-You need Go 1.25 or newer.
+You need Go 1.26 or newer.
 
 ```sh
 git clone https://github.com/AdamAkhlaq/agent-utils.git
