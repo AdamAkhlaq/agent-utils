@@ -204,6 +204,7 @@ func registry() map[string]cli.Command {
 		cli.TransformCommand("cert-decode", "decode X.509 certificates (PEM or DER) to a JSON array", certDecode),
 		cli.CIDRCommand(cidrInfoJSON, netcalc.Contains, netcalc.Overlaps, cidrSplit),
 		cli.ColorCommand(hue.Convert, hue.JSON),
+		cli.CronCommand(time.Now, clock.Zone, clock.CronFrom, clock.Cron, clock.CronJSON),
 		cli.CSVToJSONCommand(format.CSVToJSON),
 		cli.FiletypeCommand(filetypePlain, filetypeJSON),
 		cli.ConvertCommand("gif2png", "convert a GIF image to PNG (first frame of an animation)", img.GIFToPNG),
