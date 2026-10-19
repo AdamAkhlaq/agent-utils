@@ -44,6 +44,12 @@ var examples = map[string][]cli.Example{
 		{Command: `agent-utils commands | jq -r '.[].name'`},
 		{Command: `agent-utils commands | jq '.[] | select(.name == "hash")'`},
 	},
+	"cron": {
+		{Command: `agent-utils cron -n 1 -from 2026-01-01T00:00:00Z '30 9 * * MON-FRI'`, Output: `2026-01-01T09:30:00Z`},
+		{Command: `agent-utils cron -n 1 -from 2026-03-01T00:00:00Z '0 0 29 2 *'`, Output: `2028-02-29T00:00:00Z`},
+		{Command: `agent-utils cron -n 1 -z America/New_York -from 2026-03-08 '30 2 * * *'`, Output: `2026-03-08T03:00:00-04:00`},
+		{Command: `agent-utils cron -json '0 0 1 * MON' | jq -r .day_match`, Output: `either`},
+	},
 	"csv2json": {
 		{Command: `printf 'name,zip\nJane,01234\n' | agent-utils csv2json | jq -r '.[0].zip'`, Output: `01234`},
 		{Command: `agent-utils csv2json -sep ';' european.csv`},
