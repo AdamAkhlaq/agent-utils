@@ -178,6 +178,16 @@ func registry() map[string]cli.Command {
 		}
 		return subnets, err
 	}
+	timeAdd := func(t time.Time, duration string, loc *time.Location) (time.Time, error) {
+		d, err := clock.ParseDuration(duration)
+		if err != nil {
+			return time.Time{}, err
+		}
+		return clock.Add(t, d, loc)
+	}
+	timeDiff := func(from, to time.Time, loc *time.Location) string {
+		return clock.Diff(from, to, loc).String()
+	}
 	jsonValid := func(r io.Reader) error {
 		err := format.JSONValid(r)
 		if errors.Is(err, format.ErrInvalidJSON) {
@@ -222,7 +232,7 @@ func registry() map[string]cli.Command {
 		cli.SemverCommand(semver.Sort, semver.CompareStrings, semverCheck),
 		cli.StringTransformCommand("slugify", "turn text into a lowercase hyphenated slug", text.Slugify),
 		cli.ConvertCommand("strip-ansi", "remove ANSI escape sequences (colors, cursor movement, OSC) from text", text.StripANSI),
-		cli.TimeCommand(time.Now, clock.Parse, clock.Format, clock.JSON),
+		cli.TimeCommand(time.Now, clock.ParseIn, clock.Zone, clock.Format, clock.JSON, timeAdd, timeDiff, clock.DiffJSON),
 		cli.ConvertCommand("tiff2png", "convert a TIFF image to PNG (first page of a multi-page file)", img.TIFFToPNG),
 		cli.TransformCommand("toml2json", "convert a TOML document to pretty-printed JSON", format.TOMLToJSON),
 		cli.UnicodeCommand(chars.InspectJSON, chars.CheckJSON, chars.NFC, chars.NFD),

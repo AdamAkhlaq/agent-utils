@@ -98,9 +98,9 @@ Add this to your project's `CLAUDE.md` (or `~/.claude/CLAUDE.md` for every proje
 
 `agent-utils` is installed: exact, deterministic CLI utilities for
 base64/hex/URL encoding, JSON/YAML/TOML/XML/CSV conversion, Markdown tables,
-hashes, UUIDs and passwords, exact arithmetic, CIDR and SemVer math, timestamps
-and timezones, X.509, JWT, and URL decoding, Unicode inspection, ANSI stripping,
-case and slug conversion, colors, QR codes, image conversion, and
+hashes, UUIDs and passwords, exact arithmetic, CIDR, SemVer, and date math,
+timestamps and timezones, X.509, JWT, and URL decoding, Unicode inspection, ANSI
+stripping, case and slug conversion, colors, QR codes, image conversion, and
 shell/JSON/HTML/regex quoting. Prefer it over doing these transformations
 yourself. Run `agent-utils help` for the command list and
 `agent-utils <command> -h` for usage. Exit codes: 0 success, 1 failure, 2 usage
@@ -168,7 +168,7 @@ Put the same snippet in `AGENTS.md`, which these agents read. Recent versions of
 | Color | [`color`](docs/commands/color.md) | Convert a color between hex, rgb, and hsl |
 | Math | [`calc`](docs/commands/calc.md) | Evaluate an arithmetic expression exactly, with no floating point |
 | Network | [`cidr`](docs/commands/cidr.md) | CIDR/subnet math: describe, test, and split prefixes |
-| Time | [`time`](docs/commands/time.md) | Print or convert timestamps across formats and timezones |
+| Time | [`time`](docs/commands/time.md) | Print or convert timestamps across formats and timezones, add durations, or diff two dates |
 | SemVer | [`semver`](docs/commands/semver.md) | Sort, compare, or constraint-check SemVer 2.0.0 versions |
 | Download | [`video`](docs/commands/video.md) | Download a video via yt-dlp, printing the saved file path |
 | Meta | [`commands`](docs/commands/commands.md) | List every command with its usage, flags, and examples as JSON |
