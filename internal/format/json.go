@@ -34,15 +34,8 @@ func JSONCompact(w io.Writer, r io.Reader) error {
 		return err
 	}
 	var buf bytes.Buffer
-	if err := json.Compact(&buf, data); err != nil {
-		// json.Compact reports every SyntaxError at offset 0 (its scanner
-		// doesn't count bytes, unlike json.Indent's validation pass), so
-		// re-run json.Indent on the failure path to recover the position.
-		var scratch bytes.Buffer
-		if ierr := json.Indent(&scratch, data, "", ""); ierr != nil {
-			err = ierr
-		}
-		return syntaxError(data, err)
+	if err := compact(&buf, data); err != nil {
+		return err
 	}
 	if _, err := w.Write(buf.Bytes()); err != nil {
 		return fmt.Errorf("writing output: %w", err)
@@ -58,6 +51,28 @@ var ErrInvalidJSON = errors.New("invalid JSON")
 // returning nil or an error pinpointing the first problem.
 func JSONValid(r io.Reader) error {
 	return JSONCompact(io.Discard, r)
+}
+
+// checkSyntax reports whether data holds exactly one JSON document, so
+// trailing data fails too, with the line and column of the first problem.
+func checkSyntax(data []byte) error {
+	var scratch bytes.Buffer
+	return compact(&scratch, data)
+}
+
+// compact minifies the single JSON document in data into buf.
+func compact(buf *bytes.Buffer, data []byte) error {
+	if err := json.Compact(buf, data); err != nil {
+		// json.Compact reports every SyntaxError at offset 0 (its scanner
+		// doesn't count bytes, unlike json.Indent's validation pass), so
+		// re-run json.Indent on the failure path to recover the position.
+		var scratch bytes.Buffer
+		if ierr := json.Indent(&scratch, data, "", ""); ierr != nil {
+			err = ierr
+		}
+		return syntaxError(data, err)
+	}
+	return nil
 }
 
 // readInput trims trailing whitespace, because json.Indent mirrors it from

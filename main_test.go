@@ -19,7 +19,20 @@ import (
 // registry: an agent branches on these codes alone, so a predicate's "no"
 // must never share a code with a failure.
 func TestExitCodes(t *testing.T) {
-	missing := filepath.Join(t.TempDir(), "missing")
+	dir := t.TempDir()
+	missing := filepath.Join(dir, "missing")
+	schema := filepath.Join(dir, "schema.json")
+	badSchema := filepath.Join(dir, "bad-schema.json")
+	remoteSchema := filepath.Join(dir, "remote-schema.json")
+	for path, content := range map[string]string{
+		schema:       `{"type": "object", "required": ["id"]}`,
+		badSchema:    `{"type": "strin"}`,
+		remoteSchema: `{"$ref": "https://example.com/schema.json"}`,
+	} {
+		if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
 	tests := []struct {
 		name  string
 		args  []string
@@ -95,6 +108,16 @@ func TestExitCodes(t *testing.T) {
 		{name: "hash verify match", args: []string{"hash", "-c", "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"}, stdin: "abc", want: 0},
 		{name: "hash verify mismatch", args: []string{"hash", "-c", strings.Repeat("0", 64)}, stdin: "abc", want: 3},
 		{name: "hash verify missing file", args: []string{"hash", "-c", strings.Repeat("0", 64), missing}, want: 1},
+		{name: "json-schema valid", args: []string{"json-schema", schema}, stdin: `{"id": 1}`, want: 0},
+		{name: "json-schema invalid", args: []string{"json-schema", schema}, stdin: `{}`, want: 3},
+		{name: "json-schema malformed input", args: []string{"json-schema", schema}, stdin: `{"id": }`, want: 1},
+		{name: "json-schema empty input", args: []string{"json-schema", schema}, stdin: "", want: 1},
+		{name: "json-schema missing input file", args: []string{"json-schema", schema, missing}, want: 1},
+		{name: "json-schema missing schema", args: []string{"json-schema", missing}, stdin: `{}`, want: 1},
+		{name: "json-schema invalid schema", args: []string{"json-schema", badSchema}, stdin: `{}`, want: 1},
+		{name: "json-schema remote ref", args: []string{"json-schema", remoteSchema}, stdin: `{}`, want: 1},
+		{name: "json-schema no schema argument", args: []string{"json-schema"}, want: 2},
+		{name: "json-schema too many arguments", args: []string{"json-schema", schema, missing, missing}, want: 2},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -90,16 +90,10 @@ func JSONToTOML(w io.Writer, r io.Reader) error {
 	if len(data) == 0 {
 		return fmt.Errorf("empty input")
 	}
-	// Validate with json.Compact first: it rejects trailing garbage, and the
-	// json.Indent re-run recovers the offset json.Compact reports as 0
-	// (mirrors JSONToYAML).
-	var scratch bytes.Buffer
-	if err := json.Compact(&scratch, data); err != nil {
-		var indented bytes.Buffer
-		if ierr := json.Indent(&indented, data, "", ""); ierr != nil {
-			err = ierr
-		}
-		return syntaxError(data, err)
+	// Check the syntax first: the decoder below would stop after the first
+	// value and silently ignore trailing garbage.
+	if err := checkSyntax(data); err != nil {
+		return err
 	}
 	dec := json.NewDecoder(bytes.NewReader(data))
 	dec.UseNumber()

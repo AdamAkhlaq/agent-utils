@@ -195,6 +195,20 @@ func registry() map[string]cli.Command {
 		}
 		return err
 	}
+	jsonSchema := func(schemaPath string) (func(r io.Reader) (string, int, error), error) {
+		schema, err := format.CompileJSONSchema(schemaPath)
+		if err != nil {
+			return nil, err
+		}
+		return func(r io.Reader) (string, int, error) {
+			report, err := schema.Validate(r)
+			if err != nil {
+				return "", 0, err
+			}
+			out, err := format.SchemaReportJSON(report)
+			return out, len(report.Errors), err
+		}, nil
+	}
 	commands := make(map[string]cli.Command)
 	for _, cmd := range []cli.Command{
 		cli.EncodeCommand("base64", "base64-encode or -decode input (-d to decode)", encode.Base64, encode.Base64Decode),
@@ -215,6 +229,7 @@ func registry() map[string]cli.Command {
 		cli.URLParseCommand(urlparseJSON),
 		cli.ConvertCommand("jpeg2png", "convert a JPEG image to PNG", img.JPEGToPNG),
 		cli.JSONFmtCommand(format.JSON, format.JSONCompact, jsonValid),
+		cli.JSONSchemaCommand(jsonSchema),
 		cli.JSONToCSVCommand(format.JSONToCSV),
 		cli.TransformCommand("json2toml", "convert a JSON document to TOML", format.JSONToTOML),
 		cli.TransformCommand("json2yaml", "convert a JSON document to YAML", format.JSONToYAML),
