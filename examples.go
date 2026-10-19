@@ -15,6 +15,13 @@ var examples = map[string][]cli.Example{
 		{Command: `agent-utils bmp2png scan.bmp scan.png`},
 		{Command: `agent-utils bmp2png < scan.bmp > scan.png`},
 	},
+	"calc": {
+		{Command: `agent-utils calc '0.1 + 0.2'`, Output: `0.3`},
+		{Command: `agent-utils calc '2^64'`, Output: `18446744073709551616`},
+		{Command: `agent-utils calc '1/3'`, Output: `0.33333333333333333333`},
+		{Command: `agent-utils calc -scale 2 '19.99 * 3 * 1.0825'`, Output: `64.92`},
+		{Command: `agent-utils calc -json '1/3' | jq -r .fraction`, Output: `1/3`},
+	},
 	"case": {
 		{Command: `printf 'camelCase' | agent-utils case -to snake`, Output: `camel_case`},
 		{Command: `printf 'HTTPServer' | agent-utils case -to kebab`, Output: `http-server`},

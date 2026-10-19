@@ -81,11 +81,12 @@ func newManifestEntry(cmd Command) (manifestEntry, error) {
 		return manifestEntry{}, fmt.Errorf("commands: %s did not answer -h with its flags (got %v)", cmd.Name, err)
 	}
 	help.flags.VisitAll(func(f *flag.Flag) {
+		_, usage := flag.UnquoteUsage(f)
 		entry.Flags = append(entry.Flags, manifestFlag{
 			Name:        "-" + f.Name,
 			Type:        flagType(f),
 			Default:     f.DefValue,
-			Description: f.Usage,
+			Description: usage,
 		})
 	})
 	return entry, nil
