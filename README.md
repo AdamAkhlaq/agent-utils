@@ -96,14 +96,14 @@ Add this to your project's `CLAUDE.md` (or `~/.claude/CLAUDE.md` for every proje
 ```markdown
 ## agent-utils
 
-`agent-utils` is installed: exact, deterministic CLI utilities for base64/hex/URL
-encoding, JSON/YAML/TOML/XML/CSV conversion, Markdown tables, hashes, UUIDs and
-passwords, exact arithmetic, CIDR and SemVer math, timestamps and timezones, X.509, JWT, and URL
-decoding, Unicode inspection, ANSI stripping, case and slug conversion, colors,
-QR codes, and image conversion. Prefer it over doing these transformations
-yourself. Run `agent-utils help` for the
-command list and `agent-utils <command> -h` for usage. Exit codes: 0 success,
-1 failure, 2 usage error, 3 a yes/no check answered no.
+`agent-utils` is installed: exact, deterministic CLI utilities for
+base64/hex/URL encoding, JSON/YAML/TOML/XML/CSV conversion, Markdown tables,
+hashes, UUIDs and passwords, exact arithmetic, CIDR and SemVer math, timestamps
+and timezones, X.509, JWT, and URL decoding, Unicode inspection, ANSI stripping,
+case and slug conversion, colors, QR codes, and image conversion. Prefer it over
+doing these transformations yourself. Run `agent-utils help` for the command
+list and `agent-utils <command> -h` for usage. Exit codes: 0 success, 1 failure,
+2 usage error, 3 a yes/no check answered no.
 ```
 
 To let Claude Code run it without asking each time, allow it in `.claude/settings.json` (or `~/.claude/settings.json`). The deny rule keeps `video`, the one command that reaches the network, behind a prompt; deny rules take precedence over allow rules.
