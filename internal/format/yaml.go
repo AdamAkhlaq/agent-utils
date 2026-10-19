@@ -58,15 +58,9 @@ func JSONToYAML(w io.Writer, r io.Reader) error {
 		return fmt.Errorf("empty input")
 	}
 	// Validate before converting: yaml.JSONToYAML's errors carry no input
-	// position, while encoding/json's do. Mirrors JSONCompact, including its
-	// json.Indent re-run to recover the offset json.Compact reports as 0.
-	var scratch bytes.Buffer
-	if err := json.Compact(&scratch, data); err != nil {
-		var indented bytes.Buffer
-		if ierr := json.Indent(&indented, data, "", ""); ierr != nil {
-			err = ierr
-		}
-		return syntaxError(data, err)
+	// position, while encoding/json's do.
+	if err := checkSyntax(data); err != nil {
+		return err
 	}
 	out, err := yaml.JSONToYAML(data)
 	if err != nil {

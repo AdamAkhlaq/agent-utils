@@ -97,14 +97,14 @@ Add this to your project's `CLAUDE.md` (or `~/.claude/CLAUDE.md` for every proje
 ## agent-utils
 
 `agent-utils` is installed: exact, deterministic CLI utilities for
-base64/hex/URL encoding, JSON/YAML/TOML/XML/CSV conversion, Markdown tables,
-hashes, UUIDs and passwords, exact arithmetic, CIDR, SemVer, and date math,
-timestamps, timezones, cron schedules, X.509, JWT, and URL decoding, Unicode
-inspection, ANSI stripping, case and slug conversion, colors, QR codes, image
-conversion, and shell/JSON/HTML/regex quoting. Prefer it over doing these
-transformations yourself. Run `agent-utils help` for the command list and
-`agent-utils <command> -h` for usage. Exit codes: 0 success, 1 failure, 2 usage
-error, 3 a yes/no check answered no.
+base64/hex/URL encoding, JSON/YAML/TOML/XML/CSV conversion, JSON Schema
+validation, Markdown tables, hashes, UUIDs and passwords, exact arithmetic,
+CIDR, SemVer, and date math, timestamps, timezones, cron schedules, X.509, JWT,
+and URL decoding, Unicode inspection, ANSI stripping, case and slug conversion,
+colors, QR codes, image conversion, and shell/JSON/HTML/regex quoting. Prefer it
+over doing these transformations yourself. Run `agent-utils help` for the
+command list and `agent-utils <command> -h` for usage. Exit codes: 0 success,
+1 failure, 2 usage error, 3 a yes/no check answered no.
 ```
 
 To let Claude Code run it without asking each time, allow it in `.claude/settings.json` (or `~/.claude/settings.json`). The deny rule keeps `video`, the one command that reaches the network, behind a prompt; deny rules take precedence over allow rules.
@@ -138,6 +138,7 @@ Put the same snippet in `AGENTS.md`, which these agents read. Recent versions of
 | Encode | [`quote`](docs/commands/quote.md) | Quote or escape text for shell, JSON, HTML, or regex, and decode the first three |
 | Encode | [`jwt-decode`](docs/commands/jwt-decode.md) | Decode a JWT's header and payload as JSON (no verification) |
 | Format | [`json-fmt`](docs/commands/json-fmt.md) | Pretty-print, minify, or validate JSON |
+| Format | [`json-schema`](docs/commands/json-schema.md) | Validate JSON against a JSON Schema, reporting every violation as JSON |
 | Format | [`json2toml`](docs/commands/json2toml.md) | Convert JSON to TOML |
 | Format | [`json2yaml`](docs/commands/json2yaml.md) | Convert JSON to YAML |
 | Format | [`toml2json`](docs/commands/toml2json.md) | Convert TOML to JSON |
@@ -193,7 +194,7 @@ Every command follows the same rules, so a caller that has learned one command c
 | `0`  | Success. `stdout` holds the answer; for a yes/no check, the answer is yes. |
 | `1`  | Runtime failure: invalid input data (from `stdin`, a file, or a value argument such as a version, prefix, color, URL, or timestamp), an unreadable file, a failed download. The reason is on `stderr`. |
 | `2`  | Usage error: unknown command or flag, a bad flag value, or the wrong number of arguments. |
-| `3`  | A yes/no check answered no: `cidr contains`, `cidr overlaps`, `semver -check`, `json-fmt -check`, and `hash -c`. |
+| `3`  | A yes/no check answered no: `cidr contains`, `cidr overlaps`, `semver -check`, `json-fmt -check`, `json-schema`, and `hash -c`. |
 
 `unicode -check` is a report rather than a yes/no check: it exits `0` and its JSON lists what it found. A command stopped by `SIGINT` or `SIGTERM` (Ctrl-C, or an agent's tool timeout) removes any unfinished output file and exits `130` or `143`, the shell convention.
 

@@ -82,6 +82,11 @@ var examples = map[string][]cli.Example{
 		{Command: `agent-utils json-fmt -c data.json`},
 		{Command: `agent-utils json-fmt -check data.json || echo invalid`},
 	},
+	"json-schema": {
+		{Command: `agent-utils json-schema order.schema.json order.json`},
+		{Command: `agent-utils json-schema schema.json data.json >/dev/null && echo valid`},
+		{Command: `agent-utils yaml2json config.yaml | agent-utils json-schema config.schema.json | jq -r '.errors[] | .instance_path + ": " + .message'`},
+	},
 	"json2csv": {
 		{Command: `printf '[{"name":"Jane","zip":"01234"}]' | agent-utils json2csv`},
 		{Command: `agent-utils csv2json data.csv | agent-utils json2csv`},
