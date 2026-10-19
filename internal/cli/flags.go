@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"strconv"
 )
 
 // newFlagSet returns a FlagSet whose own output is silenced. Left alone, the
@@ -38,3 +39,33 @@ type helpRequest struct {
 }
 
 func (h *helpRequest) Error() string { return "help requested" }
+
+// optionalInt is an integer flag that records whether it was given, for a
+// flag whose absence means something no number can express. Its default
+// renders as empty, so neither -h nor the commands manifest claims one.
+type optionalInt struct {
+	value int
+	set   bool
+}
+
+func (o *optionalInt) Set(s string) error {
+	v, err := strconv.ParseInt(s, 10, strconv.IntSize)
+	switch {
+	case errors.Is(err, strconv.ErrRange):
+		return errors.New("out of range")
+	case err != nil:
+		return errors.New("not an integer")
+	}
+	o.value, o.set = int(v), true
+	return nil
+}
+
+func (o *optionalInt) String() string {
+	if o == nil || !o.set {
+		return ""
+	}
+	return strconv.Itoa(o.value)
+}
+
+// Get makes the manifest describe the flag as an integer.
+func (o *optionalInt) Get() any { return o.value }

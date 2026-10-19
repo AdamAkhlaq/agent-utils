@@ -14,6 +14,7 @@ import (
 	// so embed Go's (the binary must behave identically on every platform).
 	_ "time/tzdata"
 
+	"github.com/adamakhlaq/agent-utils/v2/internal/arith"
 	"github.com/adamakhlaq/agent-utils/v2/internal/chars"
 	"github.com/adamakhlaq/agent-utils/v2/internal/cli"
 	"github.com/adamakhlaq/agent-utils/v2/internal/clock"
@@ -133,6 +134,21 @@ func registry() map[string]cli.Command {
 		}
 		return inspect.URLJSON(info)
 	}
+	calcText := func(expr string, scale int) (string, error) {
+		x, err := arith.Eval(expr)
+		if err != nil {
+			return "", err
+		}
+		out, _ := arith.Format(x, scale)
+		return out, nil
+	}
+	calcJSON := func(expr string, scale int) (string, error) {
+		x, err := arith.Eval(expr)
+		if err != nil {
+			return "", err
+		}
+		return arith.JSON(x, scale)
+	}
 	imgResize := func(w io.Writer, r io.Reader, width, height, max, quality int) error {
 		return img.Resize(w, r, img.ResizeOptions{Width: width, Height: height, Max: max, Quality: quality})
 	}
@@ -173,6 +189,7 @@ func registry() map[string]cli.Command {
 	for _, cmd := range []cli.Command{
 		cli.EncodeCommand("base64", "base64-encode or -decode input (-d to decode)", encode.Base64, encode.Base64Decode),
 		cli.ConvertCommand("bmp2png", "convert a BMP image to PNG", img.BMPToPNG),
+		cli.CalcCommand(calcText, calcJSON),
 		cli.CaseCommand(text.Case),
 		cli.TransformCommand("cert-decode", "decode X.509 certificates (PEM or DER) to a JSON array", certDecode),
 		cli.CIDRCommand(cidrInfoJSON, netcalc.Contains, netcalc.Overlaps, cidrSplit),

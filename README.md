@@ -96,14 +96,14 @@ Add this to your project's `CLAUDE.md` (or `~/.claude/CLAUDE.md` for every proje
 ```markdown
 ## agent-utils
 
-`agent-utils` is installed: exact, deterministic CLI utilities for base64/hex/URL
-encoding, JSON/YAML/TOML/XML/CSV conversion, Markdown tables, hashes, UUIDs and
-passwords, CIDR and SemVer math, timestamps and timezones, X.509, JWT, and URL
-decoding, Unicode inspection, ANSI stripping, case and slug conversion, colors,
-QR codes, and image conversion. Prefer it over doing these transformations
-yourself. Run `agent-utils help` for the
-command list and `agent-utils <command> -h` for usage. Exit codes: 0 success,
-1 failure, 2 usage error, 3 a yes/no check answered no.
+`agent-utils` is installed: exact, deterministic CLI utilities for
+base64/hex/URL encoding, JSON/YAML/TOML/XML/CSV conversion, Markdown tables,
+hashes, UUIDs and passwords, exact arithmetic, CIDR and SemVer math, timestamps
+and timezones, X.509, JWT, and URL decoding, Unicode inspection, ANSI stripping,
+case and slug conversion, colors, QR codes, and image conversion. Prefer it over
+doing these transformations yourself. Run `agent-utils help` for the command
+list and `agent-utils <command> -h` for usage. Exit codes: 0 success, 1 failure,
+2 usage error, 3 a yes/no check answered no.
 ```
 
 To let Claude Code run it without asking each time, allow it in `.claude/settings.json` (or `~/.claude/settings.json`). The deny rule keeps `video`, the one command that reaches the network, behind a prompt; deny rules take precedence over allow rules.
@@ -164,6 +164,7 @@ Put the same snippet in `AGENTS.md`, which these agents read. Recent versions of
 | Text | [`strip-ansi`](docs/commands/strip-ansi.md) | Remove ANSI escape sequences from text |
 | Text | [`md-table`](docs/commands/md-table.md) | Render a JSON array or CSV as a GitHub-flavored Markdown table |
 | Color | [`color`](docs/commands/color.md) | Convert a color between hex, rgb, and hsl |
+| Math | [`calc`](docs/commands/calc.md) | Evaluate an arithmetic expression exactly, with no floating point |
 | Network | [`cidr`](docs/commands/cidr.md) | CIDR/subnet math: describe, test, and split prefixes |
 | Time | [`time`](docs/commands/time.md) | Print or convert timestamps across formats and timezones |
 | SemVer | [`semver`](docs/commands/semver.md) | Sort, compare, or constraint-check SemVer 2.0.0 versions |
@@ -177,7 +178,7 @@ Each command links to its full reference in [`docs/commands`](docs/commands).
 
 Every command follows the same rules, so a caller that has learned one command can drive them all.
 
-- **Input** comes from the file named as the argument, or from `stdin` when there is none. Some commands take values on the command line instead: `cidr`, `semver -compare`, `qr` (the text to encode), `time`, and `video` (the URL) take only literal values, and `time` never reads `stdin`; `color`, `urlparse`, and `semver -check` take a literal value or fall back to `stdin`. Each command's `-h` shows its exact form.
+- **Input** comes from the file named as the argument, or from `stdin` when there is none. Some commands take values on the command line instead: `cidr`, `semver -compare`, `qr` (the text to encode), `time`, and `video` (the URL) take only literal values, and `time` never reads `stdin`; `calc`, `color`, `urlparse`, and `semver -check` take a literal value or fall back to `stdin`. Each command's `-h` shows its exact form.
 - **Output files** are opt-in: the image commands and `strip-ansi` accept an output path as a second argument, and `qr` takes `-o`. The result is written to a temporary file beside it and renamed into place only on success, so a failed command never damages an existing file, and the output may be the input file.
 - **Results** go to `stdout` and nothing else does; diagnostics go to `stderr`. There are no colors, prompts, progress bars, or interactive modes.
 - **Structured results are JSON**, pretty-printed and ready for `jq`.
