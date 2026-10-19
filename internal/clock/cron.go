@@ -527,22 +527,3 @@ func cronRuns(expr string, from time.Time, loc *time.Location, n int) (cronSched
 	}
 	return s, out, nil
 }
-
-// CronFrom parses a -from timestamp like Parse, except that one without a
-// UTC offset is wall-clock time in loc, the zone the schedule runs in.
-func CronFrom(s string, now time.Time, loc *time.Location) (time.Time, error) {
-	t, err := Parse(s, now)
-	if err != nil {
-		return t, err
-	}
-	trimmed := strings.TrimSpace(s)
-	for _, layout := range layouts {
-		if strings.Contains(layout, "Z07") || strings.Contains(layout, "-07") || strings.Contains(layout, "MST") {
-			continue
-		}
-		if local, err := time.ParseInLocation(layout, trimmed, loc); err == nil {
-			return local, nil
-		}
-	}
-	return t, nil
-}

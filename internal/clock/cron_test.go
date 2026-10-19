@@ -293,48 +293,6 @@ func TestCronNextMatchesScan(t *testing.T) {
 	}
 }
 
-func TestCronFrom(t *testing.T) {
-	now := time.Date(2026, 8, 17, 12, 0, 0, 0, time.UTC)
-	tests := []struct {
-		name    string
-		input   string
-		zone    string
-		want    string
-		wantErr string
-	}{
-		{name: "bare date is midnight in the zone", input: "2026-03-08", zone: "America/New_York", want: "2026-03-08T00:00:00-05:00"},
-		{name: "date and time in the zone", input: "2026-11-01 01:30", zone: "America/New_York", want: "2026-11-01T01:30:00-04:00"},
-		{name: "date and time with T and seconds", input: " 2026-07-01T09:15:30\n", zone: "Asia/Tokyo", want: "2026-07-01T09:15:30+09:00"},
-		{name: "bare date in utc", input: "2026-03-08", zone: "UTC", want: "2026-03-08T00:00:00Z"},
-		{name: "explicit offset is kept", input: "2026-03-08T00:00:00Z", zone: "America/New_York", want: "2026-03-08T00:00:00Z"},
-		{name: "rfc1123 zone is kept", input: "Sun, 08 Mar 2026 00:00:00 +0000", zone: "Asia/Tokyo", want: "2026-03-08T00:00:00Z"},
-		{name: "epoch seconds are absolute", input: "1000000000", zone: "Asia/Tokyo", want: "2001-09-09T01:46:40Z"},
-		{name: "now", input: "now", zone: "Asia/Tokyo", want: "2026-08-17T12:00:00Z"},
-		{name: "garbage", input: "yesterday", zone: "UTC", wantErr: "unrecognized timestamp"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := CronFrom(tt.input, now, cronZone(t, tt.zone))
-			if tt.wantErr != "" {
-				if err == nil || !strings.Contains(err.Error(), tt.wantErr) {
-					t.Fatalf("CronFrom() error = %v, want it to contain %q", err, tt.wantErr)
-				}
-				return
-			}
-			if err != nil {
-				t.Fatal(err)
-			}
-			want, err := time.Parse(time.RFC3339, tt.want)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if !got.Equal(want) {
-				t.Errorf("CronFrom(%q) = %v, want %v", tt.input, got, want)
-			}
-		})
-	}
-}
-
 func TestCron(t *testing.T) {
 	got, err := Cron("0 9 * * MON-FRI", cronFrom, time.UTC, 2)
 	if err != nil {

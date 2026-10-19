@@ -76,7 +76,7 @@ Several skipped times that resolve to the same instant are listed once. The same
 
 Results must fall within the years `0000` to `9999`, which RFC 3339 can represent. The search covers 400 years past `-from` (or past the last run found), a full cycle of the Gregorian calendar, so rare schedules still resolve: `0 0 29 2 */6` (February 29 on a Saturday or Sunday) runs in 2088 and next in 2116, because 2100 is not a leap year.
 
-A `-from` timestamp without an offset (`2026-03-08` or `2026-03-08 09:00`) is wall-clock time in the `-z` zone, unlike `time`, which reads it as UTC; one with an offset or `Z`, or in epoch seconds, is that exact instant. Output depends on the clock only when `-from` is omitted, and on the machine only with `-z local`.
+A `-from` timestamp without an offset (`2026-03-08` or `2026-03-08 09:00`) is wall-clock time in the `-z` zone, as in `time add` and `time diff` (a skipped wall time moves forward, a repeated one is the earlier instant); one with an offset or `Z`, or in epoch seconds, is that exact instant. Output depends on the clock only when `-from` is omitted, and on the machine only with `-z local`.
 
 ## Exit codes
 
