@@ -213,6 +213,12 @@ func registry() map[string]cli.Command {
 		cli.MarkdownTableCommand(text.MarkdownTable, text.MarkdownTableCSV),
 		cli.PasswordCommand(generate.Password),
 		cli.QRCommand(img.QR, img.QRDecode),
+		cli.QuoteCommand([]cli.QuoteTarget{
+			{Name: "shell", Quote: encode.ShellQuote, Unquote: encode.ShellUnquote},
+			{Name: "json", Quote: encode.JSONQuote, Unquote: encode.JSONUnquote},
+			{Name: "html", Quote: encode.HTMLEscape, Unquote: encode.HTMLUnescape},
+			{Name: "regex", Quote: encode.RegexEscape},
+		}),
 		cli.SemverCommand(semver.Sort, semver.CompareStrings, semverCheck),
 		cli.StringTransformCommand("slugify", "turn text into a lowercase hyphenated slug", text.Slugify),
 		cli.ConvertCommand("strip-ansi", "remove ANSI escape sequences (colors, cursor movement, OSC) from text", text.StripANSI),

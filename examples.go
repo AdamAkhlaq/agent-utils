@@ -108,6 +108,13 @@ var examples = map[string][]cli.Example{
 		{Command: `agent-utils qr -o qr.png 'https://example.com'`},
 		{Command: `agent-utils qr -d qr.png`, Output: `https://example.com`},
 	},
+	"quote": {
+		{Command: `printf '%s' "it's here" | agent-utils quote -as shell`, Output: `'it'"'"'s here'`},
+		{Command: `printf 'say "hi"\n' | agent-utils quote -as json`, Output: `"say \"hi\"\n"`},
+		{Command: `printf '<a href="/">' | agent-utils quote -as html`, Output: `&lt;a href=&#34;/&#34;&gt;`},
+		{Command: `printf 'v1.2.*' | agent-utils quote -as regex`, Output: `v1\.2\.\*`},
+		{Command: `printf '%s' '"caf\u00e9"' | agent-utils quote -d -as json`, Output: `café`},
+	},
 	"semver": {
 		{Command: `printf '1.2.0\n1.10.0\n' | agent-utils semver -r | head -1`, Output: `1.10.0`},
 		{Command: `agent-utils semver -compare 1.2.3 1.10.0`, Output: `-1`},
