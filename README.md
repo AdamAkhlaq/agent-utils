@@ -146,7 +146,7 @@ Put the same snippet in `AGENTS.md`, which these agents read. Recent versions of
 | Format | [`yaml2json`](docs/commands/yaml2json.md) | Convert YAML to JSON |
 | Format | [`csv2json`](docs/commands/csv2json.md) | Convert CSV with a header row to a JSON array |
 | Format | [`json2csv`](docs/commands/json2csv.md) | Convert a JSON array of objects to CSV |
-| Image | [`qr`](docs/commands/qr.md) | Generate or decode QR code PNGs |
+| Image | [`qr`](docs/commands/qr.md) | Generate a QR code PNG, or decode one from a PNG, JPEG, GIF, BMP, TIFF, or WebP image |
 | Image | [`png2jpeg`](docs/commands/png2jpeg.md) | Convert PNG to JPEG |
 | Image | [`jpeg2png`](docs/commands/jpeg2png.md) | Convert JPEG to PNG |
 | Image | [`img-resize`](docs/commands/img-resize.md) | Resize a PNG or JPEG, keeping its format |

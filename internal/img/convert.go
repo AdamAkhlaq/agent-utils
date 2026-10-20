@@ -14,7 +14,7 @@ import (
 // Go's premultiplied color model would otherwise render transparent pixels
 // black.
 func PNGToJPEG(w io.Writer, r io.Reader, quality int) error {
-	src, err := png.Decode(r)
+	src, err := decodeLimited(r, png.DecodeConfig, png.Decode)
 	if err != nil {
 		return fmt.Errorf("decoding PNG: %w", err)
 	}
@@ -26,7 +26,7 @@ func PNGToJPEG(w io.Writer, r io.Reader, quality int) error {
 
 // JPEGToPNG converts the JPEG in r to a PNG in w, losslessly.
 func JPEGToPNG(w io.Writer, r io.Reader) error {
-	src, err := jpeg.Decode(r)
+	src, err := decodeLimited(r, jpeg.DecodeConfig, jpeg.Decode)
 	if err != nil {
 		return fmt.Errorf("decoding JPEG: %w", err)
 	}

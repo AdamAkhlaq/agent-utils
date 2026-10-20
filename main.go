@@ -224,7 +224,7 @@ func registry() map[string]cli.Command {
 		cli.ConvertCommand("gif2png", "convert a GIF image to PNG (first frame of an animation)", img.GIFToPNG),
 		cli.HashCommand(digest.Sum),
 		cli.EncodeCommand("hex", "hex-encode or -decode input (-d to decode)", encode.Hex, encode.HexDecode),
-		cli.ImgResizeCommand(imgResize),
+		cli.ImgResizeCommand(imgResize, img.MaxPixels),
 		cli.EncodeCommand("url", "URL-encode or -decode input (-d to decode)", encode.URL, encode.URLDecode),
 		cli.URLParseCommand(urlparseJSON),
 		cli.ConvertCommand("jpeg2png", "convert a JPEG image to PNG", img.JPEGToPNG),
@@ -238,7 +238,7 @@ func registry() map[string]cli.Command {
 		cli.LoremCommand(generate.LoremWords, generate.LoremParagraphs),
 		cli.MarkdownTableCommand(text.MarkdownTable, text.MarkdownTableCSV),
 		cli.PasswordCommand(generate.Password),
-		cli.QRCommand(img.QR, img.QRDecode),
+		cli.QRCommand(img.QR, img.QRDecode, img.MaxQRSize),
 		cli.QuoteCommand([]cli.QuoteTarget{
 			{Name: "shell", Quote: encode.ShellQuote, Unquote: encode.ShellUnquote},
 			{Name: "json", Quote: encode.JSONQuote, Unquote: encode.JSONUnquote},

@@ -2,9 +2,13 @@ package main
 
 import (
 	"bytes"
+	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"hash/crc32"
+	"image"
+	"image/png"
 	"io"
 	"os"
 	"path/filepath"
@@ -33,6 +37,15 @@ func TestExitCodes(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
+	tinyPNG := encodePNG(t, 1, 2)
+	oversizedPNG := encodePNG(t, 1, 1)
+	binary.BigEndian.PutUint32(oversizedPNG[16:], 30000) // IHDR width
+	binary.BigEndian.PutUint32(oversizedPNG[20:], 30000) // IHDR height
+	binary.BigEndian.PutUint32(oversizedPNG[29:], crc32.ChecksumIEEE(oversizedPNG[12:29]))
+	tallPNG := encodePNG(t, 1, 1)
+	binary.BigEndian.PutUint32(tallPNG[16:], 1000)   // IHDR width
+	binary.BigEndian.PutUint32(tallPNG[20:], 100000) // IHDR height
+	binary.BigEndian.PutUint32(tallPNG[29:], crc32.ChecksumIEEE(tallPNG[12:29]))
 	tests := []struct {
 		name  string
 		args  []string
@@ -118,6 +131,13 @@ func TestExitCodes(t *testing.T) {
 		{name: "json-schema remote ref", args: []string{"json-schema", remoteSchema}, stdin: `{}`, want: 1},
 		{name: "json-schema no schema argument", args: []string{"json-schema"}, want: 2},
 		{name: "json-schema too many arguments", args: []string{"json-schema", schema, missing, missing}, want: 2},
+		{name: "png2jpeg image over the pixel limit is bad data", args: []string{"png2jpeg"}, stdin: string(oversizedPNG), want: 1},
+		{name: "img-resize image over the pixel limit is bad data", args: []string{"img-resize", "-max", "100"}, stdin: string(oversizedPNG), want: 1},
+		{name: "img-resize derived size over the pixel limit is bad data", args: []string{"img-resize", "-width", "12000"}, stdin: string(tinyPNG), want: 1},
+		{name: "img-resize working area over the limit is bad data", args: []string{"img-resize", "-width", "2000", "-height", "1000"}, stdin: string(tallPNG), want: 1},
+		{name: "img-resize requested size over the pixel limit", args: []string{"img-resize", "-width", "16000", "-height", "8001"}, stdin: string(tinyPNG), want: 2},
+		{name: "qr -d image over the pixel limit is bad data", args: []string{"qr", "-d"}, stdin: string(oversizedPNG), want: 1},
+		{name: "qr size over the pixel limit", args: []string{"qr", "-s", "11314", "hello"}, want: 2},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -246,6 +266,15 @@ func TestCommandDocs(t *testing.T) {
 			t.Errorf("%s documents %q, which is not a command", p, name)
 		}
 	}
+}
+
+func encodePNG(t *testing.T, width, height int) []byte {
+	t.Helper()
+	var buf bytes.Buffer
+	if err := png.Encode(&buf, image.NewGray(image.Rect(0, 0, width, height))); err != nil {
+		t.Fatal(err)
+	}
+	return buf.Bytes()
 }
 
 // TestExamples runs every example that states its output and needs no shell

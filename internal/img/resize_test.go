@@ -20,6 +20,21 @@ func jpegBytes(t *testing.T, m image.Image) *bytes.Buffer {
 	return &buf
 }
 
+// Go's JPEG decoder skips stray bytes between the start-of-image marker and
+// the first segment, as other tools do, so Resize must accept them too.
+func TestResizeJPEGWithStrayByte(t *testing.T) {
+	data := jpegBytes(t, solidNRGBA(40, 20, color.NRGBA{R: 200, A: 255})).Bytes()
+	data = append(append(append([]byte{}, data[:2]...), 0x00), data[2:]...)
+	var out bytes.Buffer
+	if err := Resize(&out, bytes.NewReader(data), ResizeOptions{Width: 10, Quality: 75}); err != nil {
+		t.Fatalf("Resize() error = %v", err)
+	}
+	cfg, err := jpeg.DecodeConfig(&out)
+	if err != nil || cfg.Width != 10 || cfg.Height != 5 {
+		t.Errorf("resized to %dx%d (err %v), want 10x5", cfg.Width, cfg.Height, err)
+	}
+}
+
 func TestResize(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -119,6 +134,7 @@ func TestResize(t *testing.T) {
 			// The gif import above registers the GIF decoder, mirroring the
 			// real binary where internal/inspect registers it.
 			{name: "decodable but unsupported format", input: gifBuf.String(), opts: ResizeOptions{Width: 10, Quality: 75}, wantMsg: `unsupported input format "gif"`},
+			{name: "TIFF is rejected before its header is read", input: "II*\x00\xf0\xff\xff\x7f", opts: ResizeOptions{Width: 10, Quality: 75}, wantMsg: `unsupported input format "tiff"`},
 			{name: "no sizing mode", input: "", opts: ResizeOptions{Quality: 75}, wantMsg: "sizing mode"},
 			{name: "max combined with width", input: "", opts: ResizeOptions{Width: 10, Max: 10, Quality: 75}, wantMsg: "sizing mode"},
 			{name: "quality out of range", input: "", opts: ResizeOptions{Width: 10, Quality: 0}, wantMsg: "quality"},
