@@ -17,7 +17,6 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-	"unicode/utf8"
 
 	"github.com/santhosh-tekuri/jsonschema/v6"
 	"github.com/santhosh-tekuri/jsonschema/v6/kind"
@@ -495,17 +494,8 @@ func decodeStrict(data []byte) (any, error) {
 	if len(bytes.Trim(data, " \t\r\n")) == 0 {
 		return nil, errors.New("empty input")
 	}
-	if !utf8.Valid(data) {
-		offset := 0
-		for offset < len(data) {
-			r, size := utf8.DecodeRune(data[offset:])
-			if r == utf8.RuneError && size <= 1 {
-				break
-			}
-			offset += size
-		}
-		line, col := lineCol(data, int64(offset+1))
-		return nil, fmt.Errorf("invalid UTF-8 at line %d, column %d", line, col)
+	if err := checkUTF8(data); err != nil {
+		return nil, err
 	}
 	if !json.Valid(data) {
 		// checkSyntax is slower, but finds the position.
@@ -525,7 +515,7 @@ type strictDecoder struct {
 }
 
 func (d *strictDecoder) value() (any, error) {
-	start := d.nextTokenOffset()
+	start := nextTokenOffset(d.data, d.dec)
 	tok, err := d.dec.Token()
 	if err != nil {
 		return nil, syntaxError(d.data, err)
@@ -550,7 +540,7 @@ func (d *strictDecoder) value() (any, error) {
 func (d *strictDecoder) object() (any, error) {
 	obj := map[string]any{}
 	for d.dec.More() {
-		start := d.nextTokenOffset()
+		start := nextTokenOffset(d.data, d.dec)
 		tok, err := d.dec.Token()
 		if err != nil {
 			return nil, syntaxError(d.data, err)
@@ -585,16 +575,6 @@ func (d *strictDecoder) array() (any, error) {
 		return nil, syntaxError(d.data, err)
 	}
 	return arr, nil
-}
-
-// nextTokenOffset returns the byte offset where the next token starts: the
-// decoder's offset sits just past the previous token, before any separator.
-func (d *strictDecoder) nextTokenOffset() int64 {
-	off := d.dec.InputOffset()
-	for off < int64(len(d.data)) && strings.IndexByte(" \t\r\n,:", d.data[off]) >= 0 {
-		off++
-	}
-	return off
 }
 
 var printer = message.NewPrinter(language.English)
