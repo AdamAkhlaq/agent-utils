@@ -37,16 +37,11 @@ var layouts = []struct {
 	{time.RFC1123, true},
 }
 
-// Parse turns s into a time: "now" (the passed reference time), epoch seconds
-// or milliseconds, RFC 3339, RFC 1123, or a date with optional time. A
-// timestamp without a zone or offset is read as UTC.
-func Parse(s string, now time.Time) (time.Time, error) {
-	return ParseIn(s, now, time.UTC)
-}
-
-// ParseIn is Parse with a timestamp that has no zone or offset read as a wall
-// clock time in loc, resolving DST gaps and repeats as Add does. Epoch values,
-// "now", and timestamps with an offset are absolute and ignore loc.
+// ParseIn turns s into a time: "now" (the passed reference time), epoch
+// seconds or milliseconds, RFC 3339, RFC 1123, or a date with optional time.
+// A timestamp without a zone or offset is read as a wall clock time in loc,
+// resolving DST gaps and repeats as Add does. Epoch values, "now", and
+// timestamps with an offset are absolute and ignore loc.
 func ParseIn(s string, now time.Time, loc *time.Location) (time.Time, error) {
 	s = strings.TrimSpace(s)
 	if s == "" {
@@ -370,7 +365,7 @@ func parseGoDuration(body string, negative bool) (Duration, error) {
 	d, err := time.ParseDuration(body)
 	switch {
 	case err != nil && goSyntax.MatchString(body):
-		return Duration{}, errors.New("Go-style durations are limited to about 292 years; use ISO 8601 for longer spans, like PT3000000H")
+		return Duration{}, errors.New("a Go-style duration is limited to about 292 years; use ISO 8601 for longer spans, like PT3000000H")
 	case err != nil:
 		return Duration{}, fmt.Errorf("%s (%s)", strings.TrimPrefix(err.Error(), "time: "), durationForms)
 	}
@@ -409,7 +404,7 @@ func calendarUnitError(number, unit string, negative bool) error {
 	if negative {
 		sign = "-"
 	}
-	msg := fmt.Sprintf("Go-style durations have no %q unit: use %sP%s%s for calendar %s, keeping the wall-clock time", unit, sign, number, designator, noun)
+	msg := fmt.Sprintf("a Go-style duration has no %q unit: use %sP%s%s for calendar %s, keeping the wall-clock time", unit, sign, number, designator, noun)
 	switch {
 	case hours > 0 && n > 0:
 		msg += fmt.Sprintf(", or %s%dh for exactly %d hours", sign, n*hours, n*hours)

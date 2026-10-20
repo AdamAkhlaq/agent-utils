@@ -12,7 +12,7 @@ import (
 // 1e9 seconds after the epoch: 2001-09-09T01:46:40Z, a Sunday.
 var ref = time.Unix(1_000_000_000, 0).UTC()
 
-func TestParse(t *testing.T) {
+func TestParseInUTC(t *testing.T) {
 	now := time.Date(2026, 8, 17, 12, 0, 0, 0, time.UTC)
 	tests := []struct {
 		name    string
@@ -39,21 +39,21 @@ func TestParse(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Parse(tt.input, now)
+			got, err := ParseIn(tt.input, now, time.UTC)
 			if tt.wantErr != "" {
 				if err == nil {
-					t.Fatal("Parse() expected an error, got nil")
+					t.Fatal("ParseIn() expected an error, got nil")
 				}
 				if !strings.Contains(err.Error(), tt.wantErr) {
-					t.Fatalf("Parse() error = %q, want it to contain %q", err, tt.wantErr)
+					t.Fatalf("ParseIn() error = %q, want it to contain %q", err, tt.wantErr)
 				}
 				return
 			}
 			if err != nil {
-				t.Fatalf("Parse() error = %v", err)
+				t.Fatalf("ParseIn() error = %v", err)
 			}
 			if !got.Equal(tt.want) {
-				t.Errorf("Parse(%q) = %v, want %v", tt.input, got, tt.want)
+				t.Errorf("ParseIn(%q) = %v, want %v", tt.input, got, tt.want)
 			}
 		})
 	}

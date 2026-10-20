@@ -52,6 +52,12 @@ jobs:
       - name: govulncheck
         if: matrix.toolchain == 'stable'
         run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
+      # Bugs and dead code that vet does not look for. Each staticcheck
+      # release reads only the Go versions out when it was built, so it runs
+      # on the latest Go and its pin moves with each Go release.
+      - name: staticcheck
+        if: matrix.toolchain == 'stable'
+        run: go run honnef.co/go/tools/cmd/staticcheck@v0.8.2 ./...
       - name: cross-build release targets
         if: matrix.toolchain == 'stable'
         run: |
