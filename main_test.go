@@ -50,6 +50,12 @@ func TestExitCodes(t *testing.T) {
 	if err := png.Encode(&blankPNG, image.NewGray(image.Rect(0, 0, 64, 64))); err != nil {
 		t.Fatal(err)
 	}
+	// The billion laughs: 9 levels of 9 aliases, a 414-byte alias bomb.
+	var laughs strings.Builder
+	laughs.WriteString("a0: &a0 [lol,lol,lol,lol,lol,lol,lol,lol,lol]\n")
+	for i := 1; i < 9; i++ {
+		fmt.Fprintf(&laughs, "a%d: &a%d [%s]\n", i, i, strings.TrimSuffix(strings.Repeat(fmt.Sprintf("*a%d,", i-1), 9), ","))
+	}
 	tests := []struct {
 		name  string
 		args  []string
@@ -126,6 +132,17 @@ func TestExitCodes(t *testing.T) {
 		{name: "hash verify match", args: []string{"hash", "-c", "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"}, stdin: "abc", want: 0},
 		{name: "hash verify mismatch", args: []string{"hash", "-c", strings.Repeat("0", 64)}, stdin: "abc", want: 3},
 		{name: "hash verify missing file", args: []string{"hash", "-c", strings.Repeat("0", 64), missing}, want: 1},
+		{name: "yaml2json merge keys", args: []string{"yaml2json"}, stdin: "base: &b {a: 1}\nm: {<<: *b, c: 2}", want: 0},
+		{name: "yaml2json alias bomb is bad data", args: []string{"yaml2json"}, stdin: laughs.String(), want: 1},
+		{name: "yaml2json unknown alias is bad data", args: []string{"yaml2json"}, stdin: "a: *nope", want: 1},
+		{name: "yaml2json invalid merge value is bad data", args: []string{"yaml2json"}, stdin: "m: {<<: 1}", want: 1},
+		{name: "yaml2json infinity is bad data", args: []string{"yaml2json"}, stdin: "a: .inf", want: 1},
+		{name: "yaml2json invalid tagged scalar is bad data", args: []string{"yaml2json"}, stdin: "a: !!int 1.5", want: 1},
+		{name: "yaml2json nesting past the depth limit is bad data", args: []string{"yaml2json"}, stdin: strings.Repeat("[", 10_001) + strings.Repeat("]", 10_001), want: 1},
+		{name: "yaml2json YAML 1.2 directive converts", args: []string{"yaml2json"}, stdin: "%YAML 1.2\n---\na: 1", want: 0},
+		{name: "yaml2json TAG directive is unsupported input", args: []string{"yaml2json"}, stdin: "%TAG !e! tag:example.com,2000:\n---\na: !e!x 1", want: 1},
+		{name: "yaml2json two tags on one node is bad data", args: []string{"yaml2json"}, stdin: "a: !!str !!str v", want: 1},
+		{name: "yaml2json tag on an alias is bad data", args: []string{"yaml2json"}, stdin: "a: &x 5\nb: !!str *x", want: 1},
 		{name: "json-schema valid", args: []string{"json-schema", schema}, stdin: `{"id": 1}`, want: 0},
 		{name: "json-schema invalid", args: []string{"json-schema", schema}, stdin: `{}`, want: 3},
 		{name: "json-schema malformed input", args: []string{"json-schema", schema}, stdin: `{"id": }`, want: 1},
