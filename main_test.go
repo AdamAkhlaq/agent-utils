@@ -46,6 +46,10 @@ func TestExitCodes(t *testing.T) {
 	binary.BigEndian.PutUint32(tallPNG[16:], 1000)   // IHDR width
 	binary.BigEndian.PutUint32(tallPNG[20:], 100000) // IHDR height
 	binary.BigEndian.PutUint32(tallPNG[29:], crc32.ChecksumIEEE(tallPNG[12:29]))
+	var blankPNG bytes.Buffer
+	if err := png.Encode(&blankPNG, image.NewGray(image.Rect(0, 0, 64, 64))); err != nil {
+		t.Fatal(err)
+	}
 	tests := []struct {
 		name  string
 		args  []string
@@ -55,6 +59,7 @@ func TestExitCodes(t *testing.T) {
 		{name: "success", args: []string{"hex"}, stdin: "hi", want: 0},
 		{name: "runtime failure", args: []string{"hex", "-d"}, stdin: "zz", want: 1},
 		{name: "missing input file", args: []string{"hex", missing}, want: 1},
+		{name: "qr image without a code is bad data", args: []string{"qr", "-d"}, stdin: blankPNG.String(), want: 1},
 		{name: "usage error", args: []string{"hex", "-x"}, want: 2},
 		{name: "unknown command", args: []string{"nonsense"}, want: 2},
 		{name: "help", args: []string{"--help"}, want: 0},
