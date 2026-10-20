@@ -225,7 +225,7 @@ func TestCronNext(t *testing.T) {
 			from := cronFrom
 			if tt.from != "" {
 				var err error
-				if from, err = Parse(tt.from, from); err != nil {
+				if from, err = ParseIn(tt.from, from, time.UTC); err != nil {
 					t.Fatal(err)
 				}
 			}

@@ -27,6 +27,7 @@ Before pushing, run the same checks CI runs:
 ```sh
 gofmt -l .          # must print nothing
 go vet ./...
+go run honnef.co/go/tools/cmd/staticcheck@v0.8.2 ./...
 go test ./...
 ```
 
@@ -57,7 +58,7 @@ Naming: conversions are `x2y` (`png2jpeg`), everything else is `noun` or `noun-v
 - Pull requests are squash-merged, so the **pull request title** becomes the commit on `main` and a line in the release changelog. Write it as a [Conventional Commit](https://www.conventionalcommits.org): `feat: add the hexdump command`, `fix: reject empty input in json2csv`. Mark breaking changes with `!` (`feat!: ...`), and say in the description what breaks and how to migrate. A check on every pull request enforces the format.
 - Use one of these types: `feat` (a new command, flag, or output field), `fix`, `docs`, `test`, `refactor`, `perf`, `build` (build, release, and dependency changes), `ci`, or `chore`. In the release notes, breaking changes come first, then `feat` and `fix` in their own sections; `build`, `ci`, `refactor`, and `perf` appear under Other, and `docs`, `test`, and `chore` are left out.
 - Fill in the runbook in the pull request template: the exact commands a reviewer can run, with their expected output and exit codes.
-- CI must pass before merging: gofmt, `go mod tidy`, vet, tests, and a cgo-free build on both the minimum supported Go version and the latest, plus `govulncheck` and a cross-build of every release target on the latest.
+- CI must pass before merging: gofmt, `go mod tidy`, vet, tests, and a cgo-free build on both the minimum supported Go version and the latest, plus `govulncheck`, staticcheck, and a cross-build of every release target on the latest.
 
 ## Releases
 

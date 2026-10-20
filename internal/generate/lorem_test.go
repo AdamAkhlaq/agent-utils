@@ -13,6 +13,7 @@ func TestLoremWords(t *testing.T) {
 	}{
 		{name: "first word", n: 1, want: "Lorem"},
 		{name: "first five", n: 5, want: "Lorem ipsum dolor sit amet,"},
+		{name: "first thirty", n: 30, want: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi"},
 		{name: "zero", n: 0, want: ""},
 		{name: "negative", n: -3, want: ""},
 	}
@@ -32,12 +33,6 @@ func TestLoremWords(t *testing.T) {
 		}
 		if got[passageLen] != "Lorem" || got[passageLen+1] != "ipsum" {
 			t.Errorf("cycle restarts with %q %q, want %q %q", got[passageLen], got[passageLen+1], "Lorem", "ipsum")
-		}
-	})
-
-	t.Run("deterministic", func(t *testing.T) {
-		if LoremWords(30) != LoremWords(30) {
-			t.Error("LoremWords() is not deterministic")
 		}
 	})
 }
