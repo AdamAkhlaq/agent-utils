@@ -1,6 +1,7 @@
 package img
 
 import (
+	"errors"
 	"fmt"
 	_ "image/jpeg"
 	_ "image/png"
@@ -40,13 +41,24 @@ func QRDecode(r io.Reader) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("decoding QR image: %w", err)
 	}
-	bmp, err := gozxing.NewBinaryBitmapFromImage(m)
-	if err != nil {
-		return "", fmt.Errorf("decoding QR image: %w", err)
+	// A light-on-dark code, common in dark-mode screenshots, decodes only
+	// inverted. gozxing declares an ALSO_INVERTED hint, but no reader uses it.
+	source := gozxing.NewLuminanceSourceFromImage(m)
+	for _, luminance := range []gozxing.LuminanceSource{source, source.Invert()} {
+		bmp, err := gozxing.NewBinaryBitmap(gozxing.NewHybridBinarizer(luminance))
+		if err != nil {
+			return "", fmt.Errorf("decoding QR image: %w", err)
+		}
+		if result, err := zxqrcode.NewQRCodeReader().Decode(bmp, nil); err == nil {
+			return result.GetText(), nil
+		}
 	}
-	result, err := zxqrcode.NewQRCodeReader().Decode(bmp, nil)
-	if err != nil {
-		return "", fmt.Errorf("decoding QR image: %w", err)
-	}
-	return result.GetText(), nil
+	// gozxing's own errors describe its search ("NotFoundException: startSize =
+	// 0"), and their types do not reliably say whether a code was located, so
+	// they are not passed on.
+	return "", fmt.Errorf("%w: it may be missing, cut off, damaged, blurred, or too small", ErrNoQRCode)
 }
+
+// ErrNoQRCode is returned by QRDecode when the image decodes but no QR code in
+// it can be read.
+var ErrNoQRCode = errors.New("no readable QR code found in the image")

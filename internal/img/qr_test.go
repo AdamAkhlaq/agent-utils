@@ -2,7 +2,9 @@ package img
 
 import (
 	"bytes"
+	"errors"
 	"image"
+	"image/draw"
 	"image/png"
 	"strings"
 	"testing"
@@ -45,19 +47,80 @@ func TestQREmptyText(t *testing.T) {
 	}
 }
 
+func TestQRDecodeInverted(t *testing.T) {
+	var code bytes.Buffer
+	if err := QR(&code, "https://example.com", 256); err != nil {
+		t.Fatal(err)
+	}
+	src, err := png.Decode(&code)
+	if err != nil {
+		t.Fatal(err)
+	}
+	inverted := image.NewGray(src.Bounds())
+	draw.Draw(inverted, inverted.Bounds(), src, image.Point{}, draw.Src)
+	for i := range inverted.Pix {
+		inverted.Pix[i] = 255 - inverted.Pix[i]
+	}
+	var buf bytes.Buffer
+	if err := png.Encode(&buf, inverted); err != nil {
+		t.Fatal(err)
+	}
+	got, err := QRDecode(&buf)
+	if err != nil || got != "https://example.com" {
+		t.Errorf("QRDecode() = %q, %v, want the text of the light-on-dark code", got, err)
+	}
+}
+
 func TestQRDecodeErrors(t *testing.T) {
-	t.Run("not an image", func(t *testing.T) {
-		if _, err := QRDecode(strings.NewReader("not an image")); err == nil {
-			t.Error("QRDecode() expected an error for non-image input")
-		}
-	})
-	t.Run("image without QR code", func(t *testing.T) {
+	encodePNG := func(m image.Image) []byte {
 		var buf bytes.Buffer
-		if err := png.Encode(&buf, image.NewRGBA(image.Rect(0, 0, 64, 64))); err != nil {
+		if err := png.Encode(&buf, m); err != nil {
 			t.Fatal(err)
 		}
-		if _, err := QRDecode(&buf); err == nil {
-			t.Error("QRDecode() expected an error for an image with no QR code")
-		}
-	})
+		return buf.Bytes()
+	}
+	var code bytes.Buffer
+	if err := QR(&code, "https://example.com", 256); err != nil {
+		t.Fatal(err)
+	}
+	src, err := png.Decode(&code)
+	if err != nil {
+		t.Fatal(err)
+	}
+	noise := image.NewGray(image.Rect(0, 0, 256, 256))
+	for i, x := range noise.Pix {
+		x = uint8(uint32(i) * 2654435761 >> 24)
+		noise.Pix[i] = 255 * (x & 1)
+	}
+	tests := []struct {
+		name    string
+		input   []byte
+		wantErr error
+		wantMsg string
+	}{
+		{name: "not an image", input: []byte("not an image"), wantMsg: "decoding QR image: image: unknown format"},
+		{name: "empty input", input: nil, wantMsg: "decoding QR image:"},
+		{name: "image without a code", input: encodePNG(image.NewGray(image.Rect(0, 0, 64, 64))), wantErr: ErrNoQRCode},
+		{name: "random noise", input: encodePNG(noise), wantErr: ErrNoQRCode},
+		{name: "code cut in half", input: encodePNG(src.(interface {
+			SubImage(image.Rectangle) image.Image
+		}).SubImage(image.Rect(0, 0, 128, 256))), wantErr: ErrNoQRCode},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := QRDecode(bytes.NewReader(tt.input))
+			if err == nil {
+				t.Fatal("QRDecode() succeeded, want an error")
+			}
+			if tt.wantErr != nil && !errors.Is(err, tt.wantErr) {
+				t.Errorf("QRDecode() error = %v, want %v", err, tt.wantErr)
+			}
+			if !strings.HasPrefix(err.Error(), tt.wantMsg) {
+				t.Errorf("QRDecode() error = %q, want it to start with %q", err, tt.wantMsg)
+			}
+			if strings.Contains(err.Error(), "Exception") {
+				t.Errorf("QRDecode() error = %q leaks the decoder's internals", err)
+			}
+		})
+	}
 }
