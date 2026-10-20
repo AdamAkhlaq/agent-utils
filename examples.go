@@ -185,5 +185,6 @@ var examples = map[string][]cli.Example{
 	},
 	"yaml2json": {
 		{Command: `agent-utils yaml2json config.yaml | jq .service.name`},
+		{Command: `printf 'base: &base {image: app, restart: always}\nweb: {<<: *base, restart: "no"}\n' | agent-utils yaml2json | jq -c .web`, Output: `{"image":"app","restart":"no"}`},
 	},
 }
