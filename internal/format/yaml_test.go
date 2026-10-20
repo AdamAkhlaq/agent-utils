@@ -461,9 +461,10 @@ func TestYAMLToJSONBehaviorChanges(t *testing.T) {
 			want:   "{\n  \"a\": 1\n}",
 		},
 		{
-			name:   "control characters escaped as valid JSON",
-			input:  `a: "\0 \x01 \e \x7f \a \v \U000E0001"`,
-			before: "error: invalid escape sequence",
+			name:  "control characters escaped as valid JSON",
+			input: `a: "\0 \x01 \e \x7f \a \v \U000E0001"`,
+			// encoding/json words this error differently across Go versions.
+			before: "error: escape",
 			want:   `{` + "\n" + `  "a": "\u0000 \u0001 \u001b \u007f \u0007 \u000b \udb40\udc01"` + "\n" + `}`,
 		},
 		{
