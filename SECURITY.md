@@ -12,7 +12,7 @@ This project is maintained by volunteers, so there is no guaranteed response tim
 
 ## Scope
 
-In scope: any way that input to a command (stdin, file arguments, flag values) can make `agent-utils` crash in a way that harms the caller, produce output that misrepresents its input, or read or write files the caller didn't name, reach the network, or run other programs, beyond what is documented. Two behaviors are documented: an output file is first written to a temporary file beside it, which is renamed into place or removed; and `video` reaches the network, runs `yt-dlp` (which may run `ffmpeg`), and saves files under names `yt-dlp` chooses. Release artifacts and the build pipeline are in scope too.
+In scope: any way that input to a command (stdin, file arguments, flag values) can make `agent-utils` crash in a way that harms the caller, use memory or time far out of proportion to the size of the input and the work requested, produce output that misrepresents its input, or read or write files the caller didn't name, reach the network, or run other programs, beyond what is documented. Two behaviors are documented: an output file is first written to a temporary file beside it, which is renamed into place or removed; and `video` reaches the network, runs `yt-dlp` (which may run `ffmpeg`), and saves files under names `yt-dlp` chooses. Release artifacts and the build pipeline are in scope too.
 
 Out of scope, because the behavior is documented:
 

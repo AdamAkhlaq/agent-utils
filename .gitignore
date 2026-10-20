@@ -4,6 +4,3 @@ dev-utils
 
 # GoReleaser output
 dist/
-
-# Personal Docs
-CLAUDE.md

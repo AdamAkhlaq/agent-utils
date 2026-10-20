@@ -9,6 +9,8 @@ Thanks for helping. Bug reports, command proposals, and pull requests are all we
 
 New here? Issues labeled [`good first issue`](https://github.com/AdamAkhlaq/agent-utils/labels/good%20first%20issue) and [`help wanted`](https://github.com/AdamAkhlaq/agent-utils/labels/help%20wanted) are good places to start.
 
+Working with an AI coding agent? [CLAUDE.md](CLAUDE.md) holds the rules it should follow, and `.claude/` has a skill for adding a command (`/add-command`) and two review agents (`contract-reviewer` for the CLI contract, `hardening-auditor` for hostile input and performance). Claude Code picks them up automatically.
+
 ## Development setup
 
 You need Go 1.26 or newer.
