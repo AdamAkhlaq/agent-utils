@@ -41,8 +41,10 @@ func TestQRCommand(t *testing.T) {
 		{name: "zero size", args: []string{"-s", "0", "hello"}, wantErr: true, wantUsage: true},
 		{name: "bad flag", args: []string{"-x"}, wantErr: true, wantUsage: true},
 		{name: "size with decode", args: []string{"-d", "-s", "100"}, stdin: "img", wantErr: true, wantUsage: true},
+		{name: "largest size", args: []string{"-s", "1000", "hello"}, want: "PNG(hello,1000)"},
+		{name: "size over the largest", args: []string{"-s", "1001", "hello"}, wantErr: true, wantUsage: true},
 	}
-	cmd := QRCommand(stubQREncode, stubQRDecode)
+	cmd := QRCommand(stubQREncode, stubQRDecode, 1000)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var stdout, stderr bytes.Buffer
@@ -69,7 +71,7 @@ func TestQRCommand(t *testing.T) {
 
 func TestQRCommandWritesOutputFile(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "out.png")
-	cmd := QRCommand(stubQREncode, stubQRDecode)
+	cmd := QRCommand(stubQREncode, stubQRDecode, 1000)
 	var stdout, stderr bytes.Buffer
 	if err := cmd.Run([]string{"-o", path, "hello"}, strings.NewReader(""), &stdout, &stderr); err != nil {
 		t.Fatalf("Run() error = %v", err)
@@ -87,7 +89,7 @@ func TestQRCommandWritesOutputFile(t *testing.T) {
 }
 
 func TestQRCommandFailureLeavesOutputFileUntouched(t *testing.T) {
-	cmd := QRCommand(stubQREncode, stubQRDecode)
+	cmd := QRCommand(stubQREncode, stubQRDecode, 1000)
 	for name, args := range map[string][]string{
 		"missing text":          {},
 		"zero size":             {"-s", "0", "hello"},
@@ -114,7 +116,7 @@ func TestQRCommandDecodesFileArgument(t *testing.T) {
 	if err := os.WriteFile(path, []byte("img"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	cmd := QRCommand(stubQREncode, stubQRDecode)
+	cmd := QRCommand(stubQREncode, stubQRDecode, 1000)
 	var stdout, stderr bytes.Buffer
 	if err := cmd.Run([]string{"-d", path}, strings.NewReader("ignored"), &stdout, &stderr); err != nil {
 		t.Fatalf("Run() error = %v", err)

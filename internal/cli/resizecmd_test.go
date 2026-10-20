@@ -33,6 +33,14 @@ func TestImgResizeCommand(t *testing.T) {
 		{name: "unknown flag", args: []string{"-w", "40"}, wantErr: true, wantUsage: true},
 		{name: "too many arguments", args: []string{"-max", "512", "a", "b", "c"}, wantErr: true, wantUsage: true},
 		{name: "missing input file", args: []string{"-max", "512", "no-such-file"}, wantErr: true, wantUsage: false},
+		{name: "width and height at the pixel limit", args: []string{"-width", "200", "-height", "50"}, want: [4]int{200, 50, 0, 85}},
+		{name: "width and height just over the pixel limit", args: []string{"-width", "200", "-height", "51"}, wantErr: true, wantUsage: true},
+		{name: "width alone at the pixel limit", args: []string{"-width", "10000"}, want: [4]int{10000, 0, 0, 85}},
+		{name: "width alone over the pixel limit", args: []string{"-width", "10001"}, wantErr: true, wantUsage: true},
+		{name: "height alone at the pixel limit", args: []string{"-height", "10000"}, want: [4]int{0, 10000, 0, 85}},
+		{name: "height alone over the pixel limit", args: []string{"-height", "10001"}, wantErr: true, wantUsage: true},
+		{name: "width and height whose product overflows", args: []string{"-width", "9223372036854775807", "-height", "9223372036854775807"}, wantErr: true, wantUsage: true},
+		{name: "max is not bounded since it never upscales", args: []string{"-max", "9223372036854775807"}, want: [4]int{0, 0, 9223372036854775807, 85}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -41,7 +49,7 @@ func TestImgResizeCommand(t *testing.T) {
 				got = [4]int{width, height, max, quality}
 				_, err := io.Copy(w, r)
 				return err
-			})
+			}, 10_000)
 			var stdout, stderr bytes.Buffer
 			err := cmd.Run(tt.args, strings.NewReader("data"), &stdout, &stderr)
 			if tt.wantErr {
@@ -69,7 +77,7 @@ func TestImgResizeCommand(t *testing.T) {
 	t.Run("runtime error from the transform is not a usage error", func(t *testing.T) {
 		cmd := ImgResizeCommand(func(w io.Writer, r io.Reader, width, height, max, quality int) error {
 			return errors.New("decoding image: boom")
-		})
+		}, 10_000)
 		var stdout, stderr bytes.Buffer
 		err := cmd.Run([]string{"-max", "512"}, strings.NewReader("data"), &stdout, &stderr)
 		if err == nil {
