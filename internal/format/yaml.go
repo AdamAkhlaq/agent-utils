@@ -12,7 +12,6 @@ import (
 	"unicode/utf16"
 	"unicode/utf8"
 
-	"github.com/goccy/go-yaml"
 	"github.com/goccy/go-yaml/ast"
 	"github.com/goccy/go-yaml/lexer"
 	"github.com/goccy/go-yaml/parser"
@@ -1226,31 +1225,4 @@ func aliasText(a *ast.AliasNode) string {
 		return "*"
 	}
 	return "*" + a.Value.GetToken().Value
-}
-
-// JSONToYAML converts the JSON document in r to YAML in w, the inverse of
-// YAMLToJSON. Key order and number representation survive, and strings that
-// would read as YAML booleans or numbers ("yes", "123") come out quoted, so
-// feeding the output back through YAMLToJSON reproduces the original document.
-func JSONToYAML(w io.Writer, r io.Reader) error {
-	data, err := readInput(r)
-	if err != nil {
-		return err
-	}
-	if len(data) == 0 {
-		return fmt.Errorf("empty input")
-	}
-	// Validate before converting: yaml.JSONToYAML's errors carry no input
-	// position, while encoding/json's do.
-	if err := checkSyntax(data); err != nil {
-		return err
-	}
-	out, err := yaml.JSONToYAML(data)
-	if err != nil {
-		return fmt.Errorf("converting to YAML: %w", err)
-	}
-	if _, err := w.Write(bytes.TrimSuffix(out, []byte("\n"))); err != nil {
-		return fmt.Errorf("writing output: %w", err)
-	}
-	return nil
 }

@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strings"
+	"unicode/utf8"
 )
 
 // JSON pretty-prints the JSON document in r into w, using indent as the
@@ -111,4 +113,33 @@ func lineCol(data []byte, offset int64) (line, col int) {
 		col = 1
 	}
 	return line, col
+}
+
+// checkUTF8 reports the position of the first invalid UTF-8 sequence in data,
+// which encoding/json would otherwise silently decode as U+FFFD.
+func checkUTF8(data []byte) error {
+	if utf8.Valid(data) {
+		return nil
+	}
+	offset := 0
+	for offset < len(data) {
+		r, size := utf8.DecodeRune(data[offset:])
+		if r == utf8.RuneError && size <= 1 {
+			break
+		}
+		offset += size
+	}
+	line, col := lineCol(data, int64(offset+1))
+	return fmt.Errorf("invalid UTF-8 at line %d, column %d", line, col)
+}
+
+// nextTokenOffset returns the byte offset in data where dec's next token
+// starts: the decoder's offset sits just past the previous token, before any
+// separator.
+func nextTokenOffset(data []byte, dec *json.Decoder) int64 {
+	off := dec.InputOffset()
+	for off < int64(len(data)) && strings.IndexByte(" \t\r\n,:", data[off]) >= 0 {
+		off++
+	}
+	return off
 }
