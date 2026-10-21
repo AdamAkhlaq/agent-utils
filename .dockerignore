@@ -1,0 +1,10 @@
+# The Docker build context is the repository root (so the proxy stage can
+# compile bench/proxy against go.mod); keep everything the images do not need
+# out of the context.
+.git
+agent-utils
+dist
+bench/.runs
+bench/results
+bench/tasks
+bench/testdata
