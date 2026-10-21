@@ -1,0 +1,12 @@
+{
+  "iss": "https://issuer.example/",
+  "sub": "user-1234567890",
+  "name": "Ada Lovelace",
+  "admin": true,
+  "iat": 1716239022,
+  "exp": 1716242622,
+  "roles": [
+    "analyst",
+    "ops"
+  ]
+}
