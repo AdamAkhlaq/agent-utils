@@ -35,6 +35,7 @@ go test ./...
 
 - **`main.go` at the root** builds the command registry and dispatches `os.Args`. A single-binary project doesn't need the `cmd/` layout, which is for repositories that build several binaries.
 - **Utility logic lives under `internal/`**, so nothing outside this module can import it. This is an application, not a library.
+- **`bench/` is the benchmark harness**, a separate `main` package in the same module that measures what an agent gains from the tool. It is a development tool, never part of the released binary; see [bench/README.md](bench/README.md).
 - **One package per category** (`encode`, `format`, `img`, `inspect`, ...). The package is Go's unit of organization; files within a package are split only for readability. Package names never collide with a standard library package used alongside them (`img`, not `image`).
 - **Two layers.** Each utility is a pure, CLI-agnostic core in `internal/<category>`, shaped to its data: `io.Reader` to `io.Writer` for stream transforms, returned values for generators, plain arguments for small inputs. A thin layer in `internal/cli` parses flags and calls it. The `cli` package never imports a core package; `main.go` wires them together.
 
@@ -47,6 +48,7 @@ Every command must keep [the contract](README.md#the-contract): input from `stdi
 3. **Register it** in `registry()` in `main.go`, and add its examples to `examples.go`. An example's `Output` must be exactly what the command prints; `go test` runs every example that states an `Output` and uses no pipes, redirects, or variables, and compares; check the others by hand.
 4. **Document it** in `docs/commands/<name>.md`, following the existing pages: description, usage, flags table, behavior details, examples. Add a row to the command table in `README.md`. `go test` fails if a command has no page, or if its page leaves out a usage line or a flag.
 5. **Verify it end to end.** Build the binary and use the command the way an agent would: pipes, file arguments, bad input, and the exit code of each.
+6. **Give it a benchmark task** under `bench/tasks/<name>/<case>/`, following [bench/README.md](bench/README.md): an instruction that states a goal without naming a tool, the `agent-utils` invocation that solves it, and a checker that accepts any correct answer. `go run ./bench validate` checks the task and runs the oracle through the checker in Docker; `go test ./bench` runs the static checks in CI.
 
 Naming: conversions are `x2y` (`png2jpeg`), everything else is `noun` or `noun-verb` (`uuid`, `json-fmt`). Go functions don't repeat their package name (`generate.UUID`, `img.PNGToJPEG`), and initialisms stay capitalized (`JSON`, `URL`).
 

@@ -69,6 +69,12 @@ to, and say why in the PR when you deviate.
     determinism exceptions, whichever the command joins.
 - [ ] `SECURITY.md` "Scope", only if the command reaches the network, runs a program, or
   writes somewhere other than stdout or a named output path.
+- [ ] `bench/tasks/<name>/<case>/`: at least one benchmark task (`task.toml`,
+  `instruction.md`, fixtures, `oracle.sh`, `check.sh`), written to the rules in
+  `bench/README.md`: the instruction states a goal and an output path under `/out/` and
+  names no tool; the checker accepts any correct answer. `go run ./bench validate -tasks
+  '<name>/*'` must pass, Docker step included. A command without a task fails the
+  coverage test once the suite is complete.
 
 ## 4. Verify
 

@@ -4,3 +4,9 @@ dev-utils
 
 # GoReleaser output
 dist/
+
+# Benchmark runs that stay local (pilots, validation scratch)
+bench/.runs/
+
+# Personal, machine-specific notes for Claude Code (never shared)
+CLAUDE.local.md
