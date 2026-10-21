@@ -1,3 +1,4 @@
 #!/bin/sh
 set -eu
-agent-utils cidr contains 10.0.5.1/22 10.0.7.255 > /out/result.txt
+# contains exits 3 for a true "false" answer; only exit 1 (bad input) is a failure here.
+agent-utils cidr contains 172.29.141.77/21 172.29.145.6 > /out/result.txt || [ $? -eq 3 ]

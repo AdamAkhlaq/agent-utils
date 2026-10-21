@@ -20,6 +20,8 @@ func syntheticTrials() []Trial {
 			InputTokens: tokens / 8, CacheCreationInputTokens: tokens / 8, OutputTokens: 0, NumTurns: turns, DurationMS: ms})
 	}
 	for n := 1; n <= 2; n++ {
+		add("cidr/contains", "named", n, true, 0.008, 7000, 2, 8000, "")
+		ts[len(ts)-1].UsedTool = true
 		add("cidr/contains", "tool", n, true, 0.01, 8000, 3, 10000, "")
 		add("cidr/contains", "shell", n, true, 0.02, 16000, 4, 20000, "")
 		add("cidr/contains", "model", n, n == 1, 0.005, 4000, 2, 5000, map[bool]string{true: "", false: "want true, got \"false\""}[n == 1])
@@ -40,7 +42,7 @@ func TestSummarizeExcludesHarnessFailures(t *testing.T) {
 		t.Fatalf("excluded = %+v", s.Excluded)
 	}
 	for _, a := range s.Arms {
-		if a.Arm == "tool" && (a.Trials != 4 || a.PassRate != 1 || *a.CostPerSolved != 0.02) {
+		if a.Arm == "tool" && (a.Trials != 4 || a.PassRate != 1 || math.Abs(*a.CostPerSolved-0.02) > 1e-9) {
 			t.Errorf("tool arm counted the infra trial: %+v", a)
 		}
 	}
@@ -49,14 +51,14 @@ func TestSummarizeExcludesHarnessFailures(t *testing.T) {
 	if !strings.Contains(md.String(), "- cidr/contains `tool` trial 3 (infra): infrastructure failure after 3 retries: 529 overloaded") {
 		t.Errorf("excluded section missing:\n%s", md.String())
 	}
-	if !strings.Contains(md.String(), "14 trials over 2 tasks (2 excluded, see the last section)") {
+	if !strings.Contains(md.String(), "16 trials over 2 tasks (2 excluded, see the last section)") {
 		t.Errorf("header lacks the exclusion count:\n%s", md.String())
 	}
 }
 
 func TestSummarize(t *testing.T) {
 	s := summarize("r1", syntheticTrials(), &manifest{Model: "claude-sonnet-5-5", ClaudeCodeVersion: "2.1.304", AgentUtilsVersion: "v2.1.0"})
-	if s.Trials != 12 || s.Tasks != 2 || len(s.Arms) != 3 || len(s.Cells) != 6 {
+	if s.Trials != 14 || s.Tasks != 2 || len(s.Arms) != 4 || len(s.Cells) != 7 {
 		t.Fatalf("summary shape: trials %d tasks %d arms %d cells %d", s.Trials, s.Tasks, len(s.Arms), len(s.Cells))
 	}
 	byArm := map[string]armSummary{}
@@ -89,12 +91,19 @@ func TestSummarize(t *testing.T) {
 		t.Errorf("model failed list = %+v", byArm["model"].Failed)
 	}
 
-	if len(s.Ratios) != 2 {
+	if len(s.Ratios) != 4 {
 		t.Fatalf("ratios = %+v", s.Ratios)
 	}
-	shell := s.Ratios[0]
-	if shell.Denominator != "shell" || shell.Tasks != 2 {
-		t.Errorf("first ratio = %+v", shell)
+	named := s.Ratios[0]
+	if named.Numerator != "named" || named.Denominator != "shell" || named.Tasks != 1 || math.Abs(named.Median["cost_usd"]-0.4) > 1e-9 {
+		t.Errorf("named/shell ratio = %+v", named)
+	}
+	shell := s.Ratios[2]
+	if shell.Numerator != "tool" || shell.Denominator != "shell" || shell.Tasks != 2 {
+		t.Errorf("third ratio = %+v", shell)
+	}
+	if byArm["named"].ToolUseRate != 1 || byArm["tool"].ToolUseRate != 0 {
+		t.Errorf("tool use rates: named %v, tool %v", byArm["named"].ToolUseRate, byArm["tool"].ToolUseRate)
 	}
 	// Per-task cost ratios are 0.5 and 1.0; the median is 0.75.
 	if math.Abs(shell.Median["cost_usd"]-0.75) > 1e-9 {
@@ -134,12 +143,14 @@ func TestReportIsDeterministic(t *testing.T) {
 	}
 	for _, want := range []string{
 		"# Benchmark run r1",
-		"Model `claude-sonnet-5-5`, Claude Code 2.1.304, agent-utils v2.1.0. 12 trials over 2 tasks.",
-		"| `tool` | 4 | 2 | 100% | 2 of 2 | $0.0200 |",
-		"| `model` | 4 | 2 | 25% | 0 of 2 | $0.4100 |",
+		"Model `claude-sonnet-5-5`, Claude Code 2.1.304, agent-utils v2.1.0. 14 trials over 2 tasks.",
+		"| `tool` | 4 | 2 | 100% | 2 of 2 | 0% | $0.0200 |",
+		"| `named` | 2 | 1 | 100% | 1 of 1 | 100% | $0.0080 |",
+		"| `model` | 4 | 2 | 25% | 0 of 2 | 0% | $0.4100 |",
+		"| `named` / `shell` | 1 | 0.40 [",
 		"| `tool` / `shell` | 2 | 0.75 [",
 		"## Input-size scaling (median tokens)",
-		"| yaml2json/scale-30k | 24000 | 24000 | 80000 |",
+		"| yaml2json/scale-30k | 24000 | n/a | 24000 | 80000 |",
 		"- yaml2json/scale-30k trial 1 (completed): documents differ at $.inventory.services[3].replicas",
 	} {
 		if !strings.Contains(md1, want) {
@@ -150,7 +161,7 @@ func TestReportIsDeterministic(t *testing.T) {
 	if err := json.Unmarshal([]byte(js1), &s); err != nil {
 		t.Fatal(err)
 	}
-	if s.RunID != "r1" || len(s.Cells) != 6 {
+	if s.RunID != "r1" || len(s.Cells) != 7 {
 		t.Errorf("summary.json = %+v", s)
 	}
 }
@@ -161,7 +172,7 @@ func TestWriteSweep(t *testing.T) {
 	var buf bytes.Buffer
 	writeSweep(&buf, []summary{a, b})
 	out := buf.String()
-	if strings.Count(out, "| haiku |") != 3 || strings.Count(out, "| sonnet |") != 3 {
+	if strings.Count(out, "| haiku |") != 4 || strings.Count(out, "| sonnet |") != 4 {
 		t.Errorf("sweep rows:\n%s", out)
 	}
 }

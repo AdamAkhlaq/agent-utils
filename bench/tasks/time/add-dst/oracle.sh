@@ -1,3 +1,3 @@
 #!/bin/sh
 set -eu
-agent-utils time -z America/New_York add 2024-03-09T12:00:00 P1D > /out/next.txt
+agent-utils time -z Australia/Lord_Howe add 2025-10-04T09:15:00 P1D > /out/next.txt

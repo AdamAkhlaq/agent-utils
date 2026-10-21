@@ -14,15 +14,15 @@ func testTasks() []Task {
 
 func TestPlan(t *testing.T) {
 	cells := plan(testTasks(), arms, 2, seedFrom("run-1"), nil)
-	if len(cells) != 10 {
-		t.Fatalf("got %d cells, want 10 (3+2 arms x 2 trials)", len(cells))
+	if len(cells) != 14 {
+		t.Fatalf("got %d cells, want 14 (4+3 arms x 2 trials)", len(cells))
 	}
 	// Tasks in order, trials in order, every arm of a trial adjacent.
 	var order []string
 	for _, c := range cells {
 		order = append(order, c.Task.Name+"#"+string(rune('0'+c.Trial)))
 	}
-	want := "cidr/contains#1 cidr/contains#1 cidr/contains#1 cidr/contains#2 cidr/contains#2 cidr/contains#2 png2jpeg/basic#1 png2jpeg/basic#1 png2jpeg/basic#2 png2jpeg/basic#2"
+	want := "cidr/contains#1 cidr/contains#1 cidr/contains#1 cidr/contains#1 cidr/contains#2 cidr/contains#2 cidr/contains#2 cidr/contains#2 png2jpeg/basic#1 png2jpeg/basic#1 png2jpeg/basic#1 png2jpeg/basic#2 png2jpeg/basic#2 png2jpeg/basic#2"
 	if got := strings.Join(order, " "); got != want {
 		t.Errorf("order = %s\nwant %s", got, want)
 	}
@@ -33,7 +33,7 @@ func TestPlan(t *testing.T) {
 			t.Errorf("model arm planned for a task that excludes it")
 		}
 	}
-	if seen["tool"] != 4 || seen["shell"] != 4 || seen["model"] != 2 {
+	if seen["tool"] != 4 || seen["named"] != 4 || seen["shell"] != 4 || seen["model"] != 2 {
 		t.Errorf("arm counts = %v", seen)
 	}
 	// The same seed gives the same order; a different seed shuffles arms.
@@ -68,7 +68,7 @@ func TestPlanResumeAndArmSelection(t *testing.T) {
 			t.Errorf("done cell %s was planned again", k)
 		}
 	}
-	if strings.Contains(got, "model") {
+	if strings.Contains(got, "model") || strings.Contains(got, "named") {
 		t.Errorf("unselected arm planned: %s", got)
 	}
 	if len(cells) != 5 {

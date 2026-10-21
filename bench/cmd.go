@@ -20,7 +20,7 @@ func runMain(args []string, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("run", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	model := fs.String("model", "", "full model ID, such as claude-sonnet-5-5 (required)")
-	armList := fs.String("arms", "tool,shell,model", "arms to run, comma-separated")
+	armList := fs.String("arms", "tool,named,shell,model", "arms to run, comma-separated")
 	trials := fs.Int("trials", 0, "trials per task per arm (required)")
 	glob := fs.String("tasks", "", "run only the tasks whose name matches this glob")
 	tag := fs.String("tag", "", "run only the tasks carrying this tag (such as sweep)")
@@ -30,7 +30,7 @@ func runMain(args []string, stdout, stderr io.Writer) int {
 	version := fs.String("agent-utils-version", "", "release tag to install in the tool image (default: the latest v* tag)")
 	root := fs.String("root", "", "repository root (default: found from the working directory)")
 	printUsage := func(w io.Writer) {
-		fmt.Fprintf(w, "usage: go run ./bench run -model <id> -trials N [-arms tool,shell,model] [-tasks glob] [-tag tag] [-run-id id] [-concurrency k]\n\n")
+		fmt.Fprintf(w, "usage: go run ./bench run -model <id> -trials N [-arms tool,named,shell,model] [-tasks glob] [-tag tag] [-run-id id] [-concurrency k]\n\n")
 		fs.SetOutput(w)
 		fs.PrintDefaults()
 		fs.SetOutput(io.Discard)

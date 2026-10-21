@@ -47,11 +47,14 @@ type summary struct {
 var harnessReasons = map[string]bool{"infra": true, "isolation_leak": true}
 
 type armSummary struct {
-	Arm             string             `json:"arm"`
-	Trials          int                `json:"trials"`
-	Tasks           int                `json:"tasks"`
-	PassRate        float64            `json:"pass_rate"`
-	PassAllTasks    int                `json:"pass_all_tasks"`
+	Arm          string  `json:"arm"`
+	Trials       int     `json:"trials"`
+	Tasks        int     `json:"tasks"`
+	PassRate     float64 `json:"pass_rate"`
+	PassAllTasks int     `json:"pass_all_tasks"`
+	// ToolUseRate is the fraction of trials whose shell history invoked the
+	// task's agent-utils command: adoption, as distinct from benefit.
+	ToolUseRate     float64            `json:"tool_use_rate"`
 	CostPerSolved   *float64           `json:"cost_per_solved_task"`
 	Median          map[string]float64 `json:"median"`
 	Mean            map[string]float64 `json:"mean"`
@@ -146,8 +149,11 @@ func summarize(runID string, trials []Trial, m *manifest) summary {
 		a.Trials = len(armTrials)
 		a.PassRate = passRate(armTrials)
 		var cost, uncached, write, read, output float64
-		passes := 0
+		passes, used := 0, 0
 		for _, t := range armTrials {
+			if t.UsedTool {
+				used++
+			}
 			cost += t.TotalCostUSD
 			uncached += float64(t.InputTokens)
 			write += float64(t.CacheCreationInputTokens)
@@ -162,6 +168,7 @@ func summarize(runID string, trials []Trial, m *manifest) summary {
 			v := cost / float64(passes)
 			a.CostPerSolved = &v
 		}
+		a.ToolUseRate = float64(used) / float64(len(armTrials))
 		if total := uncached + write + read + output; total > 0 {
 			a.TokenShare["uncached_input"] = uncached / total
 			a.TokenShare["cache_write"] = write / total
@@ -176,11 +183,12 @@ func summarize(runID string, trials []Trial, m *manifest) summary {
 		s.Arms = append(s.Arms, a)
 	}
 
-	for _, denom := range []string{"shell", "model"} {
-		r := ratioSummary{Numerator: "tool", Denominator: denom, Median: map[string]float64{}, CI: map[string]interval{}}
+	for _, pair := range [][2]string{{"named", "shell"}, {"named", "model"}, {"tool", "shell"}, {"tool", "model"}} {
+		numer, denom := pair[0], pair[1]
+		r := ratioSummary{Numerator: numer, Denominator: denom, Median: map[string]float64{}, CI: map[string]interval{}}
 		ratios := map[string][]float64{}
 		for _, task := range tasks {
-			num, den := cells[task]["tool"], cells[task][denom]
+			num, den := cells[task][numer], cells[task][denom]
 			if len(num) == 0 || len(den) == 0 {
 				continue
 			}
@@ -199,7 +207,7 @@ func summarize(runID string, trials []Trial, m *manifest) summary {
 		for _, met := range metrics {
 			xs := ratios[met.Key]
 			r.Median[met.Key] = median(xs)
-			r.CI[met.Key] = bootstrapCI(xs, median, seedFrom(runID+"/"+denom+"/"+met.Key))
+			r.CI[met.Key] = bootstrapCI(xs, median, seedFrom(runID+"/"+numer+"/"+denom+"/"+met.Key))
 		}
 		s.Ratios = append(s.Ratios, r)
 	}
@@ -231,25 +239,25 @@ func writeMarkdown(w io.Writer, s summary) {
 	fmt.Fprintf(w, ". Costs are Claude Code's list-price estimates, the same basis in every arm.\n\n")
 
 	fmt.Fprintf(w, "## Per arm\n\n")
-	fmt.Fprintf(w, "| Arm | Trials | Tasks | Pass rate | Tasks with every trial passing | Cost per solved task | Median cost | Median tokens | Median turns | Median duration |\n")
-	fmt.Fprintf(w, "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n")
+	fmt.Fprintf(w, "| Arm | Trials | Tasks | Pass rate | Tasks with every trial passing | Used agent-utils | Cost per solved task | Median cost | Median tokens | Median turns | Median duration |\n")
+	fmt.Fprintf(w, "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n")
 	for _, a := range s.Arms {
 		cps := "n/a (no passes)"
 		if a.CostPerSolved != nil {
 			cps = fmt.Sprintf("$%.4f", *a.CostPerSolved)
 		}
-		fmt.Fprintf(w, "| `%s` | %d | %d | %s | %d of %d | %s | $%.4f | %s | %s | %s s |\n",
-			a.Arm, a.Trials, a.Tasks, percent(a.PassRate), a.PassAllTasks, a.Tasks, cps,
+		fmt.Fprintf(w, "| `%s` | %d | %d | %s | %d of %d | %s | %s | $%.4f | %s | %s | %s s |\n",
+			a.Arm, a.Trials, a.Tasks, percent(a.PassRate), a.PassAllTasks, a.Tasks, percent(a.ToolUseRate), cps,
 			a.Median["cost_usd"], integer(a.Median["tokens"]), number(a.Median["turns"]), number(a.Median["duration_s"]))
 	}
 
 	if len(s.Ratios) > 0 {
-		fmt.Fprintf(w, "\n## Paired ratios (tool over the other arm)\n\n")
-		fmt.Fprintf(w, "The ratio of the two arms' medians, per task, then the median across tasks with a 95%% bootstrap interval over tasks. Below 1 means the tool arm used less.\n\n")
+		fmt.Fprintf(w, "\n## Paired ratios\n\n")
+		fmt.Fprintf(w, "The ratio of the two arms' medians, per task, then the median across tasks with a 95%% bootstrap interval over tasks. Below 1 means the first arm used less. `named` is the agent with the task's command named; `tool` is the agent left to find it.\n\n")
 		fmt.Fprintf(w, "| Comparison | Tasks | Cost | Tokens | Turns | Duration |\n")
 		fmt.Fprintf(w, "| --- | --- | --- | --- | --- | --- |\n")
 		for _, r := range s.Ratios {
-			fmt.Fprintf(w, "| `tool` / `%s` | %d |", r.Denominator, r.Tasks)
+			fmt.Fprintf(w, "| `%s` / `%s` | %d |", r.Numerator, r.Denominator, r.Tasks)
 			for _, met := range metrics {
 				ci := r.CI[met.Key]
 				fmt.Fprintf(w, " %.2f [%.2f, %.2f] |", r.Median[met.Key], ci.Low, ci.High)
@@ -278,8 +286,8 @@ func writeMarkdown(w io.Writer, s summary) {
 	scale := scaleRows(s.Cells)
 	if len(scale) > 0 {
 		fmt.Fprintf(w, "\n## Input-size scaling (median tokens)\n\n")
-		fmt.Fprintf(w, "| Task | `tool` | `shell` | `model` |\n")
-		fmt.Fprintf(w, "| --- | --- | --- | --- |\n")
+		fmt.Fprintf(w, "| Task | `tool` | `named` | `shell` | `model` |\n")
+		fmt.Fprintf(w, "| --- | --- | --- | --- | --- |\n")
 		for _, row := range scale {
 			fmt.Fprintf(w, "| %s |", row.task)
 			for _, arm := range arms {
