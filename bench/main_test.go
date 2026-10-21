@@ -2,9 +2,23 @@ package main
 
 import (
 	"bytes"
+	"path/filepath"
 	"strings"
 	"testing"
 )
+
+// TestRunWithoutToken covers the precondition "bench run" checks after its
+// flags: no credential, no run. The token variable is cleared for the test.
+func TestRunWithoutToken(t *testing.T) {
+	t.Setenv("CLAUDE_CODE_OAUTH_TOKEN", "")
+	var stdout, stderr bytes.Buffer
+	if code := run([]string{"run", "-model", "claude-sonnet-5-5", "-trials", "1"}, &stdout, &stderr); code != 1 {
+		t.Errorf("exit code = %d, want 1", code)
+	}
+	if !strings.Contains(stderr.String(), "CLAUDE_CODE_OAUTH_TOKEN is not set") {
+		t.Errorf("stderr = %q", stderr.String())
+	}
+}
 
 func TestRun(t *testing.T) {
 	tests := []struct {
@@ -25,6 +39,16 @@ func TestRun(t *testing.T) {
 		{"validate static", []string{"validate", "-static", "-root", ".."}, 0, "static checks: 5 tasks ok", "coverage:"},
 		{"validate one task", []string{"validate", "-static", "-root", "..", "-tasks", "jwt-decode/*"}, 0, "static checks: 1 task ok", ""},
 		{"validate outside a repository", []string{"validate", "-static", "-root", t.TempDir()}, 1, "", "docs/commands: no such file or directory"},
+		{"run help", []string{"run", "-h"}, 0, "usage: go run ./bench run", ""},
+		{"run without model", []string{"run", "-trials", "1"}, 2, "", "-model is required"},
+		{"run without trials", []string{"run", "-model", "claude-sonnet-5-5"}, 2, "", "-trials must be positive"},
+		{"run unknown arm", []string{"run", "-model", "m", "-trials", "1", "-arms", "tool,cli"}, 2, "", `unknown arm "cli"`},
+		{"run unknown tag", []string{"run", "-model", "m", "-trials", "1", "-tag", "easy"}, 2, "", `unknown tag "easy"`},
+		{"run bad glob", []string{"run", "-model", "m", "-trials", "1", "-tasks", "["}, 2, "", "syntax error in pattern"},
+		{"run stray argument", []string{"run", "-model", "m", "-trials", "1", "extra"}, 2, "", `unexpected argument "extra"`},
+		{"report help", []string{"report", "-h"}, 0, "usage: go run ./bench report", ""},
+		{"report without a directory", []string{"report"}, 2, "", "at least one run directory is required"},
+		{"report missing directory", []string{"report", filepath.Join(t.TempDir(), "none")}, 1, "", "no trials in trials.jsonl"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

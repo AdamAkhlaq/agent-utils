@@ -20,6 +20,8 @@ const usage = `usage: go run ./bench <command> [flags]
 
 Commands:
   validate   check every task: static rules, coverage, and each oracle through its checker in Docker
+  run        run the trial matrix in Docker and write a run directory (needs CLAUDE_CODE_OAUTH_TOKEN)
+  report     compute summary.md and summary.json for one or more run directories
 
 Run "go run ./bench <command> -h" for a command's flags.
 `
@@ -36,6 +38,10 @@ func run(args []string, stdout, stderr io.Writer) int {
 	switch args[0] {
 	case "validate":
 		return validateMain(args[1:], stdout, stderr)
+	case "run":
+		return runMain(args[1:], stdout, stderr)
+	case "report":
+		return reportMain(args[1:], stdout, stderr)
 	case "-h", "--help", "help":
 		fmt.Fprint(stdout, usage)
 		return 0

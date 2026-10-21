@@ -7,10 +7,9 @@ agent doing the same task without it. The method, the tasks, and the harness liv
 and so will the per-trial data of every published run.
 
 **What exists today:** the task format, the five pilot tasks, the Docker images, the two
-context paragraphs, and `go run ./bench validate`. The runner (`bench run`) and the
-report (`bench report`) are not built yet; the sections on isolation at trial time,
-metrics, the model matrix, and published results describe what they will do, so the
-tasks and checkers written now fit the runs that come later.
+context paragraphs, and the three subcommands: `validate`, `run`, and `report`. No run
+has been published yet; `results/` and the README's measured numbers arrive with the
+first full run.
 
 The tool's authors run the benchmark. The harness is public, every prompt and checker is
 open to review, raw transcripts are published with each run, and flat or negative results
@@ -61,9 +60,17 @@ tools Claude Code exposes, and one paragraph of system-prompt context.
 
 | Arm | What the agent has | Context paragraph | Claude Code flags (added to the common set) |
 | --- | --- | --- | --- |
-| `tool` | The base image plus `agent-utils` on PATH | [`context/tool.md`](context/tool.md): the README's agent snippet, verbatim | `--permission-mode bypassPermissions` |
-| `shell` | The base image: `python3`, `jq`, `yq`, `openssl`, ImageMagick, coreutils | [`context/neutral.md`](context/neutral.md): names the installed tools and says to prefer them | `--permission-mode bypassPermissions` |
-| `model` | No command execution: only the `Read` and `Write` tools | `context/neutral.md` | `--tools Read,Write --permission-mode acceptEdits` |
+| `tool` | The base image plus `agent-utils` on PATH | [`context/tool.md`](context/tool.md): the README's agent snippet, verbatim | `--tools Bash,Edit,Glob,Grep,Read,Write --permission-mode bypassPermissions` |
+| `shell` | The base image: `python3`, `jq`, `yq`, `openssl`, ImageMagick, coreutils | [`context/neutral.md`](context/neutral.md): names the installed tools and says to prefer them | `--tools Bash,Edit,Glob,Grep,Read,Write --permission-mode bypassPermissions` |
+| `model` | No command execution: only the `Read` and `Write` tools | `context/neutral.md` | `--tools Read,Write --permission-mode bypassPermissions` |
+
+What an arm may do is fixed by its tool list, and every arm runs with
+`bypassPermissions` so no tool call is ever held for a permission the agent cannot
+grant in print mode (`acceptEdits` denies a `Write` to `/out`, which is outside the
+working directory). The tool and shell arms get every local tool and none that reaches
+the network: Claude Code's default set under `bypassPermissions` includes `WebSearch`
+and `WebFetch`, which would be a second channel out of the sandbox and a confound the
+proxy cannot see.
 
 - `tool` versus `shell` is the realistic comparison. The shell arm is expected to pass
   most tasks; the interesting deltas are turns, tokens, cost, and time, plus the tasks
@@ -83,7 +90,7 @@ tools Claude Code exposes, and one paragraph of system-prompt context.
 - The `tool` arm pays for its own `agent-utils help` and `-h` lookups. That is real cost
   and stays in the numbers.
 
-## Isolation (what the runner will enforce)
+## Isolation
 
 - **One container per trial**, from images built once per run from
   [`image/Dockerfile`](image/Dockerfile) and pinned: the Node base image by digest, Claude
@@ -100,10 +107,15 @@ tools Claude Code exposes, and one paragraph of system-prompt context.
   `DISABLE_AUTOUPDATER`, `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`, `DISABLE_TELEMETRY`,
   `DISABLE_ERROR_REPORTING`). The runner reads the `system`/`init` line of every
   trial's stream and fails the trial as `isolation_leak` if any MCP server, slash
-  command, or skill loaded, or the tool list is not the arm's.
-- **Network**: trial containers sit on an internal network whose only egress is a
-  forward proxy allowing `api.anthropic.com`. Fixtures never come from the network, and
-  `video` is excluded from the suite.
+  command, skill, or non-built-in plugin loaded, or the tool list is not the arm's.
+- **Network**: trial containers sit on an internal Docker network (`--internal`, no
+  route out) whose only egress is a sidecar running [`proxy/`](proxy/), a CONNECT proxy
+  that tunnels to `api.anthropic.com:443` and refuses every other host with a 403 and a
+  log line. The proxy log is kept with the run (`proxy.log`) and the manifest records
+  the number of refusals. Fixtures never come from the network, and `video` is excluded
+  from the suite. `BENCH_DOCKER=1 go test ./bench` includes a test that proves the
+  three properties from inside a container: the API is reachable through the proxy,
+  another host is refused, and a direct connection fails.
 - **Credential**: a subscription token from `claude setup-token`, passed as
   `CLAUDE_CODE_OAUTH_TOKEN` through the environment, stored nowhere in the repository.
   The runs draw on the plan's rate limits, and `total_cost_usd` is Claude Code's
@@ -113,8 +125,19 @@ tools Claude Code exposes, and one paragraph of system-prompt context.
   empty volume the checker inspects after the container exits. The checker runs in a
   separate container from the base image, so the agent cannot see or edit it, and no
   checker can depend on agent-utils.
-- **Budgets**: `--max-turns`, `--max-budget-usd`, and a container timeout, all from
-  `task.toml`. A trial that hits any of them is a failure with a recorded reason.
+- **Budgets**: `--max-turns`, `--max-budget-usd`, and a container timeout
+  (`timeout_seconds` plus 30 seconds of grace for container start), all from
+  `task.toml`. A trial that hits any of them is a failure with a recorded reason
+  (`max_turns`, `max_budget_usd`, `timeout`).
+- **Infrastructure failures are not results.** A trial whose result line carries an
+  API error status, whose error text or stderr shows a rate limit, a 5xx, a network
+  error, or an authentication failure, or that produced no result line at all, is
+  retried up to three times with backoff (1, 2, then 4 minutes). Every attempt's
+  transcript is kept (`.retry<n>` suffix); the trial record counts the retries. A
+  trial that fails for infrastructure four times is recorded with `terminal_reason`
+  `infra`. The report leaves `infra` and `isolation_leak` trials out of every pass
+  rate, cost, and ratio, and lists them in their own section, so they are disclosed
+  without being scored.
 
 Common invocation, every arm (the entrypoint adds `-p` with the instruction):
 
@@ -122,7 +145,8 @@ Common invocation, every arm (the entrypoint adds `-p` with the instruction):
 claude -p "$(cat /task/instruction.md)" \
   --model <full id> --setting-sources "" --disable-slash-commands \
   --strict-mcp-config --no-chrome --no-session-persistence \
-  --append-system-prompt-file /task/context.md \
+  --append-system-prompt-file /context.md \
+  --tools <the arm's list> --permission-mode <the arm's mode> \
   --max-turns <max_turns> --max-budget-usd <max_budget_usd> \
   --output-format stream-json --verbose
 ```
@@ -223,12 +247,16 @@ a glob that matches no task).
 `go test ./bench` runs the static checks on every task, and the Docker step when
 `BENCH_DOCKER=1` is set.
 
-## Metrics (what the runner will record)
+## Metrics
 
-Per trial, from the stream-json `result` line and the tool events before it: `passed`
-(the checker's verdict) and its reason, `terminal_reason`, the exit code, tokens in the
-four buckets, `total_cost_usd`, `num_turns`, the number of tool calls and `Bash` calls
-and the commands run, `duration_ms` and `duration_api_ms`.
+Per trial, one line of `trials.jsonl`, from the stream-json `result` line and the tool
+events before it: `passed` (the checker's verdict) and `check_reason`,
+`terminal_reason`, `exit_code`, the four token buckets (`input_tokens`,
+`cache_creation_input_tokens`, `cache_read_input_tokens`, `output_tokens`),
+`total_cost_usd`, `num_turns`, `tool_calls`, `bash_calls`, `bash_commands`,
+`duration_ms`, `duration_api_ms`, `started_at`, the `transcript` path, `infra_retries`,
+and `rate_limit_utilization` (the plan's five-hour window as reported during the trial,
+or -1).
 
 Per task per arm, over trials: pass rate, pass^k, median and mean of each metric.
 
@@ -255,16 +283,34 @@ A Go program in this directory, in the main module, with no new dependencies (Do
 through `os/exec`, JSON from the standard library). It is a development tool, never part
 of the released binary.
 
-- `go run ./bench validate`: the task checks above. This is the only subcommand today.
-- `go run ./bench run` and `go run ./bench report` will run the trial matrix
-  (interleaved arms, infrastructure retries, resume from `trials.jsonl`) and write the
-  statistics as Markdown and JSON. Neither exists yet.
+- `go run ./bench validate`: the task checks above.
+- `go run ./bench run -model <id> -trials N [-arms tool,shell,model] [-tasks glob]
+  [-tag sweep] [-run-id id] [-concurrency k] [-agent-utils-version vX.Y.Z]`: validates
+  the suite, builds the three images, writes `manifest.json`, brings up the network
+  and proxy, runs every cell in planned order (tasks in name order, trials in order,
+  and within each trial the task's arms in an order shuffled from a seed derived from
+  the run-id, so the arms of one trial run back to back), appends each finished trial
+  to `trials.jsonl`, and finishes with the report. The run directory is
+  `bench/.runs/<run-id>/` (`-out` changes the parent), with `transcripts/`, `out/`
+  (what every trial wrote), `proxy.log`, `manifest.json`, `trials.jsonl`,
+  `summary.md`, and `summary.json`. The credential is read from
+  `CLAUDE_CODE_OAUTH_TOKEN` and forwarded to containers by name only. Exit codes: 0 the
+  run completed, 1 it stopped (or a precondition failed: no token, no Docker, a suite
+  that does not validate), 2 usage error.
+- **Resume**: a second `run` with the same `-run-id` skips every `(task, arm, trial)`
+  already in `trials.jsonl` and refuses to continue if the model, the agent-utils
+  release, or any selected instruction changed since the manifest was written.
+- `go run ./bench report <run-dir> [<run-dir>...]`: recomputes `summary.md` and
+  `summary.json` from `trials.jsonl` (and the versions from `manifest.json`). It is
+  deterministic: the bootstrap is seeded from the run-id, so the same file always
+  gives byte-identical output. One run prints its summary; several print the model
+  sweep table, one row per run and arm.
 
 Prerequisites for the Docker step and for trials: a Docker daemon (on macOS, `colima
 start`; if image pulls fail on DNS lookups inside the VM, `colima start --dns 1.1.1.1`),
 and for trials a token from `claude setup-token` exported as `CLAUDE_CODE_OAUTH_TOKEN`.
 
-## What the repository will keep
+## What the repository keeps
 
 Committed: this document; every task; the Dockerfile and entrypoint; the two context
 paragraphs; the harness and its tests; and, per published run,

@@ -1,14 +1,17 @@
-# The benchmark images, one Dockerfile with two targets:
+# The benchmark images, one Dockerfile with three targets, built with the
+# repository root as the context (go run ./bench does this):
 #
 #   base   the "shell" arm: Node, Claude Code, python3 (with PyYAML and
 #          Pillow), jq, yq, openssl, ImageMagick, coreutils. Every checker
 #          runs here too, so no checker can depend on agent-utils.
 #   tool   base plus agent-utils, installed from a release tag so every
 #          published number maps to a release, never to a working tree.
+#   proxy  the CONNECT proxy from bench/proxy, a run's only egress.
 #
-# Everything is pinned: the Node image by digest, Claude Code by npm version,
-# yq by version and SHA-256, agent-utils by tag and the release's checksums.
-# Changing a pin is a deliberate change to what the benchmark measures.
+# Everything is pinned: the Node and Go images by digest, Claude Code
+# by npm version, yq by version and SHA-256, agent-utils by tag and the
+# release's checksums. Changing a pin is a deliberate change to what the
+# benchmark measures.
 
 ARG NODE_IMAGE=node:22-bookworm-slim@sha256:de170b39439eb0e5a3444ad7d60b015614a381e10fecae2e30ec9e735122f38d
 
@@ -53,7 +56,7 @@ ENV CLAUDE_CONFIG_DIR=/home/bench/.claude-bench \
     DISABLE_TELEMETRY=1 \
     DISABLE_ERROR_REPORTING=1
 
-COPY --chmod=0755 entrypoint.sh /usr/local/bin/entrypoint
+COPY --chmod=0755 bench/image/entrypoint.sh /usr/local/bin/entrypoint
 
 USER bench
 WORKDIR /work
@@ -78,3 +81,20 @@ RUN set -eu; \
     rm -f "$archive" checksums.txt; \
     agent-utils version
 USER bench
+
+FROM golang:1.26-bookworm@sha256:632dff7351799a5a9954a48dc06670ade72ee44e8c351cdc0e5a57af2fea21af AS proxy-build
+
+WORKDIR /src
+COPY go.mod go.sum ./
+COPY bench/proxy ./bench/proxy
+RUN CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o /proxy ./bench/proxy
+
+# The proxy is a static binary that never does TLS itself, so the image is
+# the binary alone: no shell, no package manager, no certificates, and a
+# fixed unprivileged UID.
+FROM scratch AS proxy
+
+COPY --from=proxy-build /proxy /proxy
+USER 65534:65534
+EXPOSE 3128
+ENTRYPOINT ["/proxy"]
