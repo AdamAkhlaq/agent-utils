@@ -99,6 +99,7 @@ func TestValidateTask(t *testing.T) {
 		{"command excluded", func(k *Task) { k.Name = "video/basic"; k.Command = "video" }, "excluded from the suite"},
 		{"arms empty", func(k *Task) { k.Arms = nil }, "arms is required"},
 		{"arm unknown", func(k *Task) { k.Arms = []string{"tool", "cli"} }, `unknown arm "cli"`},
+		{"arm named listed", func(k *Task) { k.Arms = []string{"tool", "named"} }, `"named" is implied by "tool"`},
 		{"arm repeated", func(k *Task) { k.Arms = []string{"tool", "tool"} }, `arm "tool" listed twice`},
 		{"arms without tool", func(k *Task) { k.Arms = []string{"shell"} }, `must include "tool"`},
 		{"tags empty", func(k *Task) { k.Tags = nil }, "tags is required"},
@@ -176,6 +177,25 @@ func TestLintInstruction(t *testing.T) {
 			got := lintInstruction(tt.text, testCommands)
 			if strings.Join(got, "|") != strings.Join(tt.want, "|") {
 				t.Errorf("lintInstruction = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestTaskArms(t *testing.T) {
+	tests := []struct {
+		arms []string
+		want string
+	}{
+		{[]string{"tool", "shell", "model"}, "tool named shell model"},
+		{[]string{"tool", "shell"}, "tool named shell"},
+		{[]string{"model", "tool"}, "tool named model"},
+		{[]string{"shell"}, "shell"},
+	}
+	for _, tt := range tests {
+		t.Run(strings.Join(tt.arms, ","), func(t *testing.T) {
+			if got := strings.Join(taskArms(Task{Arms: tt.arms}), " "); got != tt.want {
+				t.Errorf("taskArms = %q, want %q", got, tt.want)
 			}
 		})
 	}

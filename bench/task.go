@@ -36,9 +36,24 @@ type Task struct {
 	MaxBudgetUSD   float64  `toml:"max_budget_usd"`
 }
 
-// The three experimental conditions. "tool" has agent-utils on PATH, "shell"
-// has the same image without it, and "model" can only read and write files.
-var arms = []string{"tool", "shell", "model"}
+// The experimental conditions. "tool" has agent-utils on PATH with the
+// README snippet, "named" is tool plus one sentence naming the task's
+// command, "shell" is the same image without agent-utils, and "model" can
+// only read and write files. task.toml lists tool, shell, and model; named
+// applies to every task that lists tool, since it runs the same image.
+var arms = []string{"tool", "named", "shell", "model"}
+
+// taskArms lists the arms a task runs in: its task.toml arms, plus named
+// whenever tool is there.
+func taskArms(t Task) []string {
+	var out []string
+	for _, a := range arms {
+		if slices.Contains(t.Arms, a) || (a == "named" && slices.Contains(t.Arms, "tool")) {
+			out = append(out, a)
+		}
+	}
+	return out
+}
 
 var tags = []string{"basic", "scale", "hard", "sweep"}
 
@@ -213,8 +228,10 @@ func validateTask(t Task, commands map[string]bool) []string {
 		add("task.toml: arms is required")
 	}
 	for i, a := range t.Arms {
-		if !slices.Contains(arms, a) {
-			add("task.toml: unknown arm %q (want one of %s)", a, strings.Join(arms, ", "))
+		if a == "named" {
+			add("task.toml: \"named\" is implied by \"tool\"; list tool, shell, and model only")
+		} else if !slices.Contains(arms, a) {
+			add("task.toml: unknown arm %q (want one of tool, shell, model)", a)
 		} else if slices.Index(t.Arms, a) != i {
 			add("task.toml: arm %q listed twice", a)
 		}

@@ -15,6 +15,7 @@ func TestClaudeArgs(t *testing.T) {
 	}{
 		{"tool", "--tools Bash,Edit,Glob,Grep,Read,Write --permission-mode bypassPermissions"},
 		{"shell", "--tools Bash,Edit,Glob,Grep,Read,Write --permission-mode bypassPermissions"},
+		{"named", "--tools Bash,Edit,Glob,Grep,Read,Write --permission-mode bypassPermissions"},
 		{"model", "--tools Read,Write --permission-mode bypassPermissions"},
 	}
 	for _, tt := range tests {
@@ -39,6 +40,40 @@ func TestClaudeArgs(t *testing.T) {
 		if a == "--setting-sources" && args[i+1] != "" {
 			t.Errorf("--setting-sources followed by %q, want an empty argument", args[i+1])
 		}
+	}
+}
+
+func TestNamedContext(t *testing.T) {
+	got := namedContext("## agent-utils\n\nsnippet text\n", "jwt-decode")
+	want := "## agent-utils\n\nsnippet text\n\nFor this task, use `agent-utils jwt-decode`. Run `agent-utils jwt-decode -h` for its usage.\n"
+	if got != want {
+		t.Errorf("namedContext = %q\nwant %q", got, want)
+	}
+}
+
+func TestUsedTool(t *testing.T) {
+	tests := []struct {
+		name     string
+		commands []string
+		command  string
+		want     bool
+	}{
+		{"direct", []string{"agent-utils cidr contains 10.0.0.0/8 10.1.2.3 > /out/r.txt"}, "cidr", true},
+		{"after a pipe and mkdir", []string{"mkdir -p /out && cat t.jwt | agent-utils jwt-decode | jq .payload > /out/c.json"}, "jwt-decode", true},
+		{"only help", []string{"agent-utils help | grep jwt"}, "jwt-decode", false},
+		{"usage lookup of another name", []string{"agent-utils jwt -h", "python3 -c 'print(1)'"}, "jwt-decode", false},
+		{"usage lookup of the right name counts", []string{"agent-utils png2jpeg -h", "agent-utils png2jpeg in.png /out/o.jpg"}, "png2jpeg", true},
+		{"prefix of the command", []string{"agent-utils json-fmt x"}, "json", false},
+		{"command as a prefix of another", []string{"agent-utils time-travel"}, "time", false},
+		{"not agent-utils", []string{"./my-agent-utils time add x P1D"}, "time", false},
+		{"none", nil, "time", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := usedTool(tt.commands, tt.command); got != tt.want {
+				t.Errorf("usedTool = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }
 

@@ -35,6 +35,7 @@ type manifest struct {
 	Tasks             map[string]string `json:"tasks"`   // name -> SHA-256 of instruction.md
 	Context           map[string]string `json:"context"` // arm context file -> SHA-256
 	ContextTokens     map[string]int    `json:"context_tokens_estimate"`
+	NamedSentence     string            `json:"named_sentence"`
 	StartedAt         string            `json:"started_at"`
 	FinishedAt        string            `json:"finished_at,omitempty"`
 	InfraRetries      int               `json:"infra_retries"`
@@ -82,8 +83,8 @@ func plan(tasks []Task, selectedArms []string, trials int, seed uint64, done map
 	var cells []cell
 	for _, t := range tasks {
 		var applicable []string
-		for _, a := range arms {
-			if slices.Contains(t.Arms, a) && slices.Contains(selectedArms, a) {
+		for _, a := range taskArms(t) {
+			if slices.Contains(selectedArms, a) {
 				applicable = append(applicable, a)
 			}
 		}
@@ -241,12 +242,27 @@ func runOnce(cfg runConfig, c cell, net network, attempt int) (trialResult, bool
 	}
 
 	image := baseImage
-	if c.Arm == "tool" {
+	if c.Arm == "tool" || c.Arm == "named" {
 		image = toolImage
 	}
-	context := "neutral.md"
-	if c.Arm == "tool" {
-		context = "tool.md"
+	contextFile := filepath.Join(cfg.Root, "bench", "context", "neutral.md")
+	switch c.Arm {
+	case "tool":
+		contextFile = filepath.Join(cfg.Root, "bench", "context", "tool.md")
+	case "named":
+		// Generated per task into the run directory, so the exact text every
+		// named trial saw is kept with the run.
+		toolText, err := os.ReadFile(filepath.Join(cfg.Root, "bench", "context", "tool.md"))
+		if err != nil {
+			return trialResult{}, false, err
+		}
+		contextFile = filepath.Join(cfg.RunDir, "context", dockerSafe(c.Task.Name)+"-named.md")
+		if err := os.MkdirAll(filepath.Dir(contextFile), 0o755); err != nil {
+			return trialResult{}, false, err
+		}
+		if err := os.WriteFile(contextFile, []byte(namedContext(string(toolText), c.Task.Command)), 0o644); err != nil {
+			return trialResult{}, false, err
+		}
 	}
 	name := fmt.Sprintf("agent-utils-bench-%s-%s-%s-%d", dockerSafe(cfg.RunID), dockerSafe(c.Task.Name), c.Arm, c.Trial)
 	volume := name + "-out"
@@ -265,7 +281,7 @@ func runOnce(cfg runConfig, c cell, net network, attempt int) (trialResult, bool
 
 	exitCode, runErr := runTrial(trialSpec{
 		Name: name, Arm: c.Arm, Image: image, Task: c.Task,
-		ContextFile: filepath.Join(cfg.Root, "bench", "context", context),
+		ContextFile: contextFile,
 		Volume:      volume, Network: net.Name, ProxyURL: net.ProxyURL(),
 		Args:    claudeArgs(c.Arm, cfg.Model, c.Task),
 		Timeout: time.Duration(c.Task.TimeoutSeconds)*time.Second + trialGrace,
@@ -293,6 +309,7 @@ func runOnce(cfg runConfig, c cell, net network, attempt int) (trialResult, bool
 	if t.BashCommands == nil {
 		t.BashCommands = []string{}
 	}
+	t.UsedTool = usedTool(t.BashCommands, c.Task.Command)
 	if tr.Result != nil {
 		r := tr.Result
 		t.InputTokens, t.CacheCreationInputTokens = r.Usage.InputTokens, r.Usage.CacheCreationInputTokens
@@ -405,7 +422,7 @@ func buildManifest(cfg runConfig) (manifest, error) {
 		RunID: cfg.RunID, Model: cfg.Model, AgentUtilsVersion: cfg.Version, HarnessCommit: gitHead(cfg.Root),
 		Images: map[string]string{}, Arms: cfg.Arms, Trials: cfg.Trials, Concurrency: cfg.Concurrency, Seed: cfg.Seed,
 		Tasks: map[string]string{}, Context: map[string]string{}, ContextTokens: map[string]int{},
-		StartedAt: time.Now().UTC().Format(time.RFC3339),
+		StartedAt: time.Now().UTC().Format(time.RFC3339), NamedSentence: namedSentence,
 	}
 	for _, tag := range []string{baseImage, toolImage, proxyImage} {
 		d, err := imageDigest(tag)

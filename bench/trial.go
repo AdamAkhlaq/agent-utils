@@ -38,6 +38,9 @@ type Trial struct {
 	ToolCalls    int      `json:"tool_calls"`
 	BashCalls    int      `json:"bash_calls"`
 	BashCommands []string `json:"bash_commands"`
+	// UsedTool is whether a shell command invoked agent-utils with the
+	// task's command (always false in the shell and model arms).
+	UsedTool bool `json:"used_tool"`
 
 	DurationMS    int64  `json:"duration_ms"`
 	DurationAPIMS int64  `json:"duration_api_ms"`

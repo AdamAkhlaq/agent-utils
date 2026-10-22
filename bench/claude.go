@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"regexp"
 	"slices"
 	"sort"
 	"strconv"
@@ -22,8 +23,36 @@ const maxTranscriptLine = 64 << 20
 // would be a second channel out). The model arm can only read and write.
 var armTools = map[string][]string{
 	"tool":  {"Bash", "Edit", "Glob", "Grep", "Read", "Write"},
+	"named": {"Bash", "Edit", "Glob", "Grep", "Read", "Write"},
 	"shell": {"Bash", "Edit", "Glob", "Grep", "Read", "Write"},
 	"model": {"Read", "Write"},
+}
+
+// namedSentence is what the named arm's context adds to the tool arm's: the
+// command that fits the task, taken from task.toml, never the invocation.
+// It is the only per-task text any arm receives beyond the instruction, and
+// it is the treatment: tool in hand versus improvised solution.
+const namedSentence = "For this task, use `agent-utils %[1]s`. Run `agent-utils %[1]s -h` for its usage.\n"
+
+// namedContext is the named arm's context paragraph for a task.
+func namedContext(toolText, command string) string {
+	return strings.TrimRight(toolText, "\n") + "\n\n" + fmt.Sprintf(namedSentence, command)
+}
+
+var agentUtilsCall = regexp.MustCompile(`(^|[^A-Za-z0-9_./-])agent-utils\s+([a-z0-9-]+)`)
+
+// usedTool reports whether any shell command invoked agent-utils with the
+// task's command. A lookup of another command (help, -h on a guessed name)
+// does not count: the question is whether the tool did the work.
+func usedTool(commands []string, command string) bool {
+	for _, c := range commands {
+		for _, m := range agentUtilsCall.FindAllStringSubmatch(c, -1) {
+			if m[2] == command {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // claudeArgs is the argument list after "claude -p <instruction>" for one
