@@ -1,0 +1,9 @@
+2026-09-10T08:50:07.778Z WARN  request_id=eeb6c3b84268f381 service=catalog path=/v1/items/5607 status=200 duration_ms=397
+2026-09-10T08:50:07.818Z DEBUG request_id=fb0c4cf41231c4c5 service=notify path=/v1/messages/986 status=200 duration_ms=709
+2026-09-10T08:50:08.888Z INFO  request_id=315608b6e4b82f1e service=ledger path=/v1/accounts/2591 status=200 duration_ms=888
+2026-09-10T08:50:09.772Z INFO  request_id=543d85e0ebe7618c service=billing path=/v1/invoices/25 status=201 duration_ms=545
+2026-09-10T08:50:10.098Z DEBUG request_id=fd8821c67dd4bfde service=auth path=/v1/sessions/6638?page=36 status=304 duration_ms=801
+2026-09-10T08:50:10.826Z ERROR request_id=41a9d4d1598c7e52 service=notify path=/v1/messages/6403 status=200 duration_ms=697
+2026-09-10T08:50:12.364Z INFO  request_id=09d612cdcd028ded service=ledger path=/v1/accounts/9538 status=500 duration_ms=189
+2026-09-10T08:50:13.196Z DEBUG request_id=128a95d16623748b service=ledger path=/v1/accounts/1637?page=37 status=429 duration_ms=322
+2026-09-10T08:50:14.559Z ERROR request_id=dfb8d2107b90096c service=billing path=/v1/invoices/3939 status=200 duration_ms=769

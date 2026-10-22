@@ -2,7 +2,7 @@
 
 This directory holds the benchmark that measures what an agent gains from having `agent-utils` on its PATH: **speed** (wall-clock per task), **tokens and cost** (end to end, cache-aware), and **accuracy** (did the task get done right), compared with the same agent doing the same task without it. The method, the tasks, and the harness live here, and so will the per-trial data of every published run.
 
-**What exists today:** the task format, the five pilot tasks, the Docker images, the two context paragraphs, and the three subcommands: `validate`, `run`, and `report`. No run has been published yet; `results/` and the README's measured numbers arrive with the first full run.
+**What exists today:** the task format, the task suite under `tasks/` (filled in one command category per PR; `bench validate` lists the commands still without a task), the Docker images, the two context paragraphs, and the three subcommands: `validate`, `run`, and `report`. No run has been published yet; `results/` and the README's measured numbers arrive with the first full run.
 
 The tool's authors run the benchmark. The harness is public, every prompt and checker is open to review, raw transcripts are published with each run, and flat or negative results are published too.
 

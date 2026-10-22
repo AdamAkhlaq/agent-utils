@@ -1,0 +1,1 @@
+Ticket #84953: the Zürich office network (vlan 998) will be offline on 2026-11-13 from 17:30 to 19:00 CET for the switch upgrade. Contact Señora Ibáñez or Jiří Nováček at ext. 8097 if your team needs access. Estimated cost: €4.387 for the naïve rollout, 20% less with the façade plan.

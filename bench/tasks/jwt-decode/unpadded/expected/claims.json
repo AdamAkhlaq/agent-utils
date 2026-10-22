@@ -1,0 +1,24 @@
+{
+  "iss": "https://id-7176b.example/realms/orion",
+  "sub": "f5296d23e5d585f43abdfe0f",
+  "aud": [
+    "ledger-api",
+    "svc-6847"
+  ],
+  "given_name": "Zoë",
+  "family_name": "Ångström-Ní",
+  "preferred_username": "z.angstrom37",
+  "picture": "https://img.example/u/7b06ce6ba7?s=64",
+  "zoneinfo": "Europe/Zürich",
+  "iat": 1770731935,
+  "nbf": 1770731905,
+  "exp": 1770733735,
+  "org": {
+    "id": 5921,
+    "name": "Ångström 東京支社",
+    "role": "editor",
+    "mfa": true
+  },
+  "scope": "ledger:read ledger:write audit:read",
+  "jti": "c24c9aac5af963f0b6593ddabd35c6a3"
+}
