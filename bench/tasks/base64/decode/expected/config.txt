@@ -1,0 +1,17 @@
+[service]
+name = "ledger-sync-88d62e"
+region = "eu-central-2"
+owner = "Søren Þórðarson"
+replicas = 3
+
+[database]
+host = "pg-7bb2.internal"
+port = 6432
+user = "sync_882"
+password = "314dab289449c3260108"
+sslmode = "verify-full"
+
+[limits]
+batch_size = 250
+timeout_seconds = 45
+max_retries = 2
