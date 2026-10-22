@@ -1,0 +1,48 @@
+[
+  {
+    "region": "Nordics",
+    "manager": "Ingrid Haugen",
+    "revenue": 1250000.5,
+    "growth": 0.125,
+    "target_met": true
+  },
+  {
+    "region": "Benelux",
+    "manager": "Jeroen de Vries",
+    "revenue": 830400,
+    "growth": -0.02,
+    "target_met": false,
+    "note": "Q3 restated, see \"Finance memo\""
+  },
+  {
+    "region": "Iberia",
+    "revenue": 512300.75,
+    "growth": 0.3,
+    "target_met": true,
+    "note": "New office in Porto,\nopened in May"
+  },
+  {
+    "region": "DACH",
+    "manager": "Lea Müller",
+    "revenue": 1640000,
+    "growth": 0.071,
+    "target_met": null,
+    "headcount": 42
+  },
+  {
+    "region": "Baltics, Poland",
+    "manager": "Bartłomiej Wiśniewski",
+    "revenue": 97000.1,
+    "growth": 1.5,
+    "target_met": true,
+    "headcount": 7
+  },
+  {
+    "region": "UK & Ireland",
+    "manager": "Aoife Ó Briain",
+    "revenue": 0,
+    "growth": 0,
+    "target_met": false,
+    "note": ""
+  }
+]

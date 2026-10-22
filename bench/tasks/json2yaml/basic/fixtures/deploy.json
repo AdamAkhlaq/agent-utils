@@ -1,0 +1,42 @@
+{
+  "app": "booking-web",
+  "version": "1.10",
+  "region": {
+    "country": "NO",
+    "city": "Tromsø",
+    "postcode": "9008"
+  },
+  "release_date": "2026-03-01",
+  "build": "0755",
+  "replicas": 4,
+  "ratio": 0.75,
+  "maintenance": {
+    "window": "Sun 02:00-04:00",
+    "enabled": false,
+    "auto_resume": "on"
+  },
+  "feature_flags": {
+    "new_checkout": true,
+    "legacy_search": "off",
+    "dark_mode": "yes"
+  },
+  "contacts": [
+    {
+      "name": "Ingrid Haugen",
+      "phone": "+47 22 33 44 55",
+      "on_call": true
+    },
+    {
+      "name": "Ola Nordmann",
+      "phone": "+47 98 76 54 32",
+      "on_call": false
+    }
+  ],
+  "allowed_hosts": [
+    "booking.example",
+    "*.booking.example"
+  ],
+  "comment": "Values like NO, 1.10, and 0755 are strings: #keep them",
+  "empty": null,
+  "release_notes": "Fixed the date picker.\nAdded Sámi translations.\n"
+}

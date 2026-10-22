@@ -1,0 +1,92 @@
+[
+  {
+    "id": "9630",
+    "name": "Lefèvre, Dagný",
+    "email": "ufeaf4@mail.example",
+    "city": "Tromsø",
+    "postcode": "9008",
+    "phone": "",
+    "newsletter": "TRUE",
+    "balance": "1e3"
+  },
+  {
+    "id": "8438",
+    "name": "Yılmaz, Ines",
+    "email": "uc6cb9@mail.example",
+    "city": "Cork",
+    "postcode": "T12 X70A",
+    "phone": "+47 22 33 44 55",
+    "newsletter": "no",
+    "balance": "-3.5"
+  },
+  {
+    "id": "1808",
+    "name": "Tanaka, Oona",
+    "email": "uf9ff1@mail.example",
+    "city": "Bergamo",
+    "postcode": "24121",
+    "phone": "",
+    "newsletter": "TRUE",
+    "balance": "007"
+  },
+  {
+    "id": "2485",
+    "name": "Ortega, Bartłomiej",
+    "email": "u4f3bb@mail.example",
+    "city": "Akureyri",
+    "postcode": "600",
+    "phone": "+47 22 33 44 55",
+    "newsletter": "no",
+    "balance": "1,250.00"
+  },
+  {
+    "id": "0619",
+    "name": "Lefèvre, Hana",
+    "email": "uc1b7b@mail.example",
+    "city": "Lyon",
+    "postcode": "69002",
+    "phone": "+1 617-555-0143",
+    "newsletter": "",
+    "balance": "1,250.00"
+  },
+  {
+    "id": "1712",
+    "name": "Ortega, Oona",
+    "email": "u12c7b@mail.example",
+    "city": "Leuven",
+    "postcode": "3000",
+    "phone": "+47 22 33 44 55",
+    "newsletter": "",
+    "balance": "0.10"
+  },
+  {
+    "id": "3773",
+    "name": "Yılmaz, Oona",
+    "email": "u02578@mail.example",
+    "city": "Brno",
+    "postcode": "602 00",
+    "phone": "+47 22 33 44 55",
+    "newsletter": "",
+    "balance": "0.10"
+  },
+  {
+    "id": "9671",
+    "name": "Kahale, Farah",
+    "email": "u55b97@mail.example",
+    "city": "Boston",
+    "postcode": "02108",
+    "phone": "",
+    "newsletter": "TRUE",
+    "balance": "1,250.00"
+  },
+  {
+    "id": "8038",
+    "name": "Tanaka, Farah",
+    "email": "u8ebd3@mail.example",
+    "city": "Porto",
+    "postcode": "4050-262",
+    "phone": "+1 617-555-0143",
+    "newsletter": "TRUE",
+    "balance": "-3.5"
+  }
+]

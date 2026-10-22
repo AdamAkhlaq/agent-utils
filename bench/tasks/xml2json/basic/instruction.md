@@ -1,0 +1,3 @@
+The file `/task/fixtures/report.xml` is a JUnit-style test report. Write the tests that failed or errored to `/out/failures.json` as a JSON array, in the order they appear in the report. Each element is an object with exactly three string fields: `suite` (the `name` of the enclosing `testsuite` element), `name` (the `name` of the `testcase` element), and `message` (the `message` attribute of its `failure` or `error` element, with XML entities decoded).
+
+Done means `/out/failures.json` lists every failed or errored test, and nothing else, in that form. Do not ask questions; write the file and stop.

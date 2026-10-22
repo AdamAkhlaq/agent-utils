@@ -1,0 +1,287 @@
+[
+  {
+    "id": "ORD-317824",
+    "email": "bartlomiej.294e@shop.example",
+    "placed": "2026-12-23",
+    "status": "shipped",
+    "currency": "EUR",
+    "total": 5244.2,
+    "items": [
+      {
+        "sku": "KTL-2041",
+        "qty": 5
+      },
+      {
+        "sku": "LID-0042",
+        "qty": 2
+      },
+      {
+        "sku": "CUP-4410",
+        "qty": 2
+      }
+    ]
+  },
+  {
+    "id": "ORD-943534",
+    "email": "jun.007b@shop.example",
+    "placed": "2026-02-29",
+    "status": "shipped",
+    "currency": "EUR",
+    "total": 1019.4,
+    "items": [
+      {
+        "sku": "CUP-4410",
+        "qty": 4
+      },
+      {
+        "sku": "JAR-1207",
+        "qty": 5
+      },
+      {
+        "sku": "TEA-7782",
+        "qty": 2
+      }
+    ]
+  },
+  {
+    "id": "ORD-180561",
+    "email": "jun.761c@shop.example",
+    "placed": "2026-07-28",
+    "status": "pending",
+    "currency": "USD",
+    "total": 9394.5,
+    "items": [
+      {
+        "sku": "TEA-7782",
+        "qty": 2.0
+      },
+      {
+        "sku": "JAR-1207",
+        "qty": 5
+      },
+      {
+        "sku": "KTL-2041",
+        "qty": 3
+      }
+    ]
+  },
+  {
+    "id": "ORD-789882",
+    "email": "hana.e398@shop.example",
+    "placed": "2026-08-09",
+    "status": "paid",
+    "currency": "USD",
+    "total": 3226.8,
+    "items": [
+      {
+        "sku": "KTL-2041",
+        "qty": 0
+      }
+    ]
+  },
+  {
+    "id": "ORD-309041",
+    "email": "farah.b090@shop.example",
+    "placed": "2026-04-21",
+    "status": "paid",
+    "currency": "NOK",
+    "total": 19.99,
+    "items": [
+      {
+        "sku": "MUG-0310",
+        "qty": 5
+      },
+      {
+        "sku": "LID-0042",
+        "qty": 3
+      }
+    ]
+  },
+  {
+    "id": "ORD-04417",
+    "email": "priya.d06a@shop.example",
+    "placed": "2026-07-26",
+    "status": "shipped",
+    "currency": "NOK",
+    "total": 1981.6,
+    "items": [
+      {
+        "sku": "TEA-7782",
+        "qty": 5
+      }
+    ]
+  },
+  {
+    "id": "ORD-235907",
+    "email": "dana+orders@shop.example",
+    "placed": "2026-09-17",
+    "status": "shipped",
+    "currency": "EUR",
+    "total": 9722.4,
+    "items": [
+      {
+        "sku": "LID-0042",
+        "qty": 3
+      },
+      {
+        "sku": "JAR-1207",
+        "qty": 2
+      },
+      {
+        "sku": "MUG-0310",
+        "qty": 4
+      }
+    ],
+    "notes": "Bitte vor 18 Uhr liefern, danke 🙏"
+  },
+  {
+    "id": "ORD-757055",
+    "email": "lucia.3949@shop.example",
+    "placed": "2026-09-10",
+    "status": "paid",
+    "currency": "USD",
+    "total": 5543.9,
+    "items": [
+      {
+        "sku": "MUG-0310",
+        "qty": 3
+      },
+      {
+        "sku": "CUP-4410",
+        "qty": 5
+      }
+    ],
+    "coupon": "SPRING-10"
+  },
+  {
+    "id": "ORD-848936",
+    "email": "lucia.0b96@shop.example",
+    "placed": "2026-03-23",
+    "status": "paid",
+    "currency": "EUR",
+    "total": 5706.3,
+    "items": []
+  },
+  {
+    "id": "ORD-711447",
+    "email": "hana.5b1c@shop.example",
+    "placed": "2026-03-15",
+    "status": "canceled",
+    "currency": "EUR",
+    "total": 8718.8,
+    "items": [
+      {
+        "sku": "JAR-1207",
+        "qty": 4
+      },
+      {
+        "sku": "TEA-7782",
+        "qty": 3
+      }
+    ]
+  },
+  {
+    "id": "ORD-557449",
+    "email": "lucia.b072@shop.example",
+    "placed": "2026-12-08",
+    "status": "shipped",
+    "currency": "EUR",
+    "total": 0.07,
+    "items": [
+      {
+        "sku": "KTL-2041",
+        "qty": 3
+      },
+      {
+        "sku": "MUG-0310",
+        "qty": 5
+      },
+      {
+        "sku": "CUP-4410",
+        "qty": 1
+      }
+    ]
+  },
+  {
+    "id": "ORD-994106",
+    "email": "hana.6e0b@shop.example",
+    "placed": "2026-11-14",
+    "status": "shipped",
+    "currency": "NOK",
+    "total": 12.345,
+    "items": [
+      {
+        "sku": "MUG-0310",
+        "qty": 3
+      }
+    ]
+  },
+  {
+    "id": "ORD-987853",
+    "email": "jun.c78e@shop.example",
+    "placed": "2026-11-03",
+    "status": "pending",
+    "currency": "USD",
+    "total": 789.7,
+    "items": [
+      {
+        "sku": "ktl-2041",
+        "qty": 3
+      },
+      {
+        "sku": "MUG-0310",
+        "qty": 2
+      },
+      {
+        "sku": "CUP-4410",
+        "qty": 3
+      }
+    ]
+  },
+  {
+    "id": "ORD-367877",
+    "email": "mateus.28a2@shop.example",
+    "placed": "2028-02-29",
+    "status": "shipped",
+    "currency": "NOK",
+    "total": 9531.7,
+    "items": [
+      {
+        "sku": "CUP-4410",
+        "qty": 4
+      }
+    ]
+  },
+  {
+    "id": "ORD-446437",
+    "email": "ops@@shop.example",
+    "placed": "2026-04-25",
+    "status": "paid",
+    "currency": "NOK",
+    "total": 9462.6,
+    "items": [
+      {
+        "sku": "TEA-7782",
+        "qty": 2
+      }
+    ]
+  },
+  {
+    "id": "ORD-531599",
+    "email": "oona.9d5a@shop.example",
+    "placed": "2026-10-10",
+    "status": "shipped",
+    "currency": "NOK",
+    "total": 100,
+    "items": [
+      {
+        "sku": "FLT-0099",
+        "qty": 3
+      },
+      {
+        "sku": "KTL-2041",
+        "qty": 5
+      }
+    ]
+  }
+]

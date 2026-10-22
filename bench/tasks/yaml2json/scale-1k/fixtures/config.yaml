@@ -1,0 +1,62 @@
+inventory:
+  generated: "2026-10-22"
+  version: 3
+  regions:
+    - "eu-west-1"
+    - "us-east-1"
+    - "ap-south-1"
+  services:
+    - name: "svc-000"
+      team: "search"
+      image: "registry.example/svc-000:1.19.1"
+      replicas: 10
+      cpu_millicores: 1000
+      memory_mb: 512
+      public: true
+      owner_email: "team-0@example.com"
+      error_budget: 0.9855
+      ports:
+        - name: "http"
+          port: 8000
+          protocol: "TCP"
+      env:
+        LOG_LEVEL: "warn"
+        REGION: "eu-west-1"
+      depends_on: []
+    - name: "svc-001"
+      team: "infra"
+      image: "registry.example/svc-001:1.16.5"
+      replicas: 6
+      cpu_millicores: 250
+      memory_mb: 512
+      public: false
+      owner_email: "team-1@example.com"
+      error_budget: 0.9584
+      ports:
+        - name: "http"
+          port: 8001
+          protocol: "TCP"
+      env:
+        LOG_LEVEL: "debug"
+        REGION: "ap-south-1"
+      depends_on:
+        - "svc-000"
+    - name: "svc-002"
+      team: "payments"
+      image: "registry.example/svc-002:5.8.26"
+      replicas: 11
+      cpu_millicores: 250
+      memory_mb: 256
+      public: true
+      owner_email: "team-2@example.com"
+      error_budget: 0.9135
+      ports:
+        - name: "http"
+          port: 8002
+          protocol: "TCP"
+      env:
+        LOG_LEVEL: "warn"
+        REGION: "us-east-1"
+      depends_on:
+        - "svc-001"
+        - "svc-000"

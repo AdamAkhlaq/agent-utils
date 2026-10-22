@@ -1,0 +1,3 @@
+Write the JSON array of objects in `/task/fixtures/regions.json` as CSV to `/out/regions.csv`. The first row is a header whose columns are every key that appears in any object, in the order each key first appears in the file. Then write one row per object, in array order. A key that is missing from an object, or whose value is null, gives an empty field. Write strings as they are, numbers with their value unchanged, and booleans as `true` or `false`. Separate fields with commas, and follow RFC 4180 for fields that contain commas, line breaks, or double quotes.
+
+Done means a standard CSV reader gets exactly that header and those rows from `/out/regions.csv`. Do not ask questions; write the file and stop.

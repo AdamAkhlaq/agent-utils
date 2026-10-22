@@ -1,0 +1,72 @@
+[
+  {
+    "event_id": "db0cd093f7470bfc6e0e",
+    "type": "page_view",
+    "ts": "2026-05-27T20:02:12Z",
+    "user": {
+      "id": 50856,
+      "country": "IS",
+      "beta": false
+    },
+    "props": {
+      "path": "/",
+      "ms": 1588,
+      "score": 0.5809
+    },
+    "labels": []
+  },
+  {
+    "event_id": "ccb4b527a3b126404e58",
+    "type": "page_view",
+    "ts": "2026-05-21T17:14:16Z",
+    "user": {
+      "id": 57897,
+      "country": "IT",
+      "beta": true
+    },
+    "props": {
+      "path": "/cart",
+      "ms": 2829,
+      "score": 0.3787
+    },
+    "labels": [
+      "ref:mail"
+    ]
+  },
+  {
+    "event_id": "78abe5570329a3be730f",
+    "type": "add_to_cart",
+    "ts": "2026-05-01T15:42:58Z",
+    "user": {
+      "id": 12612,
+      "country": "CZ",
+      "beta": false
+    },
+    "props": {
+      "path": "/search",
+      "ms": 2779,
+      "score": 0.9824
+    },
+    "labels": []
+  },
+  {
+    "event_id": "7fcef11a9217ee37d716",
+    "type": "page_view",
+    "ts": "2026-05-24T05:45:35Z",
+    "user": {
+      "id": 76302,
+      "country": "IS",
+      "beta": true
+    },
+    "props": {
+      "path": "/",
+      "ms": 3911,
+      "score": 0.3197
+    },
+    "labels": [
+      "ab:b",
+      "ref:ads",
+      "mobile"
+    ]
+  }
+]
