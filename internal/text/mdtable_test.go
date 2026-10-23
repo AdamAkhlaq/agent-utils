@@ -2,8 +2,11 @@ package text
 
 import (
 	"bytes"
+	"errors"
+	"io"
 	"strings"
 	"testing"
+	"testing/iotest"
 )
 
 func TestMarkdownTable(t *testing.T) {
@@ -97,6 +100,14 @@ func TestMarkdownTable(t *testing.T) {
 		{name: "invalid JSON", input: `[{"a":`, wantErr: "invalid JSON"},
 		{name: "top-level object", input: `{"a":1}`, wantErr: "must be a JSON array of objects or a JSON array of arrays, got an object"},
 		{name: "top-level scalar", input: `"hi"`, wantErr: "got a string"},
+		{
+			name:  "leading byte order mark skipped",
+			input: "\xef\xbb\xbf" + `[{"name":"Jane"}]`,
+			want: "| name |\n" +
+				"| ---- |\n" +
+				"| Jane |\n",
+		},
+		{name: "byte order mark only is empty input", input: "\xef\xbb\xbf", wantErr: "empty input"},
 		{name: "scalar element", input: `[1,2]`, wantErr: "array element 1 must be an object or an array, got a number"},
 		{name: "mixed object then array", input: `[{"a":"1"},["b"]]`, wantErr: "array element 2 is an array but element 1 is an object"},
 		{name: "mixed array then object", input: `[["a"],{"b":"1"}]`, wantErr: "array element 2 is an object but element 1 is an array"},
@@ -167,7 +178,15 @@ func TestMarkdownTableCSV(t *testing.T) {
 			want: "| a   | b   |\n" +
 				"| --- | --- |\n",
 		},
+		{
+			name:  "leading byte order mark skipped",
+			input: "\xef\xbb\xbfname,age\r\nJane,30\r\n",
+			want: "| name | age |\n" +
+				"| ---- | --- |\n" +
+				"| Jane | 30  |\n",
+		},
 		{name: "empty input", input: "", wantErr: "empty input"},
+		{name: "byte order mark only is empty input", input: "\xef\xbb\xbf", wantErr: "empty input"},
 		{name: "ragged row", input: "a,b\n1", wantErr: "wrong number of fields"},
 	}
 	for _, tt := range tests {
@@ -188,6 +207,17 @@ func TestMarkdownTableCSV(t *testing.T) {
 			}
 			if got := out.String(); got != tt.want {
 				t.Errorf("MarkdownTableCSV() =\n%s\nwant:\n%s", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestMarkdownTableReadFailure(t *testing.T) {
+	readErr := errors.New("disk on fire")
+	for name, render := range map[string]func(io.Writer, io.Reader) error{"json": MarkdownTable, "csv": MarkdownTableCSV} {
+		t.Run(name, func(t *testing.T) {
+			if err := render(io.Discard, iotest.ErrReader(readErr)); !errors.Is(err, readErr) {
+				t.Fatalf("error = %v, want it to wrap %v", err, readErr)
 			}
 		})
 	}

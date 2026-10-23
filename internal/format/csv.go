@@ -17,7 +17,11 @@ import (
 // "01234" must not become the number 1234). The JSON is assembled by hand
 // because marshalling through a map would lose column order.
 func CSVToJSON(w io.Writer, r io.Reader, sep rune) error {
-	cr := csv.NewReader(r)
+	data, err := readText(r)
+	if err != nil {
+		return err
+	}
+	cr := csv.NewReader(bytes.NewReader(data))
 	cr.Comma = sep
 	headers, err := cr.Read()
 	if err != nil {
@@ -89,7 +93,11 @@ func CSVToJSON(w io.Writer, r io.Reader, sep rune) error {
 // objects and arrays are rejected: CSV cells are flat, and any flattening
 // scheme would be lossy.
 func JSONToCSV(w io.Writer, r io.Reader, sep rune) error {
-	dec := json.NewDecoder(r)
+	data, err := readText(r)
+	if err != nil {
+		return err
+	}
+	dec := json.NewDecoder(bytes.NewReader(data))
 	dec.UseNumber()
 	tok, err := dec.Token()
 	if err != nil {

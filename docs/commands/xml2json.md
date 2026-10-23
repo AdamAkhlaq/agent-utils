@@ -17,7 +17,7 @@ XML and JSON do not map onto each other one-to-one, so this command implements o
 - Repeated sibling elements with the same name become a JSON array. A single occurrence stays a single value, which is the convention's sharpest edge: a list with one `<item>` produces a string or object where a list with two produces an array, so consumers that expect a list should normalize with something like `jq 'if type == "array" then . else [.] end'`.
 - CDATA is treated as text, and entities are decoded. Comments, processing instructions, the XML declaration, and the DOCTYPE are dropped. Namespace prefixes are kept as part of the key name as written (`<x:b>` becomes `"x:b"`, and `xmlns` declarations survive as `@xmlns...` attributes).
 
-Object keys are emitted in sorted order, so the same input always produces byte-identical output. All values are strings; nothing is guessed into numbers or booleans. Malformed XML (unclosed or mismatched tags, text outside the root, multiple roots, unknown entities) fails with a specific error and exit 1. A worked example:
+Object keys are emitted in sorted order, so the same input always produces byte-identical output. All values are strings; nothing is guessed into numbers or booleans. Malformed XML (unclosed or mismatched tags, text outside the root, multiple roots, unknown entities) fails with a specific error and exit 1. A UTF-8 byte order mark at the start, which XML allows, is skipped. A worked example:
 
 ```xml
 <rss version="2.0">

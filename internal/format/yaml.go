@@ -75,9 +75,9 @@ func YAMLToJSON(w io.Writer, r io.Reader) error {
 }
 
 func yamlToJSON(w io.Writer, r io.Reader, limits yamlLimits) error {
-	data, err := io.ReadAll(r)
+	data, err := readText(r)
 	if err != nil {
-		return fmt.Errorf("reading input: %w", err)
+		return err
 	}
 	if len(bytes.TrimSpace(data)) == 0 {
 		return fmt.Errorf("empty input")

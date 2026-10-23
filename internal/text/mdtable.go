@@ -1,6 +1,7 @@
 package text
 
 import (
+	"bytes"
 	"encoding/csv"
 	"encoding/json"
 	"errors"
@@ -23,7 +24,11 @@ import (
 // missing keys become empty cells. Nested objects and arrays are rejected:
 // table cells are flat.
 func MarkdownTable(w io.Writer, r io.Reader) error {
-	dec := json.NewDecoder(r)
+	data, err := readInput(r)
+	if err != nil {
+		return err
+	}
+	dec := json.NewDecoder(bytes.NewReader(data))
 	dec.UseNumber()
 	tok, err := dec.Token()
 	if err != nil {
@@ -147,7 +152,11 @@ func MarkdownTable(w io.Writer, r io.Reader) error {
 // quotes, newlines) and CRLF line endings are handled per RFC 4180, matching
 // csv2json.
 func MarkdownTableCSV(w io.Writer, r io.Reader) error {
-	cr := csv.NewReader(r)
+	data, err := readInput(r)
+	if err != nil {
+		return err
+	}
+	cr := csv.NewReader(bytes.NewReader(data))
 	header, err := cr.Read()
 	if err != nil {
 		if errors.Is(err, io.EOF) {
@@ -275,4 +284,15 @@ func describeJSONToken(tok json.Token) string {
 	default:
 		return fmt.Sprintf("%v", tok)
 	}
+}
+
+// readInput reads all of r without a leading UTF-8 byte order mark: an
+// encoding signature some Windows tools write, not part of the first key or
+// header. The format package's converters apply the same rule.
+func readInput(r io.Reader) ([]byte, error) {
+	data, err := io.ReadAll(r)
+	if err != nil {
+		return nil, fmt.Errorf("reading input: %w", err)
+	}
+	return bytes.TrimPrefix(data, []byte("\xef\xbb\xbf")), nil
 }

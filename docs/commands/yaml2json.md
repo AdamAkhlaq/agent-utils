@@ -8,7 +8,7 @@ Convert a YAML document to pretty-printed JSON.
 agent-utils yaml2json [file]
 ```
 
-Key order is preserved, and only `true` and `false` are booleans (`yes`/`no` stay strings). Input with more than one document is rejected rather than silently truncated, an empty `---` document included. A `%YAML 1.1` or `%YAML 1.2` directive is accepted, and the document after it is read by the rules below either way (so `yes` stays a string under `%YAML 1.1` too); other directives, `%TAG` included, are an error. Output pipes straight into `jq` or `json-fmt`. Every error below exits with code `1`, and nothing is written to `stdout` unless the whole document converts.
+Key order is preserved, and only `true` and `false` are booleans (`yes`/`no` stay strings). Input with more than one document is rejected rather than silently truncated, an empty `---` document included. A `%YAML 1.1` or `%YAML 1.2` directive is accepted, and the document after it is read by the rules below either way (so `yes` stays a string under `%YAML 1.1` too); other directives, `%TAG` included, are an error. A UTF-8 byte order mark at the start of the input is skipped, since YAML does not count it as content. Output pipes straight into `jq` or `json-fmt`. Every error below exits with code `1`, and nothing is written to `stdout` unless the whole document converts.
 
 ## Details
 
