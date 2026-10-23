@@ -63,5 +63,8 @@ func parseSep(name, s string) (rune, error) {
 	if size == 0 || size != len(s) || (r == utf8.RuneError && size == 1) {
 		return 0, fmt.Errorf(`%s: -sep must be a single character or \t, got %q`, name, s)
 	}
+	if r == '"' || r == '\r' || r == '\n' || r == utf8.RuneError {
+		return 0, fmt.Errorf("%s: -sep cannot be a double quote, carriage return, line feed, or U+FFFD, got %q", name, s)
+	}
 	return r, nil
 }
