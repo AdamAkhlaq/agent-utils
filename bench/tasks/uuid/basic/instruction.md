@@ -1,0 +1,3 @@
+The device inventory in `/task/fixtures/devices.json` is a JSON array of twelve devices, each with an `id` of `null`. Before the import, every device needs its own fresh identifier: set each `id` to a new, randomly generated version 4 universally unique identifier (RFC 9562), written as 36 characters in the canonical lowercase hexadecimal 8-4-4-4-12 form. All twelve must be different, and must come from a real random source, not a pattern or a counter. Leave every other field and the order of the devices unchanged, and write the result to `/out/devices.json`.
+
+Done means `/out/devices.json` holds the twelve devices with their new identifiers. Do not ask questions; write the file and stop.
