@@ -18,7 +18,7 @@ agent-utils json-fmt -check [file]
 | `-c`          | Compact (minify) instead of pretty-print.                       |
 | `-check`      | Validate only: print nothing, exit `0` if valid and `3` if not. |
 
-Formatting preserves the document exactly as written: key order and number representation are untouched, so large integers never lose precision. Invalid input is reported with its line and column.
+Formatting preserves the document exactly as written: key order and number representation are untouched, so large integers never lose precision. Invalid input is reported with its line and column. A UTF-8 byte order mark at the start of the input is skipped, as `jq` does.
 
 ## Examples
 

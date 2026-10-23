@@ -491,6 +491,7 @@ func filePath(u string) (string, error) {
 // wins), and numbers whose decimal exponent is beyond ±1000000 (math/big
 // refuses them, and the library then panics or skips the keyword).
 func decodeStrict(data []byte) (any, error) {
+	data = trimBOM(data)
 	if len(bytes.Trim(data, " \t\r\n")) == 0 {
 		return nil, errors.New("empty input")
 	}

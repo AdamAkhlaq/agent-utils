@@ -51,6 +51,10 @@ func Certificates(r io.Reader, now time.Time) ([]Certificate, error) {
 	if err != nil {
 		return nil, fmt.Errorf("reading input: %w", err)
 	}
+	// pem.Decode finds a block only at the start of a line, so a UTF-8 byte
+	// order mark in front of a PEM file would hide its first certificate.
+	// DER always starts with 0x30, so it never has one.
+	data = bytes.TrimPrefix(data, []byte("\xef\xbb\xbf"))
 	if len(bytes.TrimSpace(data)) == 0 {
 		return nil, fmt.Errorf("empty input")
 	}

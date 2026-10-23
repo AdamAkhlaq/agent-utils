@@ -8,7 +8,7 @@ Convert a JSON document to YAML.
 agent-utils json2yaml [file]
 ```
 
-The inverse of [`yaml2json`](yaml2json.md). The output is block-style YAML that reads back as the same document in YAML 1.1 and 1.2 readers (go-yaml, PyYAML, and Ruby's Psych are checked in tests): key order is kept, numbers keep their digits, and a string never reads back as a number, boolean, or null. Every error below exits with code `1`, and nothing is written to `stdout` unless the whole document converts.
+The inverse of [`yaml2json`](yaml2json.md). The output is block-style YAML that reads back as the same document in YAML 1.1 and 1.2 readers (go-yaml, PyYAML, and Ruby's Psych are checked in tests): key order is kept, numbers keep their digits, and a string never reads back as a number, boolean, or null. A UTF-8 byte order mark at the start of the input is skipped. Every error below exits with code `1`, and nothing is written to `stdout` unless the whole document converts.
 
 ## Details
 

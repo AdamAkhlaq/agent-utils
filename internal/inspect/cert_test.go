@@ -299,6 +299,20 @@ func TestCertificates(t *testing.T) {
 			},
 		},
 		{
+			name: "chain pem after a utf-8 byte order mark",
+			input: func(t *testing.T) []byte {
+				return append([]byte("\xef\xbb\xbf"), chainPEM(t)...)
+			},
+			check: func(t *testing.T, certs []Certificate) {
+				if len(certs) != 2 {
+					t.Fatalf("got %d certificates, want 2", len(certs))
+				}
+				if certs[0].Subject != "CN=leaf.example.com" {
+					t.Errorf("leaf Subject = %q", certs[0].Subject)
+				}
+			},
+		},
+		{
 			name: "mixed pem with private key and certificate",
 			input: func(t *testing.T) []byte {
 				return append(privateKeyPEM(t), rsaSelfSignedPEM(t)...)

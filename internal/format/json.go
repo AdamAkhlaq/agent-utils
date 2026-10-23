@@ -79,11 +79,12 @@ func compact(buf *bytes.Buffer, data []byte) error {
 
 // readInput trims trailing whitespace, because json.Indent mirrors it from
 // input to output and the CLI layer owns the final newline. Leading whitespace
-// stays, so syntax-error offsets keep matching the input the user piped in.
+// stays, so syntax-error positions match what an editor shows (it does not
+// count a byte order mark either).
 func readInput(r io.Reader) ([]byte, error) {
-	data, err := io.ReadAll(r)
+	data, err := readText(r)
 	if err != nil {
-		return nil, fmt.Errorf("reading input: %w", err)
+		return nil, err
 	}
 	return bytes.TrimRight(data, " \t\r\n"), nil
 }
