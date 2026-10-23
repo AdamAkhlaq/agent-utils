@@ -166,6 +166,13 @@ func TestMarkdownTableCSV(t *testing.T) {
 				"| l1<br>l2 | p\\|q |\n",
 		},
 		{
+			name:  "crlf inside a quoted field is one line break",
+			input: "a\r\n\"l1\r\nl2\"\r\n",
+			want: "| a        |\n" +
+				"| -------- |\n" +
+				"| l1<br>l2 |\n",
+		},
+		{
 			name:  "crlf line endings",
 			input: "a,b\r\n1,2\r\n",
 			want: "| a   | b   |\n" +
@@ -187,7 +194,8 @@ func TestMarkdownTableCSV(t *testing.T) {
 		},
 		{name: "empty input", input: "", wantErr: "empty input"},
 		{name: "byte order mark only is empty input", input: "\xef\xbb\xbf", wantErr: "empty input"},
-		{name: "ragged row", input: "a,b\n1", wantErr: "wrong number of fields"},
+		{name: "ragged row", input: "a,b\n1", wantErr: "invalid CSV at line 2: record has 1 field but the header row has 2"},
+		{name: "bare carriage return", input: "a\r1\r", wantErr: "invalid CSV at line 1, column 2: carriage return without a line feed"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

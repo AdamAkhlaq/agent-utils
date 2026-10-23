@@ -2,7 +2,6 @@ package text
 
 import (
 	"bytes"
-	"encoding/csv"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,6 +9,8 @@ import (
 	"strconv"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/adamakhlaq/agent-utils/v2/internal/format"
 )
 
 // MarkdownTable renders a JSON array from r as a GitHub-flavored Markdown
@@ -148,21 +149,19 @@ func MarkdownTable(w io.Writer, r io.Reader) error {
 }
 
 // MarkdownTableCSV renders CSV from r (first record is the header row) as a
-// GitHub-flavored Markdown pipe table in w. Quoted fields (embedded commas,
-// quotes, newlines) and CRLF line endings are handled per RFC 4180, matching
-// csv2json.
+// GitHub-flavored Markdown pipe table in w, read by the same reader as
+// csv2json so the two never disagree about what a file holds.
 func MarkdownTableCSV(w io.Writer, r io.Reader) error {
-	data, err := readInput(r)
+	cr, err := format.NewCSVReader(r, ',')
 	if err != nil {
 		return err
 	}
-	cr := csv.NewReader(bytes.NewReader(data))
 	header, err := cr.Read()
 	if err != nil {
 		if errors.Is(err, io.EOF) {
 			return errors.New("empty input")
 		}
-		return fmt.Errorf("reading CSV header: %w", err)
+		return err
 	}
 	var rows [][]string
 	for {
@@ -171,7 +170,7 @@ func MarkdownTableCSV(w io.Writer, r io.Reader) error {
 			break
 		}
 		if err != nil {
-			return fmt.Errorf("reading CSV: %w", err)
+			return err
 		}
 		rows = append(rows, record)
 	}

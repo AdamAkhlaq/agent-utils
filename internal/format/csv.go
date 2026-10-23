@@ -8,27 +8,26 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+	"strings"
 )
 
-// CSVToJSON converts CSV from r (first record is the header row) to a
-// pretty-printed JSON array of objects in w, one object per data row with the
-// headers as keys in column order. Every value stays a JSON string: CSV
+// CSVToJSON converts CSV from r (first record is the header row, read by
+// CSVReader) to a pretty-printed JSON array of objects in w, one object per
+// data row with the headers as keys in column order. Every value stays a JSON string: CSV
 // carries no type information, and inferring types corrupts data (a zip code
 // "01234" must not become the number 1234). The JSON is assembled by hand
 // because marshalling through a map would lose column order.
 func CSVToJSON(w io.Writer, r io.Reader, sep rune) error {
-	data, err := readText(r)
+	cr, err := NewCSVReader(r, sep)
 	if err != nil {
 		return err
 	}
-	cr := csv.NewReader(bytes.NewReader(data))
-	cr.Comma = sep
 	headers, err := cr.Read()
 	if err != nil {
 		if errors.Is(err, io.EOF) {
 			return fmt.Errorf("empty input")
 		}
-		return fmt.Errorf("reading CSV header: %w", err)
+		return err
 	}
 	seen := make(map[string]bool, len(headers))
 	keys := make([][]byte, len(headers))
@@ -52,7 +51,7 @@ func CSVToJSON(w io.Writer, r io.Reader, sep rune) error {
 			break
 		}
 		if err != nil {
-			return fmt.Errorf("reading CSV: %w", err)
+			return err
 		}
 		if rows > 0 {
 			buf.WriteByte(',')
@@ -180,7 +179,7 @@ func JSONToCSV(w io.Writer, r io.Reader, sep rune) error {
 	}
 	cw := csv.NewWriter(w)
 	cw.Comma = sep
-	if err := cw.Write(columns); err != nil {
+	if err := writeRecord(cw, w, columns, sep); err != nil {
 		return fmt.Errorf("writing CSV header: %w", err)
 	}
 	record := make([]string, len(columns))
@@ -188,7 +187,7 @@ func JSONToCSV(w io.Writer, r io.Reader, sep rune) error {
 		for i, col := range columns {
 			record[i] = row[col]
 		}
-		if err := cw.Write(record); err != nil {
+		if err := writeRecord(cw, w, record, sep); err != nil {
 			return fmt.Errorf("writing CSV: %w", err)
 		}
 	}
@@ -197,6 +196,31 @@ func JSONToCSV(w io.Writer, r io.Reader, sep rune) error {
 		return fmt.Errorf("writing CSV: %w", err)
 	}
 	return nil
+}
+
+// writeRecord writes record through cw, quoting the first field by hand where
+// encoding/csv would leave it bare and a reader would then lose data: a record
+// of one empty field is a blank line, which CSV readers skip (Python's
+// csv.writer writes "" for the same reason), and a first field starting with
+// U+FEFF reads as a byte order mark at the start of the output.
+func writeRecord(cw *csv.Writer, w io.Writer, record []string, sep rune) error {
+	first := record[0]
+	if (len(record) > 1 || first != "") && !strings.HasPrefix(first, "\ufeff") {
+		return cw.Write(record)
+	}
+	cw.Flush()
+	if err := cw.Error(); err != nil {
+		return err
+	}
+	quoted := `"` + strings.ReplaceAll(first, `"`, `""`) + `"`
+	if len(record) == 1 {
+		_, err := io.WriteString(w, quoted+"\n")
+		return err
+	}
+	if _, err := io.WriteString(w, quoted+string(sep)); err != nil {
+		return err
+	}
+	return cw.Write(record[1:])
 }
 
 func describeJSONToken(tok json.Token) string {
