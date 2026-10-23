@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="ci-2b40a4" tests="13">
+  <testsuite name="billing.InvoiceTest" tests="5" failures="1" errors="1" skipped="0">
+    <testcase classname="billing.InvoiceTest" name="refreshes_total_0" time="0.144"/>
+    <testcase classname="billing.InvoiceTest" name="computes_total_1" time="2.187">
+      <failure message="expected &lt;42.10&gt; but was &lt;42.1&gt;" type="AssertionError"><![CDATA[at billing.InvoiceTest.computes_total_1(InvoiceTest.java:83)
+  & more <frames>]]></failure>
+    </testcase>
+    <testcase classname="billing.InvoiceTest" name="computes_total_2" time="1.745"/>
+    <testcase classname="billing.InvoiceTest" name="rejects_large_values_3" time="0.585">
+      <error message="NullPointerException: customer &quot;acme&quot; not found" type="AssertionError"><![CDATA[at billing.InvoiceTest.rejects_large_values_3(InvoiceTest.java:111)
+  & more <frames>]]></error>
+    </testcase>
+    <testcase classname="billing.InvoiceTest" name="rejects_large_values_4" time="0.726"/>
+    <system-out><![CDATA[seed=61842 <ok>]]></system-out>
+  </testsuite>
+  <testsuite name="billing.TaxTest" tests="1" failures="1" errors="0" skipped="0">
+    <testcase classname="billing.TaxTest" name="computes_discount_0" time="1.650">
+      <failure message="VAT for NO should be 25% &amp; got 15%" type="AssertionError"><![CDATA[at billing.TaxTest.computes_discount_0(TaxTest.java:27)
+  & more <frames>]]></failure>
+    </testcase>
+    <system-out><![CDATA[seed=32979 <ok>]]></system-out>
+  </testsuite>
+  <testsuite name="catalog.SearchTest" tests="4" failures="0" errors="0" skipped="1">
+    <testcase classname="catalog.SearchTest" name="parses_empty_input_0" time="0.782"/>
+    <testcase classname="catalog.SearchTest" name="refreshes_empty_input_1" time="1.993"/>
+    <testcase classname="catalog.SearchTest" name="parses_total_2" time="0.000"><skipped message="flaky on CI"/></testcase>
+    <testcase classname="catalog.SearchTest" name="renders_discount_3" time="2.430"/>
+    <system-out><![CDATA[seed=83487 <ok>]]></system-out>
+  </testsuite>
+  <testsuite name="auth.SessionTest" tests="3" failures="1" errors="0" skipped="0">
+    <testcase classname="auth.SessionTest" name="rounds_discount_0" time="0.196"/>
+    <testcase classname="auth.SessionTest" name="rejects_large_values_1" time="0.041"/>
+    <testcase classname="auth.SessionTest" name="rounds_unicode_names_2" time="0.201">
+      <failure message="token expired at 2026-05-01T00:00:00Z &lt; now" type="AssertionError"><![CDATA[at auth.SessionTest.rounds_unicode_names_2(SessionTest.java:207)
+  & more <frames>]]></failure>
+    </testcase>
+    <system-out><![CDATA[seed=83755 <ok>]]></system-out>
+  </testsuite>
+</testsuites>

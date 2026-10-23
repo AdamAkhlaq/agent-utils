@@ -1,0 +1,10 @@
+id,name,email,city,postcode,phone,newsletter,balance
+9630,"Lefèvre, Dagný",ufeaf4@mail.example,Tromsø,9008,,TRUE,1e3
+8438,"Yılmaz, Ines",uc6cb9@mail.example,Cork,T12 X70A,+47 22 33 44 55,no,-3.5
+1808,"Tanaka, Oona",uf9ff1@mail.example,Bergamo,24121,,TRUE,007
+2485,"Ortega, Bartłomiej",u4f3bb@mail.example,Akureyri,600,+47 22 33 44 55,no,"1,250.00"
+0619,"Lefèvre, Hana",uc1b7b@mail.example,Lyon,69002,+1 617-555-0143,,"1,250.00"
+1712,"Ortega, Oona",u12c7b@mail.example,Leuven,3000,+47 22 33 44 55,,0.10
+3773,"Yılmaz, Oona",u02578@mail.example,Brno,602 00,+47 22 33 44 55,,0.10
+9671,"Kahale, Farah",u55b97@mail.example,Boston,02108,,TRUE,"1,250.00"
+8038,"Tanaka, Farah",u8ebd3@mail.example,Porto,4050-262,+1 617-555-0143,TRUE,-3.5

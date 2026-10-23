@@ -1,0 +1,42 @@
+# CI pipeline with shared defaults
+.defaults: &defaults
+  image: "registry.example/ci/build:19.2"
+  timeout_minutes: 30
+  retry: 1
+  env: &default_env
+    GOFLAGS: "-mod=readonly"
+    CGO_ENABLED: "0"
+    REGION: "eu-north-1"
+
+.cache: &cache
+  cache:
+    key: "go-d3aea443"
+    paths: [".cache/go-build", ".cache/gomod"]
+  retry: 2
+
+.arm: &arm
+  platform: linux/arm64
+  timeout_minutes: 45
+
+jobs:
+  lint:
+    <<: *defaults
+    script: ["make lint"]
+  test:
+    <<: [*cache, *defaults]
+    timeout_minutes: 20
+    script: ["make test"]
+  build-arm:
+    <<: [*arm, *defaults, *cache]
+    env:
+      <<: *default_env
+      CGO_ENABLED: "1"
+      GOARCH: arm64
+    script: &build_script
+      - make build
+      - make package
+  release:
+    <<: *defaults
+    needs: [lint, test, build-arm]
+    script: *build_script
+    env: *default_env

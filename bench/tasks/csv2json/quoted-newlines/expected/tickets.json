@@ -1,0 +1,74 @@
+[
+  {
+    "ticket": "T-51861",
+    "opened": "2026-09-20 10:01",
+    "customer": "Hana Iyer",
+    "subject": "Uploads",
+    "description": "Checkout fails on step 2.\nBrowser: Firefox 131\nSteps: add item, pay with card",
+    "priority": "P1",
+    "assignee": ""
+  },
+  {
+    "ticket": "T-26823",
+    "opened": "2026-07-18 18:35",
+    "customer": "Émile Virtanen",
+    "subject": "Export \"CSV\"",
+    "description": "Customer says the \"Pay now\" button does nothing,\nbut only on mobile.",
+    "priority": "P2",
+    "assignee": ""
+  },
+  {
+    "ticket": "T-56058",
+    "opened": "2026-06-25 14:22",
+    "customer": "Priya Ortega",
+    "subject": "Uploads",
+    "description": "Export, import, and sync, all broken",
+    "priority": "P2",
+    "assignee": ""
+  },
+  {
+    "ticket": "T-36273",
+    "opened": "2026-08-28 10:40",
+    "customer": "Bartłomiej Yılmaz",
+    "subject": "Export \"CSV\"",
+    "description": "\"",
+    "priority": "P3",
+    "assignee": ""
+  },
+  {
+    "ticket": "T-70552",
+    "opened": "2026-04-26 09:42",
+    "customer": "Ines Kahale",
+    "subject": "Uploads",
+    "description": "Line one\n\nLine three after an empty line",
+    "priority": "P3",
+    "assignee": ""
+  },
+  {
+    "ticket": "T-43222",
+    "opened": "2026-02-24 17:40",
+    "customer": "Émile Novák",
+    "subject": "Login loop",
+    "description": "Résumé upload rejects PDFs over 2 MB;\nlimit should be 10 MB",
+    "priority": "P1",
+    "assignee": ""
+  },
+  {
+    "ticket": "T-74140",
+    "opened": "2026-05-13 14:49",
+    "customer": "Bartłomiej Haddad",
+    "subject": "Billing, invoices",
+    "description": "",
+    "priority": "P1",
+    "assignee": "Mateus Lima"
+  },
+  {
+    "ticket": "T-52746",
+    "opened": "2026-09-19 09:28",
+    "customer": "Mateus Ortega",
+    "subject": "Login loop",
+    "description": "Trailing spaces matter here   ",
+    "priority": "P3",
+    "assignee": ""
+  }
+]

@@ -1,0 +1,38 @@
+# Pipeline worker configuration
+title = "nightly-import"
+owner.name = "Kalani Kahale"
+owner.email = "kalani.5c93@data.example"
+
+[schedule]
+start = 2026-04-17T01:30:00-07:00
+first_run = 2026-04-17
+cutoff = 05:45:00
+retries = 3
+backoff_seconds = [5, 30, 120]
+
+[limits]
+max_rows = 2_500_000
+mask = 0xFF_FF
+mode = 0o640
+memory_fraction = 0.6
+threshold = 1e-4
+
+[paths]
+input = 'D:\imports\df8b\*.csv'
+archive = "s3://archive-02f6/nightly/"
+banner = """
+Nightly import \
+for the data warehouse.
+Contact: data-team"""
+
+[[sources]]
+name = "crm"
+url = "https://crm.example/export"
+enabled = true
+fields = { id = "int", email = "str", created = "date" }
+
+[[sources]]
+name = "billing"
+url = "https://billing.example/v2/export"
+enabled = false
+tags = ["finance", "eu"]

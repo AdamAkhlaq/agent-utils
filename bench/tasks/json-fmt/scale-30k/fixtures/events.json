@@ -1,0 +1,1966 @@
+[
+  {
+    "event_id": "bb726e419ddbb92bd668",
+    "type": "checkout",
+    "ts": "2026-05-05T01:38:39Z",
+    "user": {
+      "id": 94571,
+      "country": "FR",
+      "beta": true
+    },
+    "props": {
+      "path": "/search",
+      "ms": 2538,
+      "score": 0.1648
+    },
+    "labels": []
+  },
+  {
+    "event_id": "06386fc6d74dbb402c94",
+    "type": "checkout",
+    "ts": "2026-05-15T23:23:31Z",
+    "user": {
+      "id": 14261,
+      "country": "CZ",
+      "beta": false
+    },
+    "props": {
+      "path": "/",
+      "ms": 2760,
+      "score": 0.8507
+    },
+    "labels": [
+      "ref:ads",
+      "ab:b",
+      "mobile"
+    ]
+  },
+  {
+    "event_id": "68bf3fd2076c4c31a23a",
+    "type": "page_view",
+    "ts": "2026-05-14T08:37:15Z",
+    "user": {
+      "id": 58240,
+      "country": "IE",
+      "beta": true
+    },
+    "props": {
+      "path": "/search",
+      "ms": 1745,
+      "score": 0.3464
+    },
+    "labels": []
+  },
+  {
+    "event_id": "c92b3961eec0621db7c8",
+    "type": "checkout",
+    "ts": "2026-05-23T15:25:46Z",
+    "user": {
+      "id": 84313,
+      "country": "IE",
+      "beta": true
+    },
+    "props": {
+      "path": "/search",
+      "ms": 503,
+      "score": 0.8144
+    },
+    "labels": [
+      "ref:mail",
+      "ref:ads"
+    ]
+  },
+  {
+    "event_id": "da3e5b266ac48a25831f",
+    "type": "login",
+    "ts": "2026-05-13T00:50:35Z",
+    "user": {
+      "id": 70161,
+      "country": "BE",
+      "beta": false
+    },
+    "props": {
+      "path": "/search",
+      "ms": 2610,
+      "score": 0.7911
+    },
+    "labels": []
+  },
+  {
+    "event_id": "d91e5017dbe04513dbc4",
+    "type": "page_view",
+    "ts": "2026-05-26T23:30:36Z",
+    "user": {
+      "id": 33251,
+      "country": "NO",
+      "beta": true
+    },
+    "props": {
+      "path": "/p/bb44b1",
+      "ms": 3333,
+      "score": 0.3827
+    },
+    "labels": []
+  },
+  {
+    "event_id": "0166eb7a0a1a9d54f471",
+    "type": "search",
+    "ts": "2026-05-06T03:28:03Z",
+    "user": {
+      "id": 32963,
+      "country": "IS",
+      "beta": true
+    },
+    "props": {
+      "path": "/cart",
+      "ms": 2672,
+      "score": 0.404
+    },
+    "labels": [
+      "ref:mail",
+      "mobile"
+    ]
+  },
+  {
+    "event_id": "45071de96e9fc3219c2b",
+    "type": "add_to_cart",
+    "ts": "2026-05-22T21:30:48Z",
+    "user": {
+      "id": 20660,
+      "country": "PT",
+      "beta": true
+    },
+    "props": {
+      "path": "/cart",
+      "ms": 1416,
+      "score": 0.9222
+    },
+    "labels": [
+      "mobile"
+    ]
+  },
+  {
+    "event_id": "2aeec11d8ca4b7639a97",
+    "type": "add_to_cart",
+    "ts": "2026-05-22T12:25:51Z",
+    "user": {
+      "id": 52103,
+      "country": "IE",
+      "beta": true
+    },
+    "props": {
+      "path": "/p/553e18",
+      "ms": 2292,
+      "score": 0.8615
+    },
+    "labels": [
+      "returning",
+      "ref:ads"
+    ]
+  },
+  {
+    "event_id": "2383ec50ec5ba86161f9",
+    "type": "checkout",
+    "ts": "2026-05-15T14:00:32Z",
+    "user": {
+      "id": 53829,
+      "country": "PT",
+      "beta": false
+    },
+    "props": {
+      "path": "/cart",
+      "ms": 3607,
+      "score": 0.6165
+    },
+    "labels": []
+  },
+  {
+    "event_id": "232b8ce06ecfbc206724",
+    "type": "checkout",
+    "ts": "2026-05-05T14:10:20Z",
+    "user": {
+      "id": 34883,
+      "country": "IT",
+      "beta": false
+    },
+    "props": {
+      "path": "/search",
+      "ms": 3680,
+      "score": 0.4684
+    },
+    "labels": [
+      "mobile"
+    ]
+  },
+  {
+    "event_id": "d37159859075f85e7612",
+    "type": "login",
+    "ts": "2026-05-06T23:05:44Z",
+    "user": {
+      "id": 16517,
+      "country": "US",
+      "beta": true
+    },
+    "props": {
+      "path": "/cart",
+      "ms": 80,
+      "score": 0.349
+    },
+    "labels": []
+  },
+  {
+    "event_id": "b5d8e93c37c4e9ac311a",
+    "type": "login",
+    "ts": "2026-05-11T06:09:20Z",
+    "user": {
+      "id": 56173,
+      "country": "NO",
+      "beta": false
+    },
+    "props": {
+      "path": "/cart",
+      "ms": 412,
+      "score": 0.5477
+    },
+    "labels": [
+      "ab:b",
+      "returning"
+    ]
+  },
+  {
+    "event_id": "1e20daf7adf2064ead6a",
+    "type": "login",
+    "ts": "2026-05-25T20:58:47Z",
+    "user": {
+      "id": 84954,
+      "country": "PT",
+      "beta": true
+    },
+    "props": {
+      "path": "/p/3be12d",
+      "ms": 590,
+      "score": 0.2061
+    },
+    "labels": [
+      "returning",
+      "ref:mail"
+    ]
+  },
+  {
+    "event_id": "bccf8fec01a5d41f1220",
+    "type": "add_to_cart",
+    "ts": "2026-05-10T19:24:10Z",
+    "user": {
+      "id": 41065,
+      "country": "NO",
+      "beta": true
+    },
+    "props": {
+      "path": "/cart",
+      "ms": 1015,
+      "score": 0.8285
+    },
+    "labels": [
+      "ab:b"
+    ]
+  },
+  {
+    "event_id": "7590f548a5da3534a111",
+    "type": "search",
+    "ts": "2026-05-27T22:31:12Z",
+    "user": {
+      "id": 62029,
+      "country": "NO",
+      "beta": true
+    },
+    "props": {
+      "path": "/p/b830e6",
+      "ms": 2833,
+      "score": 0.2144
+    },
+    "labels": [
+      "returning",
+      "ref:ads"
+    ]
+  },
+  {
+    "event_id": "b15a655dd27e34fa13f4",
+    "type": "page_view",
+    "ts": "2026-05-12T04:31:28Z",
+    "user": {
+      "id": 71885,
+      "country": "NO",
+      "beta": false
+    },
+    "props": {
+      "path": "/search",
+      "ms": 1582,
+      "score": 0.5821
+    },
+    "labels": [
+      "ref:ads",
+      "mobile"
+    ]
+  },
+  {
+    "event_id": "653bbce84d9e0c2a076a",
+    "type": "checkout",
+    "ts": "2026-05-24T00:51:22Z",
+    "user": {
+      "id": 92338,
+      "country": "US",
+      "beta": false
+    },
+    "props": {
+      "path": "/p/e9609c",
+      "ms": 856,
+      "score": 0.8572
+    },
+    "labels": [
+      "mobile"
+    ]
+  },
+  {
+    "event_id": "13234f646f1c16a5eccc",
+    "type": "search",
+    "ts": "2026-05-10T12:05:12Z",
+    "user": {
+      "id": 31357,
+      "country": "US",
+      "beta": true
+    },
+    "props": {
+      "path": "/p/c9adba",
+      "ms": 3499,
+      "score": 0.8709
+    },
+    "labels": [
+      "ab:b",
+      "ref:mail",
+      "returning"
+    ]
+  },
+  {
+    "event_id": "a64912f2ed1627060729",
+    "type": "add_to_cart",
+    "ts": "2026-05-13T04:26:26Z",
+    "user": {
+      "id": 41725,
+      "country": "IE",
+      "beta": false
+    },
+    "props": {
+      "path": "/",
+      "ms": 3873,
+      "score": 0.3115
+    },
+    "labels": [
+      "mobile"
+    ]
+  },
+  {
+    "event_id": "93a5c2e530e85bafc068",
+    "type": "checkout",
+    "ts": "2026-05-21T20:28:47Z",
+    "user": {
+      "id": 43782,
+      "country": "IS",
+      "beta": true
+    },
+    "props": {
+      "path": "/cart",
+      "ms": 116,
+      "score": 0.0664
+    },
+    "labels": [
+      "mobile",
+      "ab:b",
+      "returning"
+    ]
+  },
+  {
+    "event_id": "4590e72b001ed307d3a8",
+    "type": "checkout",
+    "ts": "2026-05-27T14:22:21Z",
+    "user": {
+      "id": 11771,
+      "country": "BE",
+      "beta": false
+    },
+    "props": {
+      "path": "/search",
+      "ms": 3791,
+      "score": 0.541
+    },
+    "labels": [
+      "ab:b",
+      "ref:ads"
+    ]
+  },
+  {
+    "event_id": "b2df5540378798343c4d",
+    "type": "search",
+    "ts": "2026-05-02T00:22:39Z",
+    "user": {
+      "id": 62807,
+      "country": "IT",
+      "beta": true
+    },
+    "props": {
+      "path": "/p/82a4c2",
+      "ms": 3753,
+      "score": 0.5493
+    },
+    "labels": [
+      "returning",
+      "mobile",
+      "ref:mail"
+    ]
+  },
+  {
+    "event_id": "30bb468e6f77db5982e9",
+    "type": "add_to_cart",
+    "ts": "2026-05-06T09:41:06Z",
+    "user": {
+      "id": 98586,
+      "country": "US",
+      "beta": true
+    },
+    "props": {
+      "path": "/",
+      "ms": 3076,
+      "score": 0.8662
+    },
+    "labels": []
+  },
+  {
+    "event_id": "a05c6f7b51c5d95d8003",
+    "type": "search",
+    "ts": "2026-05-06T08:36:15Z",
+    "user": {
+      "id": 34712,
+      "country": "BE",
+      "beta": false
+    },
+    "props": {
+      "path": "/p/805635",
+      "ms": 1680,
+      "score": 0.934
+    },
+    "labels": []
+  },
+  {
+    "event_id": "87aa4301b23a9d73b1b1",
+    "type": "search",
+    "ts": "2026-05-06T23:59:44Z",
+    "user": {
+      "id": 24162,
+      "country": "NO",
+      "beta": false
+    },
+    "props": {
+      "path": "/cart",
+      "ms": 1870,
+      "score": 0.8677
+    },
+    "labels": [
+      "ref:ads",
+      "ref:mail"
+    ]
+  },
+  {
+    "event_id": "b25bec0ace581dd3ca74",
+    "type": "search",
+    "ts": "2026-05-15T20:11:09Z",
+    "user": {
+      "id": 41296,
+      "country": "CZ",
+      "beta": true
+    },
+    "props": {
+      "path": "/p/cd692e",
+      "ms": 3884,
+      "score": 0.639
+    },
+    "labels": [
+      "ref:mail",
+      "returning",
+      "mobile"
+    ]
+  },
+  {
+    "event_id": "71ca6678aaf48ec00c65",
+    "type": "page_view",
+    "ts": "2026-05-03T20:15:34Z",
+    "user": {
+      "id": 17792,
+      "country": "IE",
+      "beta": true
+    },
+    "props": {
+      "path": "/p/b08fce",
+      "ms": 46,
+      "score": 0.819
+    },
+    "labels": [
+      "returning",
+      "ref:mail",
+      "ab:b"
+    ]
+  },
+  {
+    "event_id": "8c8ef34d95d62bc23244",
+    "type": "login",
+    "ts": "2026-05-17T10:43:22Z",
+    "user": {
+      "id": 18337,
+      "country": "IT",
+      "beta": true
+    },
+    "props": {
+      "path": "/search",
+      "ms": 857,
+      "score": 0.8098
+    },
+    "labels": [
+      "mobile",
+      "ref:ads",
+      "ref:mail"
+    ]
+  },
+  {
+    "event_id": "2646fcb5287a1499dc6f",
+    "type": "page_view",
+    "ts": "2026-05-11T07:35:02Z",
+    "user": {
+      "id": 41599,
+      "country": "IS",
+      "beta": true
+    },
+    "props": {
+      "path": "/p/6cf26e",
+      "ms": 3633,
+      "score": 0.2275
+    },
+    "labels": []
+  },
+  {
+    "event_id": "473d8bb2ba0e1a888373",
+    "type": "add_to_cart",
+    "ts": "2026-05-23T03:09:24Z",
+    "user": {
+      "id": 86493,
+      "country": "IS",
+      "beta": false
+    },
+    "props": {
+      "path": "/search",
+      "ms": 2712,
+      "score": 0.9073
+    },
+    "labels": [
+      "mobile"
+    ]
+  },
+  {
+    "event_id": "687727de6721c1aaa395",
+    "type": "checkout",
+    "ts": "2026-05-09T10:08:00Z",
+    "user": {
+      "id": 35035,
+      "country": "IT",
+      "beta": false
+    },
+    "props": {
+      "path": "/p/63421c",
+      "ms": 1329,
+      "score": 0.686
+    },
+    "labels": [
+      "mobile",
+      "returning"
+    ]
+  },
+  {
+    "event_id": "2bb01addc501fc7b1c7d",
+    "type": "add_to_cart",
+    "ts": "2026-05-26T17:52:34Z",
+    "user": {
+      "id": 79113,
+      "country": "IE",
+      "beta": true
+    },
+    "props": {
+      "path": "/p/eefc71",
+      "ms": 1970,
+      "score": 0.2896
+    },
+    "labels": [
+      "ref:ads"
+    ]
+  },
+  {
+    "event_id": "964dfa7e7a0205c29083",
+    "type": "page_view",
+    "ts": "2026-05-27T02:33:03Z",
+    "user": {
+      "id": 38659,
+      "country": "PT",
+      "beta": false
+    },
+    "props": {
+      "path": "/cart",
+      "ms": 26,
+      "score": 0.7715
+    },
+    "labels": [
+      "ref:mail",
+      "ab:b",
+      "ref:ads"
+    ]
+  },
+  {
+    "event_id": "12c1dd4d5c10f9108002",
+    "type": "add_to_cart",
+    "ts": "2026-05-27T20:19:27Z",
+    "user": {
+      "id": 72298,
+      "country": "NO",
+      "beta": true
+    },
+    "props": {
+      "path": "/p/10ac48",
+      "ms": 942,
+      "score": 0.2444
+    },
+    "labels": [
+      "mobile",
+      "ref:ads"
+    ]
+  },
+  {
+    "event_id": "7bc7225353768ddf5263",
+    "type": "checkout",
+    "ts": "2026-05-24T04:27:14Z",
+    "user": {
+      "id": 25413,
+      "country": "FR",
+      "beta": true
+    },
+    "props": {
+      "path": "/search",
+      "ms": 1646,
+      "score": 0.7806
+    },
+    "labels": [
+      "ref:mail",
+      "mobile",
+      "ab:b"
+    ]
+  },
+  {
+    "event_id": "ee163f3de753d6fd7479",
+    "type": "checkout",
+    "ts": "2026-05-13T19:11:46Z",
+    "user": {
+      "id": 18562,
+      "country": "CZ",
+      "beta": true
+    },
+    "props": {
+      "path": "/search",
+      "ms": 2183,
+      "score": 0.0647
+    },
+    "labels": [
+      "mobile"
+    ]
+  },
+  {
+    "event_id": "f75c66d3e03f14b41f0a",
+    "type": "checkout",
+    "ts": "2026-05-15T00:06:16Z",
+    "user": {
+      "id": 71433,
+      "country": "IS",
+      "beta": true
+    },
+    "props": {
+      "path": "/cart",
+      "ms": 3204,
+      "score": 0.3318
+    },
+    "labels": [
+      "ab:b"
+    ]
+  },
+  {
+    "event_id": "2b1884204b9811bc1c1c",
+    "type": "checkout",
+    "ts": "2026-05-09T06:08:58Z",
+    "user": {
+      "id": 90911,
+      "country": "IS",
+      "beta": true
+    },
+    "props": {
+      "path": "/",
+      "ms": 3947,
+      "score": 0.4434
+    },
+    "labels": [
+      "ref:mail",
+      "mobile",
+      "returning"
+    ]
+  },
+  {
+    "event_id": "52a91f94b90272f5f9ae",
+    "type": "search",
+    "ts": "2026-05-28T16:43:02Z",
+    "user": {
+      "id": 71759,
+      "country": "IT",
+      "beta": true
+    },
+    "props": {
+      "path": "/search",
+      "ms": 3405,
+      "score": 0.2926
+    },
+    "labels": []
+  },
+  {
+    "event_id": "1f61383e7f4dbbeccdee",
+    "type": "add_to_cart",
+    "ts": "2026-05-24T08:28:50Z",
+    "user": {
+      "id": 44427,
+      "country": "US",
+      "beta": true
+    },
+    "props": {
+      "path": "/",
+      "ms": 3240,
+      "score": 0.4598
+    },
+    "labels": []
+  },
+  {
+    "event_id": "36a9a9757fd8d9b77699",
+    "type": "checkout",
+    "ts": "2026-05-16T21:39:53Z",
+    "user": {
+      "id": 73285,
+      "country": "IT",
+      "beta": true
+    },
+    "props": {
+      "path": "/p/47e8f3",
+      "ms": 3726,
+      "score": 0.9036
+    },
+    "labels": [
+      "ab:b",
+      "ref:ads",
+      "mobile"
+    ]
+  },
+  {
+    "event_id": "551f3e28b00bb7e72104",
+    "type": "checkout",
+    "ts": "2026-05-06T18:49:14Z",
+    "user": {
+      "id": 42342,
+      "country": "BE",
+      "beta": true
+    },
+    "props": {
+      "path": "/cart",
+      "ms": 1429,
+      "score": 0.2294
+    },
+    "labels": [
+      "ab:b",
+      "mobile"
+    ]
+  },
+  {
+    "event_id": "1c7f79f435659c5303e4",
+    "type": "add_to_cart",
+    "ts": "2026-05-03T08:00:02Z",
+    "user": {
+      "id": 94383,
+      "country": "FR",
+      "beta": false
+    },
+    "props": {
+      "path": "/",
+      "ms": 2953,
+      "score": 0.6132
+    },
+    "labels": [
+      "ab:b"
+    ]
+  },
+  {
+    "event_id": "d553f7716ffe56fde709",
+    "type": "search",
+    "ts": "2026-05-17T13:14:26Z",
+    "user": {
+      "id": 45470,
+      "country": "CZ",
+      "beta": false
+    },
+    "props": {
+      "path": "/p/4760e3",
+      "ms": 2621,
+      "score": 0.6989
+    },
+    "labels": [
+      "ab:b",
+      "returning",
+      "ref:mail"
+    ]
+  },
+  {
+    "event_id": "28ca112680afda31a265",
+    "type": "search",
+    "ts": "2026-05-02T13:42:35Z",
+    "user": {
+      "id": 33968,
+      "country": "PT",
+      "beta": true
+    },
+    "props": {
+      "path": "/search",
+      "ms": 1112,
+      "score": 0.0569
+    },
+    "labels": []
+  },
+  {
+    "event_id": "93528933197e7c1535de",
+    "type": "page_view",
+    "ts": "2026-05-01T14:03:41Z",
+    "user": {
+      "id": 42301,
+      "country": "US",
+      "beta": true
+    },
+    "props": {
+      "path": "/p/d1d5e5",
+      "ms": 1368,
+      "score": 0.0808
+    },
+    "labels": [
+      "mobile",
+      "ab:b"
+    ]
+  },
+  {
+    "event_id": "1033801038602d91a327",
+    "type": "login",
+    "ts": "2026-05-04T03:38:45Z",
+    "user": {
+      "id": 46084,
+      "country": "CZ",
+      "beta": true
+    },
+    "props": {
+      "path": "/p/c21989",
+      "ms": 498,
+      "score": 0.7393
+    },
+    "labels": [
+      "mobile",
+      "returning",
+      "ref:ads"
+    ]
+  },
+  {
+    "event_id": "58a8ae15c3bb43e307b3",
+    "type": "checkout",
+    "ts": "2026-05-14T18:09:50Z",
+    "user": {
+      "id": 12627,
+      "country": "NO",
+      "beta": false
+    },
+    "props": {
+      "path": "/p/7ed12f",
+      "ms": 1626,
+      "score": 0.7544
+    },
+    "labels": [
+      "returning",
+      "mobile",
+      "ab:b"
+    ]
+  },
+  {
+    "event_id": "8c0bda1e77c633b903f0",
+    "type": "add_to_cart",
+    "ts": "2026-05-08T10:50:32Z",
+    "user": {
+      "id": 75545,
+      "country": "FR",
+      "beta": false
+    },
+    "props": {
+      "path": "/search",
+      "ms": 925,
+      "score": 0.5745
+    },
+    "labels": [
+      "ref:ads",
+      "returning",
+      "mobile"
+    ]
+  },
+  {
+    "event_id": "6a78bd6054c7419e6268",
+    "type": "search",
+    "ts": "2026-05-06T16:03:09Z",
+    "user": {
+      "id": 10129,
+      "country": "US",
+      "beta": true
+    },
+    "props": {
+      "path": "/p/c2b864",
+      "ms": 2822,
+      "score": 0.1856
+    },
+    "labels": [
+      "ab:b"
+    ]
+  },
+  {
+    "event_id": "c91c8e73c68f3741c094",
+    "type": "search",
+    "ts": "2026-05-09T02:31:15Z",
+    "user": {
+      "id": 99578,
+      "country": "BE",
+      "beta": false
+    },
+    "props": {
+      "path": "/p/6f69de",
+      "ms": 3057,
+      "score": 0.5604
+    },
+    "labels": [
+      "ab:b",
+      "returning"
+    ]
+  },
+  {
+    "event_id": "f22b14994a6cedb015fb",
+    "type": "search",
+    "ts": "2026-05-24T09:45:44Z",
+    "user": {
+      "id": 95994,
+      "country": "BE",
+      "beta": true
+    },
+    "props": {
+      "path": "/cart",
+      "ms": 746,
+      "score": 0.4024
+    },
+    "labels": []
+  },
+  {
+    "event_id": "0fb9aad39d036556b182",
+    "type": "search",
+    "ts": "2026-05-13T09:03:25Z",
+    "user": {
+      "id": 96231,
+      "country": "IT",
+      "beta": false
+    },
+    "props": {
+      "path": "/search",
+      "ms": 415,
+      "score": 0.5881
+    },
+    "labels": []
+  },
+  {
+    "event_id": "d476366897b44065f4df",
+    "type": "add_to_cart",
+    "ts": "2026-05-05T16:19:02Z",
+    "user": {
+      "id": 45888,
+      "country": "NO",
+      "beta": true
+    },
+    "props": {
+      "path": "/p/7dd5bc",
+      "ms": 919,
+      "score": 0.5626
+    },
+    "labels": [
+      "mobile"
+    ]
+  },
+  {
+    "event_id": "04e516b43aa9625735eb",
+    "type": "checkout",
+    "ts": "2026-05-23T12:31:59Z",
+    "user": {
+      "id": 21950,
+      "country": "CZ",
+      "beta": false
+    },
+    "props": {
+      "path": "/search",
+      "ms": 1962,
+      "score": 0.2997
+    },
+    "labels": [
+      "returning"
+    ]
+  },
+  {
+    "event_id": "4e924206fca70e18edfb",
+    "type": "search",
+    "ts": "2026-05-26T12:03:41Z",
+    "user": {
+      "id": 68670,
+      "country": "FR",
+      "beta": true
+    },
+    "props": {
+      "path": "/",
+      "ms": 3211,
+      "score": 0.9628
+    },
+    "labels": []
+  },
+  {
+    "event_id": "c47498caa343af6e1a3a",
+    "type": "login",
+    "ts": "2026-05-16T01:32:16Z",
+    "user": {
+      "id": 57959,
+      "country": "FR",
+      "beta": true
+    },
+    "props": {
+      "path": "/search",
+      "ms": 3494,
+      "score": 0.7071
+    },
+    "labels": [
+      "returning",
+      "ref:ads",
+      "mobile"
+    ]
+  },
+  {
+    "event_id": "355ed12c2bb674c4113c",
+    "type": "login",
+    "ts": "2026-05-14T06:55:39Z",
+    "user": {
+      "id": 76936,
+      "country": "IS",
+      "beta": false
+    },
+    "props": {
+      "path": "/",
+      "ms": 3932,
+      "score": 0.7809
+    },
+    "labels": [
+      "mobile"
+    ]
+  },
+  {
+    "event_id": "1aef01f509336eebcbaa",
+    "type": "login",
+    "ts": "2026-05-08T13:23:54Z",
+    "user": {
+      "id": 64935,
+      "country": "US",
+      "beta": false
+    },
+    "props": {
+      "path": "/p/3f4fc4",
+      "ms": 2446,
+      "score": 0.3344
+    },
+    "labels": [
+      "ref:ads"
+    ]
+  },
+  {
+    "event_id": "944d21d345e30b511ae6",
+    "type": "add_to_cart",
+    "ts": "2026-05-11T03:39:53Z",
+    "user": {
+      "id": 34098,
+      "country": "NO",
+      "beta": false
+    },
+    "props": {
+      "path": "/cart",
+      "ms": 2072,
+      "score": 0.1825
+    },
+    "labels": [
+      "mobile",
+      "returning"
+    ]
+  },
+  {
+    "event_id": "6218b522b1fc38e527f1",
+    "type": "add_to_cart",
+    "ts": "2026-05-21T11:54:25Z",
+    "user": {
+      "id": 30054,
+      "country": "BE",
+      "beta": false
+    },
+    "props": {
+      "path": "/p/f3e9a2",
+      "ms": 814,
+      "score": 0.693
+    },
+    "labels": [
+      "mobile",
+      "returning",
+      "ref:ads"
+    ]
+  },
+  {
+    "event_id": "539a6c70dadea050ae90",
+    "type": "add_to_cart",
+    "ts": "2026-05-01T06:40:48Z",
+    "user": {
+      "id": 64340,
+      "country": "PT",
+      "beta": true
+    },
+    "props": {
+      "path": "/",
+      "ms": 231,
+      "score": 0.4677
+    },
+    "labels": [
+      "ab:b"
+    ]
+  },
+  {
+    "event_id": "5747fccadbb96aba7021",
+    "type": "search",
+    "ts": "2026-05-22T22:13:38Z",
+    "user": {
+      "id": 60196,
+      "country": "BE",
+      "beta": true
+    },
+    "props": {
+      "path": "/",
+      "ms": 1148,
+      "score": 0.209
+    },
+    "labels": []
+  },
+  {
+    "event_id": "54ccbd76a18b7c65aa84",
+    "type": "page_view",
+    "ts": "2026-05-02T00:31:09Z",
+    "user": {
+      "id": 49652,
+      "country": "IE",
+      "beta": false
+    },
+    "props": {
+      "path": "/",
+      "ms": 1160,
+      "score": 0.8797
+    },
+    "labels": [
+      "ref:mail",
+      "mobile"
+    ]
+  },
+  {
+    "event_id": "80a903f6ca188cecc2c0",
+    "type": "search",
+    "ts": "2026-05-22T08:39:45Z",
+    "user": {
+      "id": 68896,
+      "country": "IE",
+      "beta": false
+    },
+    "props": {
+      "path": "/search",
+      "ms": 459,
+      "score": 0.1781
+    },
+    "labels": []
+  },
+  {
+    "event_id": "6bbcda347b4491c5152c",
+    "type": "login",
+    "ts": "2026-05-18T10:52:43Z",
+    "user": {
+      "id": 77886,
+      "country": "FR",
+      "beta": false
+    },
+    "props": {
+      "path": "/cart",
+      "ms": 1274,
+      "score": 0.7575
+    },
+    "labels": [
+      "mobile",
+      "ref:mail",
+      "ab:b"
+    ]
+  },
+  {
+    "event_id": "1e09e6d94611c79c8950",
+    "type": "add_to_cart",
+    "ts": "2026-05-10T15:07:10Z",
+    "user": {
+      "id": 17553,
+      "country": "PT",
+      "beta": true
+    },
+    "props": {
+      "path": "/p/120805",
+      "ms": 3705,
+      "score": 0.434
+    },
+    "labels": []
+  },
+  {
+    "event_id": "5c24e3463f34d8476ba0",
+    "type": "search",
+    "ts": "2026-05-23T12:48:14Z",
+    "user": {
+      "id": 74698,
+      "country": "IS",
+      "beta": false
+    },
+    "props": {
+      "path": "/",
+      "ms": 1827,
+      "score": 0.2045
+    },
+    "labels": [
+      "ref:mail",
+      "returning"
+    ]
+  },
+  {
+    "event_id": "585eccbf555b79f0d0c6",
+    "type": "page_view",
+    "ts": "2026-05-07T14:31:43Z",
+    "user": {
+      "id": 24960,
+      "country": "PT",
+      "beta": true
+    },
+    "props": {
+      "path": "/cart",
+      "ms": 3966,
+      "score": 0.6085
+    },
+    "labels": []
+  },
+  {
+    "event_id": "83468c807b73b306d6d3",
+    "type": "search",
+    "ts": "2026-05-20T12:38:08Z",
+    "user": {
+      "id": 37847,
+      "country": "PT",
+      "beta": true
+    },
+    "props": {
+      "path": "/p/fd8f84",
+      "ms": 2829,
+      "score": 0.9467
+    },
+    "labels": [
+      "ref:mail",
+      "mobile"
+    ]
+  },
+  {
+    "event_id": "3e9e8b33657f79141d7e",
+    "type": "page_view",
+    "ts": "2026-05-13T23:30:25Z",
+    "user": {
+      "id": 29191,
+      "country": "CZ",
+      "beta": false
+    },
+    "props": {
+      "path": "/p/420ba3",
+      "ms": 1098,
+      "score": 0.6701
+    },
+    "labels": [
+      "returning"
+    ]
+  },
+  {
+    "event_id": "2d5c96808a1db248c014",
+    "type": "page_view",
+    "ts": "2026-05-22T00:00:50Z",
+    "user": {
+      "id": 23273,
+      "country": "PT",
+      "beta": false
+    },
+    "props": {
+      "path": "/p/013937",
+      "ms": 1280,
+      "score": 0.4926
+    },
+    "labels": []
+  },
+  {
+    "event_id": "50de5dcc84a47c59d8d0",
+    "type": "login",
+    "ts": "2026-05-20T17:49:03Z",
+    "user": {
+      "id": 35652,
+      "country": "FR",
+      "beta": false
+    },
+    "props": {
+      "path": "/search",
+      "ms": 627,
+      "score": 0.803
+    },
+    "labels": [
+      "ab:b",
+      "returning",
+      "mobile"
+    ]
+  },
+  {
+    "event_id": "5e9b004e8946d89d33c0",
+    "type": "add_to_cart",
+    "ts": "2026-05-14T22:35:05Z",
+    "user": {
+      "id": 46743,
+      "country": "NO",
+      "beta": true
+    },
+    "props": {
+      "path": "/cart",
+      "ms": 1655,
+      "score": 0.0492
+    },
+    "labels": []
+  },
+  {
+    "event_id": "62dc90f679b8d811cbbc",
+    "type": "add_to_cart",
+    "ts": "2026-05-12T02:13:51Z",
+    "user": {
+      "id": 75904,
+      "country": "IT",
+      "beta": true
+    },
+    "props": {
+      "path": "/search",
+      "ms": 1326,
+      "score": 0.6373
+    },
+    "labels": []
+  },
+  {
+    "event_id": "f52359d246a4d9e7a5d4",
+    "type": "page_view",
+    "ts": "2026-05-16T23:58:36Z",
+    "user": {
+      "id": 26017,
+      "country": "FR",
+      "beta": false
+    },
+    "props": {
+      "path": "/",
+      "ms": 211,
+      "score": 0.8463
+    },
+    "labels": []
+  },
+  {
+    "event_id": "54ea5c2f643e1dc3d498",
+    "type": "login",
+    "ts": "2026-05-13T15:32:32Z",
+    "user": {
+      "id": 62951,
+      "country": "US",
+      "beta": true
+    },
+    "props": {
+      "path": "/",
+      "ms": 860,
+      "score": 0.8743
+    },
+    "labels": [
+      "ref:mail"
+    ]
+  },
+  {
+    "event_id": "7880422f6c5cda281fe9",
+    "type": "page_view",
+    "ts": "2026-05-16T12:25:44Z",
+    "user": {
+      "id": 39570,
+      "country": "PT",
+      "beta": false
+    },
+    "props": {
+      "path": "/cart",
+      "ms": 2514,
+      "score": 0.2267
+    },
+    "labels": [
+      "ab:b"
+    ]
+  },
+  {
+    "event_id": "5efcf41437821a9ccd6b",
+    "type": "search",
+    "ts": "2026-05-05T05:07:23Z",
+    "user": {
+      "id": 37945,
+      "country": "PT",
+      "beta": false
+    },
+    "props": {
+      "path": "/p/3964c6",
+      "ms": 3904,
+      "score": 0.2861
+    },
+    "labels": []
+  },
+  {
+    "event_id": "fd284bc5770b392ba882",
+    "type": "page_view",
+    "ts": "2026-05-02T00:29:56Z",
+    "user": {
+      "id": 55093,
+      "country": "IE",
+      "beta": true
+    },
+    "props": {
+      "path": "/search",
+      "ms": 1483,
+      "score": 0.5695
+    },
+    "labels": []
+  },
+  {
+    "event_id": "45bcd0ff5422bc2d41ec",
+    "type": "login",
+    "ts": "2026-05-03T03:35:00Z",
+    "user": {
+      "id": 38250,
+      "country": "IT",
+      "beta": true
+    },
+    "props": {
+      "path": "/",
+      "ms": 2598,
+      "score": 0.9187
+    },
+    "labels": [
+      "ref:ads",
+      "mobile",
+      "returning"
+    ]
+  },
+  {
+    "event_id": "90208d9d1d24ab36515c",
+    "type": "add_to_cart",
+    "ts": "2026-05-11T08:06:49Z",
+    "user": {
+      "id": 18636,
+      "country": "IE",
+      "beta": true
+    },
+    "props": {
+      "path": "/search",
+      "ms": 2095,
+      "score": 0.2796
+    },
+    "labels": [
+      "ref:mail"
+    ]
+  },
+  {
+    "event_id": "eb91f1d718a203b76c61",
+    "type": "login",
+    "ts": "2026-05-16T16:38:58Z",
+    "user": {
+      "id": 75837,
+      "country": "IE",
+      "beta": false
+    },
+    "props": {
+      "path": "/cart",
+      "ms": 2224,
+      "score": 0.3277
+    },
+    "labels": [
+      "ref:ads",
+      "ab:b"
+    ]
+  },
+  {
+    "event_id": "4b2d876b8985399d8db6",
+    "type": "search",
+    "ts": "2026-05-07T00:17:05Z",
+    "user": {
+      "id": 16949,
+      "country": "BE",
+      "beta": true
+    },
+    "props": {
+      "path": "/",
+      "ms": 615,
+      "score": 0.4089
+    },
+    "labels": []
+  },
+  {
+    "event_id": "d5e2e5488dd79941a642",
+    "type": "checkout",
+    "ts": "2026-05-12T09:26:21Z",
+    "user": {
+      "id": 13552,
+      "country": "CZ",
+      "beta": true
+    },
+    "props": {
+      "path": "/cart",
+      "ms": 2785,
+      "score": 0.967
+    },
+    "labels": []
+  },
+  {
+    "event_id": "5605f66f385358826ec7",
+    "type": "login",
+    "ts": "2026-05-18T01:58:51Z",
+    "user": {
+      "id": 99991,
+      "country": "US",
+      "beta": false
+    },
+    "props": {
+      "path": "/cart",
+      "ms": 3076,
+      "score": 0.2801
+    },
+    "labels": [
+      "ab:b",
+      "mobile"
+    ]
+  },
+  {
+    "event_id": "a06f498b10833d504de2",
+    "type": "login",
+    "ts": "2026-05-24T06:25:38Z",
+    "user": {
+      "id": 96779,
+      "country": "IS",
+      "beta": true
+    },
+    "props": {
+      "path": "/search",
+      "ms": 3694,
+      "score": 0.4763
+    },
+    "labels": [
+      "ab:b"
+    ]
+  },
+  {
+    "event_id": "192c180cd8798b9dfa58",
+    "type": "login",
+    "ts": "2026-05-18T15:15:05Z",
+    "user": {
+      "id": 96330,
+      "country": "CZ",
+      "beta": false
+    },
+    "props": {
+      "path": "/",
+      "ms": 3409,
+      "score": 0.6981
+    },
+    "labels": [
+      "mobile"
+    ]
+  },
+  {
+    "event_id": "cdd7a2ec5f2064ef4ce5",
+    "type": "add_to_cart",
+    "ts": "2026-05-06T02:33:11Z",
+    "user": {
+      "id": 67602,
+      "country": "IT",
+      "beta": true
+    },
+    "props": {
+      "path": "/cart",
+      "ms": 2796,
+      "score": 0.1091
+    },
+    "labels": [
+      "ref:ads",
+      "mobile"
+    ]
+  },
+  {
+    "event_id": "f54edfdad0164436eb7a",
+    "type": "add_to_cart",
+    "ts": "2026-05-03T02:27:19Z",
+    "user": {
+      "id": 24422,
+      "country": "NO",
+      "beta": true
+    },
+    "props": {
+      "path": "/",
+      "ms": 2839,
+      "score": 0.7512
+    },
+    "labels": []
+  },
+  {
+    "event_id": "4bf46f929cf44cdc65cc",
+    "type": "checkout",
+    "ts": "2026-05-03T07:21:09Z",
+    "user": {
+      "id": 39529,
+      "country": "IS",
+      "beta": false
+    },
+    "props": {
+      "path": "/p/ecbd74",
+      "ms": 1197,
+      "score": 0.2137
+    },
+    "labels": []
+  },
+  {
+    "event_id": "645d2f69770ed4e6526a",
+    "type": "add_to_cart",
+    "ts": "2026-05-03T13:28:11Z",
+    "user": {
+      "id": 53581,
+      "country": "NO",
+      "beta": false
+    },
+    "props": {
+      "path": "/",
+      "ms": 1155,
+      "score": 0.377
+    },
+    "labels": [
+      "ab:b",
+      "ref:ads",
+      "mobile"
+    ]
+  },
+  {
+    "event_id": "a98b78f553e6b7b8e4ed",
+    "type": "add_to_cart",
+    "ts": "2026-05-01T22:27:17Z",
+    "user": {
+      "id": 99250,
+      "country": "PT",
+      "beta": false
+    },
+    "props": {
+      "path": "/cart",
+      "ms": 1845,
+      "score": 0.2008
+    },
+    "labels": []
+  },
+  {
+    "event_id": "08ab8819d9c93165d95e",
+    "type": "checkout",
+    "ts": "2026-05-22T23:56:12Z",
+    "user": {
+      "id": 25690,
+      "country": "US",
+      "beta": false
+    },
+    "props": {
+      "path": "/",
+      "ms": 3977,
+      "score": 0.8309
+    },
+    "labels": [
+      "ref:ads"
+    ]
+  },
+  {
+    "event_id": "2162fc6b8d111041aa0e",
+    "type": "add_to_cart",
+    "ts": "2026-05-05T18:58:05Z",
+    "user": {
+      "id": 54507,
+      "country": "IE",
+      "beta": false
+    },
+    "props": {
+      "path": "/search",
+      "ms": 1003,
+      "score": 0.3442
+    },
+    "labels": [
+      "ref:ads"
+    ]
+  },
+  {
+    "event_id": "3570118e48036fd8aa74",
+    "type": "page_view",
+    "ts": "2026-05-08T10:50:05Z",
+    "user": {
+      "id": 43578,
+      "country": "CZ",
+      "beta": false
+    },
+    "props": {
+      "path": "/",
+      "ms": 2070,
+      "score": 0.8706
+    },
+    "labels": [
+      "mobile",
+      "ref:ads"
+    ]
+  },
+  {
+    "event_id": "b5560a0084a6cd86050a",
+    "type": "checkout",
+    "ts": "2026-05-24T19:37:21Z",
+    "user": {
+      "id": 58699,
+      "country": "CZ",
+      "beta": true
+    },
+    "props": {
+      "path": "/cart",
+      "ms": 2877,
+      "score": 0.0471
+    },
+    "labels": []
+  },
+  {
+    "event_id": "0dc0e1a67fc39b4c013c",
+    "type": "checkout",
+    "ts": "2026-05-08T06:53:55Z",
+    "user": {
+      "id": 55377,
+      "country": "CZ",
+      "beta": true
+    },
+    "props": {
+      "path": "/cart",
+      "ms": 2195,
+      "score": 0.0048
+    },
+    "labels": []
+  },
+  {
+    "event_id": "d497dfbeb85a5e820983",
+    "type": "checkout",
+    "ts": "2026-05-28T10:29:49Z",
+    "user": {
+      "id": 86806,
+      "country": "PT",
+      "beta": false
+    },
+    "props": {
+      "path": "/search",
+      "ms": 1248,
+      "score": 0.1005
+    },
+    "labels": [
+      "ab:b",
+      "ref:ads",
+      "returning"
+    ]
+  },
+  {
+    "event_id": "006cc0ee29ca595626dc",
+    "type": "add_to_cart",
+    "ts": "2026-05-13T15:09:48Z",
+    "user": {
+      "id": 87609,
+      "country": "US",
+      "beta": true
+    },
+    "props": {
+      "path": "/cart",
+      "ms": 3881,
+      "score": 0.0305
+    },
+    "labels": [
+      "ref:mail",
+      "ref:ads",
+      "mobile"
+    ]
+  },
+  {
+    "event_id": "34f7cf4e62818c39b238",
+    "type": "checkout",
+    "ts": "2026-05-20T01:13:25Z",
+    "user": {
+      "id": 63512,
+      "country": "FR",
+      "beta": true
+    },
+    "props": {
+      "path": "/search",
+      "ms": 1300,
+      "score": 0.3587
+    },
+    "labels": []
+  },
+  {
+    "event_id": "2d042612a437c0778f61",
+    "type": "search",
+    "ts": "2026-05-09T18:37:25Z",
+    "user": {
+      "id": 24877,
+      "country": "IS",
+      "beta": false
+    },
+    "props": {
+      "path": "/p/7e49a8",
+      "ms": 2669,
+      "score": 0.1998
+    },
+    "labels": [
+      "returning"
+    ]
+  },
+  {
+    "event_id": "b3eb82a2fb8c00fd8aaa",
+    "type": "add_to_cart",
+    "ts": "2026-05-08T07:04:28Z",
+    "user": {
+      "id": 22172,
+      "country": "PT",
+      "beta": true
+    },
+    "props": {
+      "path": "/search",
+      "ms": 3988,
+      "score": 0.7379
+    },
+    "labels": [
+      "ref:ads",
+      "mobile"
+    ]
+  },
+  {
+    "event_id": "c7d9cebb70e8871a3daf",
+    "type": "search",
+    "ts": "2026-05-08T14:52:15Z",
+    "user": {
+      "id": 59829,
+      "country": "NO",
+      "beta": false
+    },
+    "props": {
+      "path": "/cart",
+      "ms": 2138,
+      "score": 0.1968
+    },
+    "labels": []
+  },
+  {
+    "event_id": "f9e9a9c2ed5d35cd64de",
+    "type": "page_view",
+    "ts": "2026-05-14T23:48:38Z",
+    "user": {
+      "id": 53839,
+      "country": "NO",
+      "beta": true
+    },
+    "props": {
+      "path": "/",
+      "ms": 3554,
+      "score": 0.3688
+    },
+    "labels": []
+  },
+  {
+    "event_id": "c3a9950e2011d52df5cc",
+    "type": "add_to_cart",
+    "ts": "2026-05-03T20:37:10Z",
+    "user": {
+      "id": 12819,
+      "country": "NO",
+      "beta": false
+    },
+    "props": {
+      "path": "/search",
+      "ms": 720,
+      "score": 0.4992
+    },
+    "labels": [
+      "ab:b"
+    ]
+  },
+  {
+    "event_id": "e25ec7bd40e916645e88",
+    "type": "login",
+    "ts": "2026-05-27T13:27:50Z",
+    "user": {
+      "id": 17987,
+      "country": "PT",
+      "beta": true
+    },
+    "props": {
+      "path": "/cart",
+      "ms": 242,
+      "score": 0.3419
+    },
+    "labels": [
+      "returning",
+      "mobile"
+    ]
+  },
+  {
+    "event_id": "eadf5380b51dff157ee9",
+    "type": "search",
+    "ts": "2026-05-10T04:04:30Z",
+    "user": {
+      "id": 49935,
+      "country": "FR",
+      "beta": true
+    },
+    "props": {
+      "path": "/p/ce39df",
+      "ms": 2738,
+      "score": 0.8931
+    },
+    "labels": [
+      "ref:mail",
+      "ab:b",
+      "mobile"
+    ]
+  }
+]

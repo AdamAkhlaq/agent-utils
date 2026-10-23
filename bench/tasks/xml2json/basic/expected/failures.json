@@ -1,0 +1,22 @@
+[
+  {
+    "suite": "billing.InvoiceTest",
+    "name": "computes_total_1",
+    "message": "expected <42.10> but was <42.1>"
+  },
+  {
+    "suite": "billing.InvoiceTest",
+    "name": "rejects_large_values_3",
+    "message": "NullPointerException: customer \"acme\" not found"
+  },
+  {
+    "suite": "billing.TaxTest",
+    "name": "computes_discount_0",
+    "message": "VAT for NO should be 25% & got 15%"
+  },
+  {
+    "suite": "auth.SessionTest",
+    "name": "rounds_unicode_names_2",
+    "message": "token expired at 2026-05-01T00:00:00Z < now"
+  }
+]
