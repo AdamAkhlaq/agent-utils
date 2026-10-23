@@ -1,0 +1,3 @@
+The page mockup `/task/fixtures/landing.html` has four empty paragraphs, each with a `data-filler-words` attribute giving how many words of placeholder text it needs. Fill each one with exactly that many words of the same filler passage as the paragraph with `class="sample"`: start at the passage's first word, take its words in order, separated by spaces, and when the passage runs out, start again from its first word. Punctuation and line breaks inside a paragraph do not matter. Change nothing else in the page, and write it to `/out/landing.html`.
+
+Done means `/out/landing.html` is the mockup with its four paragraphs filled. Do not ask questions; write the file and stop.

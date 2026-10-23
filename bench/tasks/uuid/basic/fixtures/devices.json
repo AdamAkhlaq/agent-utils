@@ -1,0 +1,14 @@
+[
+  {"id": null, "hostname": "hgf-dock-scan-01", "site": "Felling North", "model": "Zebra MC9300", "serial": "21094522506881"},
+  {"id": null, "hostname": "hgf-dock-scan-02", "site": "Felling North", "model": "Zebra MC9300", "serial": "21094522507113"},
+  {"id": null, "hostname": "hgf-yard-gate-01", "site": "Felling North", "model": "Axis P1455-LE", "serial": "B8A44F3C91D2"},
+  {"id": null, "hostname": "hgf-office-ap-01", "site": "Felling North", "model": "Ubiquiti U6-Pro", "serial": "F4E2C6A1B907"},
+  {"id": null, "hostname": "hgf-dock-scan-01", "site": "Washington Lane", "model": "Zebra MC9300", "serial": "21094522511450"},
+  {"id": null, "hostname": "hgf-chill-probe-01", "site": "Washington Lane", "model": "Monnit ALTA", "serial": "558213"},
+  {"id": null, "hostname": "hgf-chill-probe-02", "site": "Washington Lane", "model": "Monnit ALTA", "serial": "558214"},
+  {"id": null, "hostname": "hgf-label-print-01", "site": "Washington Lane", "model": "Honeywell PM45", "serial": "17227B0294"},
+  {"id": null, "hostname": "hgf-forklift-tel-07", "site": "Team Valley", "model": "Teletrac TN360", "serial": "6F9619FF-8B86-D011-B42D-00C04FC964FF"},
+  {"id": null, "hostname": "hgf-forklift-tel-08", "site": "Team Valley", "model": "Teletrac TN360", "serial": "6F9619FF-8B86-D011-B42D-00C04FC96500"},
+  {"id": null, "hostname": "hgf-weigh-bridge-01", "site": "Team Valley", "model": "Avery Weigh-Tronix BW500", "serial": "WT-0093-4471"},
+  {"id": null, "hostname": "hgf-office-ap-01", "site": "Team Valley", "model": "Ubiquiti U6-Pro", "serial": "F4E2C6A1C33E"}
+]

@@ -1,0 +1,3 @@
+Each service listed in `/task/fixtures/services.txt` (one name per line) needs a new random secret. Write `/out/secrets.env` with one line per service, in the order the file lists them, of the form `NAME_SECRET=value`, such as `ORDERS_DB_SECRET=...`. Each value is exactly 28 characters, every one of them an ASCII letter or digit (`A`-`Z`, `a`-`z`, `0`-`9`), because the deployment tool rejects anything else; draw every character uniformly at random from those 62 with a cryptographically secure random source. The five values must all be different.
+
+Done means `/out/secrets.env` holds those five lines and nothing else. Do not ask questions; write the file and stop.
