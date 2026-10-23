@@ -1,0 +1,5 @@
+https://[2001:db8:41c::7]:8443/v2/c++/st%C3%A4tus/%E2%9C%93?id=7&id=19&q=caf%C3%A9+au+lait&empty=&flag#sec%202
+http://deploy:s3cr3t@build-17.corp.tarnwick.example:3000/a%2Fb/c?next=%2Fhome%3Fx%3D1
+ftp://mirror.tarnwick.example/pub/linux%20isos/
+https://shop.tarnwick.example/search?tag=red&tag=blue&tag=red&page=02
+HTTPS://docs.tarnwick.example/guide/4.13#install-on-linux

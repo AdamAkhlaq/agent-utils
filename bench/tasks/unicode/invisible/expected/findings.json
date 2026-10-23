@@ -1,0 +1,46 @@
+[
+  {
+    "line": 2,
+    "codepoint": "U+200B"
+  },
+  {
+    "line": 5,
+    "codepoint": "U+2060"
+  },
+  {
+    "line": 6,
+    "codepoint": "U+202E"
+  },
+  {
+    "line": 6,
+    "codepoint": "U+202C"
+  },
+  {
+    "line": 7,
+    "codepoint": "U+00AD"
+  },
+  {
+    "line": 8,
+    "codepoint": "U+FEFF"
+  },
+  {
+    "line": 10,
+    "codepoint": "U+200D"
+  },
+  {
+    "line": 10,
+    "codepoint": "U+200C"
+  },
+  {
+    "line": 11,
+    "codepoint": "U+2066"
+  },
+  {
+    "line": 11,
+    "codepoint": "U+2069"
+  },
+  {
+    "line": 12,
+    "codepoint": "U+061C"
+  }
+]

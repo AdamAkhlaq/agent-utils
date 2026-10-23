@@ -1,0 +1,1 @@
+{"name":"ledger-sync","version":"4.13.2","files":["bin/ledger-sync","share/ledger-sync/rates.csv"],"min_kernel":"5.15","build":"e7c1d09"}

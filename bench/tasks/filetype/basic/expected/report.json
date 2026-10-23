@@ -1,0 +1,8 @@
+{
+  "avatar.jpg": {"mime": "image/png", "width": 37, "height": 23},
+  "backup.gif": {"mime": "application/zip"},
+  "banner.png": {"mime": "image/jpeg", "width": 211, "height": 64},
+  "invoice.png": {"mime": "application/pdf"},
+  "receipt.pdf": {"mime": "image/webp", "width": 48, "height": 30},
+  "spinner.webp": {"mime": "image/gif", "width": 19, "height": 7}
+}

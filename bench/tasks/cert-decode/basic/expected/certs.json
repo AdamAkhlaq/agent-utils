@@ -1,0 +1,22 @@
+[
+  {
+    "subject_cn": "ledger-api.tarnwick.example",
+    "issuer_cn": "Kestrel Ridge Issuing CA G3",
+    "serial": "164117833133551314409601624940244829731",
+    "not_after": "2027-05-19T06:42:16Z",
+    "dns_names": [
+      "ledger-api.tarnwick.example",
+      "ledger-api-eu.tarnwick.example",
+      "*.ledger.tarnwick.example"
+    ],
+    "sha256_fingerprint": "1c42314483f0f4e44a56517daf99a06d1e6efcd5d4c374dd29ab5cf607440e7b"
+  },
+  {
+    "subject_cn": "Kestrel Ridge Issuing CA G3",
+    "issuer_cn": "Kestrel Ridge Root CA R2",
+    "serial": "424328702810847122538861904767282556568757545734",
+    "not_after": "2031-11-02T23:59:59Z",
+    "dns_names": [],
+    "sha256_fingerprint": "11f4e858e74b4b81a2ce2520a713dae88250c205e5d931bee0c14ce1ddc6f1e7"
+  }
+]

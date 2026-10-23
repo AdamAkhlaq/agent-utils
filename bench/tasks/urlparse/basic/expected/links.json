@@ -1,0 +1,69 @@
+[
+  {
+    "scheme": "https",
+    "host": "2001:db8:41c::7",
+    "port": "8443",
+    "path": "/v2/c++/stätus/✓",
+    "query": {
+      "empty": [
+        ""
+      ],
+      "flag": [
+        ""
+      ],
+      "id": [
+        "7",
+        "19"
+      ],
+      "q": [
+        "café au lait"
+      ]
+    },
+    "fragment": "sec 2"
+  },
+  {
+    "scheme": "http",
+    "host": "build-17.corp.tarnwick.example",
+    "port": "3000",
+    "path": "/a/b/c",
+    "query": {
+      "next": [
+        "/home?x=1"
+      ]
+    },
+    "fragment": ""
+  },
+  {
+    "scheme": "ftp",
+    "host": "mirror.tarnwick.example",
+    "port": "",
+    "path": "/pub/linux isos/",
+    "query": {},
+    "fragment": ""
+  },
+  {
+    "scheme": "https",
+    "host": "shop.tarnwick.example",
+    "port": "",
+    "path": "/search",
+    "query": {
+      "page": [
+        "02"
+      ],
+      "tag": [
+        "red",
+        "blue",
+        "red"
+      ]
+    },
+    "fragment": ""
+  },
+  {
+    "scheme": "https",
+    "host": "docs.tarnwick.example",
+    "port": "",
+    "path": "/guide/4.13",
+    "query": {},
+    "fragment": "install-on-linux"
+  }
+]
