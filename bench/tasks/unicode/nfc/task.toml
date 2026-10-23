@@ -1,0 +1,6 @@
+command = "unicode"
+arms = ["tool", "shell", "model"]
+tags = ["hard"]
+timeout_seconds = 300
+max_turns = 40
+max_budget_usd = 1.00

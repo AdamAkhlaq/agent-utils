@@ -1,0 +1,3 @@
+Users uploaded six files, and their extensions cannot be trusted: `/task/fixtures/uploads/avatar.jpg`, `/task/fixtures/uploads/backup.gif`, `/task/fixtures/uploads/banner.png`, `/task/fixtures/uploads/invoice.png`, `/task/fixtures/uploads/receipt.pdf`, and `/task/fixtures/uploads/spinner.webp`. Identify what each file really is from its content. Write a JSON object to `/out/report.json` that maps each file name (such as `avatar.jpg`) to an object with `mime`, the media type of its actual content (such as `image/png` or `application/pdf`), and, only for images, `width` and `height` in pixels as integers.
+
+Done means `/out/report.json` parses as JSON and holds exactly one entry per file with those keys and values. Do not ask questions; write the file and stop.

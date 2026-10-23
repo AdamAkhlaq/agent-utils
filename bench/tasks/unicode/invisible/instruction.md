@@ -1,0 +1,3 @@
+The file `/task/fixtures/handles.txt` lists one account handle per line. Some handles contain invisible format characters (general category Cf, such as zero-width spaces, joiners, and bidirectional controls) that make them look like other handles. Find every character of general category Cf in the file and write them to `/out/findings.json` as a JSON array in file order (by line, then left to right), one object per character with `line` (the 1-based line number, as an integer) and `codepoint` (written as `U+` and at least four uppercase hexadecimal digits, such as `U+00AD`). Characters of any other category are not findings.
+
+Done means `/out/findings.json` parses as JSON and lists exactly those characters. Do not ask questions; write the file and stop.
