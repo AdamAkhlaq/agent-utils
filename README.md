@@ -165,7 +165,7 @@ Put the same snippet in `AGENTS.md`, which these agents read. Recent versions of
 | Text | [`slugify`](docs/commands/slugify.md) | Turn text into a lowercase hyphenated slug |
 | Text | [`case`](docs/commands/case.md) | Convert between snake, camel, pascal, kebab, screaming case |
 | Text | [`strip-ansi`](docs/commands/strip-ansi.md) | Remove ANSI escape sequences from text |
-| Text | [`md-table`](docs/commands/md-table.md) | Render a JSON array or CSV as a GitHub-flavored Markdown table |
+| Text | [`md-table`](docs/commands/md-table.md) | Render a JSON array or CSV as a Markdown table with bounded padding |
 | Color | [`color`](docs/commands/color.md) | Convert a color between hex, rgb, and hsl |
 | Math | [`calc`](docs/commands/calc.md) | Evaluate an arithmetic expression exactly, with no floating point |
 | Network | [`cidr`](docs/commands/cidr.md) | CIDR/subnet math: describe, test, and split prefixes |

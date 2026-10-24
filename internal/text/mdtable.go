@@ -1,6 +1,7 @@
 package text
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"errors"
@@ -177,12 +178,13 @@ func MarkdownTableCSV(w io.Writer, r io.Reader) error {
 	return renderTable(w, header, rows)
 }
 
-// renderTable writes header and rows as a GFM pipe table, padding every cell
-// with spaces to the widest cell in its column so the pipes align vertically
-// in monospace. Widths are counted in runes; East Asian wide characters
+// renderTable writes header and rows as a GFM pipe table, padding columns
+// only when their widest escaped cell is at most 80 runes. Wider columns
+// stay unpadded so one long cell cannot amplify every row. East Asian wide characters
 // occupy two terminal columns and may still misalign visually. Rows shorter
 // than the header are padded with empty cells.
 func renderTable(w io.Writer, header []string, rows [][]string) error {
+	const paddingLimit = 80
 	// The GFM separator row needs at least three dashes per column.
 	widths := make([]int, len(header))
 	for i := range widths {
@@ -205,13 +207,15 @@ func renderTable(w io.Writer, header []string, rows [][]string) error {
 	for i, row := range rows {
 		escRows[i] = escape(row)
 	}
-	var b strings.Builder
+	b := bufio.NewWriter(w)
 	writeRow := func(cells []string) {
 		b.WriteByte('|')
 		for i, cell := range cells {
 			b.WriteByte(' ')
 			b.WriteString(cell)
-			b.WriteString(strings.Repeat(" ", widths[i]-utf8.RuneCountInString(cell)))
+			if widths[i] <= paddingLimit {
+				b.WriteString(strings.Repeat(" ", widths[i]-utf8.RuneCountInString(cell)))
+			}
 			b.WriteString(" |")
 		}
 		b.WriteByte('\n')
@@ -219,6 +223,9 @@ func renderTable(w io.Writer, header []string, rows [][]string) error {
 	writeRow(escHeader)
 	b.WriteByte('|')
 	for _, width := range widths {
+		if width > paddingLimit {
+			width = 3
+		}
 		b.WriteByte(' ')
 		b.WriteString(strings.Repeat("-", width))
 		b.WriteString(" |")
@@ -227,7 +234,7 @@ func renderTable(w io.Writer, header []string, rows [][]string) error {
 	for _, row := range escRows {
 		writeRow(row)
 	}
-	if _, err := io.WriteString(w, b.String()); err != nil {
+	if err := b.Flush(); err != nil {
 		return fmt.Errorf("writing output: %w", err)
 	}
 	return nil

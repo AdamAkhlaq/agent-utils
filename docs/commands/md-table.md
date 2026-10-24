@@ -18,6 +18,8 @@ The default input is a JSON array of objects: one row per object, with the colum
 
 Pipes in cells are escaped as `\|` and newlines become `<br>`, so any cell value survives the trip. Column widths are computed in runes; East Asian wide characters occupy two terminal columns and may still misalign visually (exact display-width handling would need data tables beyond the stdlib).
 
+Columns align in the raw Markdown only while their widest escaped cell is at most 80 characters. Wider columns are unpadded and use a three-dash separator; values are never truncated, and other columns still align. This keeps one long cell from expanding every row with spaces. The complete input is parsed and validated before output begins, then rows are written through a fixed-size buffer rather than keeping the whole output table in memory.
+
 ## Examples
 
 ```sh

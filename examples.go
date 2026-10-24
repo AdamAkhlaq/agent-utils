@@ -107,6 +107,7 @@ var examples = map[string][]cli.Example{
 	"md-table": {
 		{Command: `printf '[{"name":"Jane","age":30}]' | agent-utils md-table`},
 		{Command: `agent-utils md-table -csv report.csv`},
+		{Command: `printf 'id\n%081d\n' 1 | agent-utils md-table -csv`},
 	},
 	"password": {
 		{Command: `agent-utils password`},
