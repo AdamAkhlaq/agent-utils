@@ -56,6 +56,11 @@ func writeJWTPart(out *bytes.Buffer, part, name string) error {
 	if err != nil {
 		return fmt.Errorf("decoding %s: %w", name, err)
 	}
+	// json.Indent copies invalid UTF-8 through untouched, and JSON text
+	// must be UTF-8 (RFC 8259), so the output would not be JSON.
+	if err := validUTF8(string(raw)); err != nil {
+		return fmt.Errorf("%s is not valid JSON: %w", name, err)
+	}
 	if err := json.Indent(out, raw, "  ", "  "); err != nil {
 		return fmt.Errorf("%s is not valid JSON: %w", name, err)
 	}

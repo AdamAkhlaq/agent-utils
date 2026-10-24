@@ -92,7 +92,7 @@ func CSVToJSON(w io.Writer, r io.Reader, sep rune) error {
 // objects and arrays are rejected: CSV cells are flat, and any flattening
 // scheme would be lossy.
 func JSONToCSV(w io.Writer, r io.Reader, sep rune) error {
-	data, err := readText(r)
+	data, err := ReadText(r)
 	if err != nil {
 		return err
 	}

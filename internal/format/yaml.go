@@ -75,7 +75,7 @@ func YAMLToJSON(w io.Writer, r io.Reader) error {
 }
 
 func yamlToJSON(w io.Writer, r io.Reader, limits yamlLimits) error {
-	data, err := readText(r)
+	data, err := ReadText(r)
 	if err != nil {
 		return err
 	}

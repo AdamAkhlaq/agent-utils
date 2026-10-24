@@ -27,9 +27,6 @@ func JSONToYAML(w io.Writer, r io.Reader) error {
 	if len(data) == 0 {
 		return fmt.Errorf("empty input")
 	}
-	if err := checkUTF8(data); err != nil {
-		return err
-	}
 	if err := checkSyntax(data); err != nil {
 		return err
 	}

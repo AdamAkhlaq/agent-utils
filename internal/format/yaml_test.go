@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -1280,6 +1281,7 @@ func FuzzYAMLToJSON(f *testing.F) {
 			case strings.Contains(msg, "more than one tag"), strings.Contains(msg, "more than one anchor"):
 			case strings.Contains(msg, "YAML documents; expected one"):
 			case strings.Contains(msg, "misreads the empty value"):
+			case errors.Is(err, ErrInvalidUTF8):
 			default:
 				t.Fatalf("go-yaml converts %q to %q, but YAMLToJSON() fails: %v", input, want, err)
 			}

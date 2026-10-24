@@ -29,7 +29,7 @@ func NewCSVReader(r io.Reader, sep rune) (*CSVReader, error) {
 	if sep == 0 || sep == '"' || sep == '\r' || sep == '\n' || sep == utf8.RuneError || !utf8.ValidRune(sep) {
 		return nil, fmt.Errorf("invalid CSV separator %q", sep)
 	}
-	data, err := readText(r)
+	data, err := ReadText(r)
 	if err != nil {
 		return nil, err
 	}

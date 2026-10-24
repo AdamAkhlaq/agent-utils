@@ -18,7 +18,7 @@ The inverse of [`yaml2json`](yaml2json.md). The output is block-style YAML that 
 
 **Keys.** Keys follow the same rules as strings. A key of exactly `<<` is written `!!str "<<"`, since some readers (Ruby's Psych) take even a quoted `<<` key for a merge key, and a key that ends in `<<` is quoted (go-yaml reads it as a merge key otherwise). A key longer than 1,024 characters, the most YAML allows on one line before the `:`, is written in the explicit `? key` form. A string of several lines right after either of these two key forms is double-quoted, as go-yaml cannot read a literal block there.
 
-**Errors.** Invalid JSON is reported with its line and column, and so are a duplicate key in one object (YAML does not allow one), invalid UTF-8, and a `\uXXXX` escape of an unpaired UTF-16 surrogate (such as `\ud800`), which has no UTF-8 form.
+**Errors.** Invalid JSON is reported with its line and column, and so are a duplicate key in one object (YAML does not allow one), invalid UTF-8, and a `\uXXXX` escape of an unpaired UTF-16 surrogate (such as `\ud800`), which has no UTF-8 form. Input that starts with a UTF-16 or UTF-32 byte order mark is reported as that encoding.
 
 **Reading it back with `yaml2json`.** `yaml2json` reads integers past the 64-bit range and floats past the 64-bit range as strings, and floats only to 64-bit precision, so a round trip keeps every value within those ranges.
 
