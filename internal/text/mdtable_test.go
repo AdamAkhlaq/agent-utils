@@ -3,7 +3,9 @@ package text
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
+	"math"
 	"strings"
 	"testing"
 	"testing/iotest"
@@ -118,6 +120,35 @@ func TestMarkdownTable(t *testing.T) {
 		{name: "objects without keys", input: `[{},{}]`, wantErr: "no columns to render"},
 		{name: "empty header row", input: `[[]]`, wantErr: "header row (the first inner array) is empty"},
 		{name: "row wider than header", input: `[["a"],["1","2"]]`, wantErr: "array element 2 has 2 cells but the header row has only 1"},
+		{
+			name:  "column at the padding limit is padded",
+			input: `[["a","b"],["` + strings.Repeat("x", 80) + `","y"]]`,
+			want: "| a" + strings.Repeat(" ", 79) + " | b   |\n" +
+				"| " + strings.Repeat("-", 80) + " | --- |\n" +
+				"| " + strings.Repeat("x", 80) + " | y   |\n",
+		},
+		{
+			name:  "column past the padding limit is not padded",
+			input: `[["a","b"],["` + strings.Repeat("x", 81) + `","y"],["z","w"]]`,
+			want: "| a | b   |\n" +
+				"| --- | --- |\n" +
+				"| " + strings.Repeat("x", 81) + " | y   |\n" +
+				"| z | w   |\n",
+		},
+		{
+			name:  "padding limit counts runes, not bytes",
+			input: `[["a"],["` + strings.Repeat("é", 80) + `"]]`,
+			want: "| a" + strings.Repeat(" ", 79) + " |\n" +
+				"| " + strings.Repeat("-", 80) + " |\n" +
+				"| " + strings.Repeat("é", 80) + " |\n",
+		},
+		{
+			name:  "padding limit counts the escaped cell",
+			input: `[["a"],["` + strings.Repeat("|", 41) + `"]]`,
+			want: "| a |\n" +
+				"| --- |\n" +
+				"| " + strings.Repeat(`\|`, 41) + " |\n",
+		},
 		{name: "trailing data after array", input: `[["a"]] 2`, wantErr: "unexpected data after the JSON array"},
 	}
 	for _, tt := range tests {
@@ -256,3 +287,130 @@ func TestMarkdownTableRejectsNonUTF8(t *testing.T) {
 		})
 	}
 }
+
+func TestMarkdownTableOutputIsBounded(t *testing.T) {
+	keys := make([]string, 8000)
+	for i := range keys {
+		keys[i] = fmt.Sprintf(`{"%x":0}`, i)
+	}
+	tests := []struct {
+		name    string
+		render  func(io.Writer, io.Reader) error
+		input   string
+		maxOut  int
+		wantErr string
+	}{
+		{
+			// One huge cell used to pad every other row in its column to
+			// its width: 120 KB of input produced 1 GB of output.
+			name:   "one wide cell does not pad its column",
+			render: MarkdownTableCSV,
+			input:  "a\n" + strings.Repeat("x", 100_000) + "\n" + strings.Repeat("y\n", 10_000),
+			maxOut: 2 * 120_003,
+		},
+		{
+			// Padding alone would take this valid table to 83 MB, past
+			// both 64 MiB and 64 times its 1 MB of input.
+			name:   "padding that would pass the limit is dropped",
+			render: MarkdownTableCSV,
+			input:  strings.Repeat("h"+strings.Repeat("x", 79)+",", 19) + strings.Repeat("x", 80) + "\n" + strings.Repeat(strings.Repeat(",", 19)+"\n", 50_000),
+			maxOut: 4 << 20,
+		},
+		{
+			name:    "short rows under a wide header",
+			render:  MarkdownTable,
+			input:   "[[" + strings.Repeat(`"",`, 7999) + `""]` + strings.Repeat(",[]", 8000) + "]",
+			wantErr: "the table would be more than 67108864 bytes even without padding (8000 columns by 2793 rows so far, from 48003 bytes of input;",
+		},
+		{
+			name:    "every object adds a column",
+			render:  MarkdownTable,
+			input:   "[" + strings.Join(keys, ",") + "]",
+			wantErr: "the table would be more than 67108864 bytes even without padding",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var out bytes.Buffer
+			err := tt.render(&out, strings.NewReader(tt.input))
+			if tt.wantErr != "" {
+				if err == nil || !strings.Contains(err.Error(), tt.wantErr) {
+					t.Fatalf("error = %v, want it to contain %q", err, tt.wantErr)
+				}
+				if out.Len() != 0 {
+					t.Errorf("wrote %d bytes before failing", out.Len())
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("error = %v", err)
+			}
+			if out.Len() > tt.maxOut {
+				t.Errorf("output is %d bytes for %d bytes of input, want at most %d", out.Len(), len(tt.input), tt.maxOut)
+			}
+		})
+	}
+}
+
+// The output limit is only as good as the size it checks, so the computed
+// size must match what render writes.
+func TestTableSizeIsExact(t *testing.T) {
+	jsonInputs := []string{
+		`[{"zebra":"1","alpha":"2"}]`,
+		`[{"name":"Jane","age":30},{"name":"Bob","city":"Oslo","age":4}]`,
+		`[{},{"a":"v"},{}]`,
+		`[["a","b","c"],["1"],[],["x","y","z"]]`,
+		`[["h"]]`,
+		`[{"a":"x|y\nz","é":"ü"}]`,
+		`[["a","b"],["` + strings.Repeat("x", 80) + `","` + strings.Repeat("y", 81) + `"]]`,
+		`[["` + strings.Repeat("é", 81) + `"],["` + strings.Repeat("日", 3) + `"]]`,
+	}
+	csvInputs := []string{
+		"a,b\n1,2\n",
+		"a\n\"x\r\ny\"\n",
+		"a|b,c\n|,\n",
+		"h\n" + strings.Repeat("é", 90) + "\n\n",
+	}
+	check := func(t *testing.T, tbl *table) {
+		t.Helper()
+		for _, pad := range []bool{true, false} {
+			var out bytes.Buffer
+			if err := tbl.write(&out, pad); err != nil {
+				t.Fatalf("write() error = %v", err)
+			}
+			if got := tbl.size(pad, math.MaxInt64); got != int64(out.Len()) {
+				t.Errorf("size(pad=%t) = %d, write wrote %d bytes:\n%s", pad, got, out.Len(), out.String())
+			}
+		}
+	}
+	for _, input := range jsonInputs {
+		t.Run(input, func(t *testing.T) {
+			tbl, err := parseJSONTable([]byte(input), len(input))
+			if err != nil {
+				t.Fatalf("parseJSONTable() error = %v", err)
+			}
+			check(t, tbl)
+		})
+	}
+	for _, input := range csvInputs {
+		t.Run(input, func(t *testing.T) {
+			tbl, err := parseCSVTable(strings.NewReader(input))
+			if err != nil {
+				t.Fatalf("parseCSVTable() error = %v", err)
+			}
+			check(t, tbl)
+		})
+	}
+}
+
+func TestMarkdownTableWriteFailure(t *testing.T) {
+	writeErr := errors.New("pipe closed")
+	err := MarkdownTable(failingWriter{writeErr}, strings.NewReader(`[{"a":"1"}]`))
+	if !errors.Is(err, writeErr) || !strings.Contains(err.Error(), "writing output") {
+		t.Fatalf("error = %v, want a writing output error wrapping %v", err, writeErr)
+	}
+}
+
+type failingWriter struct{ err error }
+
+func (f failingWriter) Write([]byte) (int, error) { return 0, f.err }
