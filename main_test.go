@@ -139,6 +139,7 @@ func TestExitCodes(t *testing.T) {
 		{name: "json2toml invalid UTF-8 is bad data", args: []string{"json2toml"}, stdin: "{\"a\":\"x\xffy\"}", want: 1},
 		{name: "md-table invalid UTF-8 is bad data", args: []string{"md-table"}, stdin: "[{\"a\":\"x\xffy\"}]", want: 1},
 		{name: "md-table csv invalid UTF-8 is bad data", args: []string{"md-table", "-csv"}, stdin: "a\nx\xffy\n", want: 1},
+		{name: "md-table over the output limit is bad data", args: []string{"md-table"}, stdin: "[[" + strings.Repeat(`"",`, 7999) + `""]` + strings.Repeat(",[]", 8000) + "]", want: 1},
 		{name: "yaml2json invalid UTF-8 is bad data", args: []string{"yaml2json"}, stdin: "a: x\xffy\n", want: 1},
 		{name: "xml2json skips a leading byte order mark", args: []string{"xml2json"}, stdin: "\xef\xbb\xbf<a>1</a>", want: 0},
 		{name: "toml2json skips a leading byte order mark", args: []string{"toml2json"}, stdin: "\xef\xbb\xbfa = 1", want: 0},
