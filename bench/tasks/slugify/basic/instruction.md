@@ -1,0 +1,3 @@
+The file `/task/fixtures/titles.txt` lists blog post titles, one per line. Write the slug for each title (the part of the post's web address that names it) to `/out/slugs.txt`, one per line, in the same order. A slug is the title lowercased, with every run of characters that are not letters or digits (spaces, punctuation, symbols, emoji) replaced by a single hyphen, and no hyphen at the start or the end. Letters from any script count as letters and are kept as they are apart from lowercasing: accented letters such as `é` and `ø`, Cyrillic, and Japanese all stay, with no transliteration and no accent removal.
+
+Done means `/out/slugs.txt` holds exactly one slug per title, in order. Do not ask questions; write the file and stop.

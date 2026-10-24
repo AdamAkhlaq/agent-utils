@@ -1,0 +1,433 @@
+]0;pytest-like: suite run 5023[1mcollected tests for run 5023 · runner zürich-2[0m
+
+[1;34mtests/search/test_rebuilds_001.py[0m
+  [32mPASS[0m settles a zero-amount invoice with a stale cache [2m(3716 ms)[22m
+  [1;38;5;196mFAIL[0m caches a missing currency with a stale cache [2m(1136 ms)[22m
+    [31mAssertionError: expected 461.12, got 354.11[0m
+    see ]8;;file:///srv/ci/work/search/report-5023-1.html\report 1]8;;\
+  [32mPASS[0m settles the daylight-saving cutover in dry-run mode [2m(3369 ms)[22m
+  [33mSKIP[39m applies a missing currency for EUR accounts [2m(3651 ms)[22m
+  [32mPASS[0m settles a partial refund under load [2m(4635 ms)[22m
+  [32mPASS[0m applies the daylight-saving cutover in dry-run mode [2m(1670 ms)[22m
+[2K[38;2;120;120;120m[files done: 1] running…[0m[2K[1;34mtests/webhooks/test_splits_002.py[0m
+  [32mPASS[0m rounds duplicate events under load [2m(4637 ms)[22m
+  [32mPASS[0m settles a zero-amount invoice under load [2m(1981 ms)[22m
+  [32mPASS[0m retries duplicate events under load [2m(164 ms)[22m
+  [32mPASS[0m caches a missing currency after a retry [2m(1833 ms)[22m
+[2K[38;2;120;120;120m[files done: 2] running…[0m[2K[1;34mtests/billing/test_caches_003.py[0m
+  [32mPASS[0m caches a missing currency for EUR accounts [2m(3852 ms)[22m
+  [33mSKIP[39m caches a zero-amount invoice with a stale cache [2m(3885 ms)[22m
+  [1;38;5;196mFAIL[0m splits a missing currency under load [2m(3028 ms)[22m
+    [31mAssertionError: expected 17.38, got 895.18[0m
+    see ]8;;file:///srv/ci/work/billing/report-5023-3.html\report 3]8;;\
+  [32mPASS[0m caches a partial refund under load [2m(644 ms)[22m
+  [32mPASS[0m settles a partial refund in dry-run mode [2m(983 ms)[22m
+  [32mPASS[0m merges the daylight-saving cutover after a retry [2m(3457 ms)[22m
+[1;34mtests/exports/test_rounds_004.py[0m
+  [32mPASS[0m merges half-cent totals with a stale cache [2m(2672 ms)[22m
+  [32mPASS[0m retries a missing currency for EUR accounts [2m(2451 ms)[22m
+  [32mPASS[0m merges a partial refund in dry-run mode [2m(1177 ms)[22m
+  [32mPASS[0m rounds duplicate events in dry-run mode [2m(815 ms)[22m
+  [32mPASS[0m splits an empty batch across shards [2m(1365 ms)[22m
+[1;34mtests/billing/test_rounds_005.py[0m
+  [32mPASS[0m rejects duplicate events with a stale cache [2m(163 ms)[22m
+  [32mPASS[0m rebuilds the daylight-saving cutover in dry-run mode [2m(1741 ms)[22m
+[1;34mtests/webhooks/test_rebuilds_006.py[0m
+  [32mPASS[0m rejects half-cent totals under load [2m(3510 ms)[22m
+  [32mPASS[0m applies half-cent totals across shards [2m(2630 ms)[22m
+[1;34mtests/search/test_applies_007.py[0m
+  [32mPASS[0m rebuilds unicode payee names under load [2m(4497 ms)[22m
+  [32mPASS[0m merges the late fee for EUR accounts [2m(3460 ms)[22m
+  [32mPASS[0m settles unicode payee names with a stale cache [2m(640 ms)[22m
+[1;34mtests/fx/test_retries_008.py[0m
+  [32mPASS[0m rebuilds unicode payee names across shards [2m(2958 ms)[22m
+  [32mPASS[0m retries an empty batch for EUR accounts [2m(789 ms)[22m
+  [32mPASS[0m splits an expired token for EUR accounts [2m(743 ms)[22m
+  [33mSKIP[39m merges duplicate events in dry-run mode [2m(4156 ms)[22m
+  [32mPASS[0m applies an empty batch across shards [2m(3322 ms)[22m
+[1;34mtests/search/test_retries_009.py[0m
+  [32mPASS[0m merges a partial refund across shards [2m(809 ms)[22m
+  [32mPASS[0m rejects a missing currency with a stale cache [2m(863 ms)[22m
+  [32mPASS[0m rejects duplicate events after a retry [2m(3664 ms)[22m
+  [32mPASS[0m settles a partial refund across shards [2m(86 ms)[22m
+  [32mPASS[0m rounds an empty batch across shards [2m(2792 ms)[22m
+[1;34mtests/billing/test_merges_010.py[0m
+  [33mSKIP[39m rounds duplicate events after a retry [2m(2485 ms)[22m
+  [32mPASS[0m applies a zero-amount invoice across shards [2m(2779 ms)[22m
+  [32mPASS[0m skips the late fee for EUR accounts [2m(3200 ms)[22m
+  [32mPASS[0m retries a partial refund under load [2m(3666 ms)[22m
+  [32mPASS[0m skips the daylight-saving cutover across shards [2m(317 ms)[22m
+[1;34mtests/exports/test_skips_011.py[0m
+  [32mPASS[0m splits the daylight-saving cutover for EUR accounts [2m(1852 ms)[22m
+  [32mPASS[0m rounds the daylight-saving cutover under load [2m(291 ms)[22m
+  [32mPASS[0m applies a zero-amount invoice under load [2m(4106 ms)[22m
+  [32mPASS[0m caches half-cent totals after a retry [2m(1816 ms)[22m
+  [32mPASS[0m rounds an empty batch for EUR accounts [2m(2240 ms)[22m
+[1;34mtests/payouts/test_rejects_012.py[0m
+  [33mSKIP[39m applies half-cent totals with a stale cache [2m(2336 ms)[22m
+  [32mPASS[0m merges half-cent totals in dry-run mode [2m(2106 ms)[22m
+  [32mPASS[0m settles a partial refund after a retry [2m(4371 ms)[22m
+  [32mPASS[0m splits a zero-amount invoice in dry-run mode [2m(3930 ms)[22m
+  [32mPASS[0m settles half-cent totals under load [2m(3574 ms)[22m
+[1;34mtests/notify/test_merges_013.py[0m
+  [32mPASS[0m rebuilds the daylight-saving cutover across shards [2m(3458 ms)[22m
+  [32mPASS[0m splits a missing currency for EUR accounts [2m(4539 ms)[22m
+  [32mPASS[0m rebuilds a partial refund under load [2m(1269 ms)[22m
+  [1;38;5;196mFAIL[0m rounds duplicate events with a stale cache [2m(4600 ms)[22m
+    [31mAssertionError: expected 346.75, got 729.93[0m
+    see ]8;;file:///srv/ci/work/notify/report-5023-13.html\report 13]8;;\
+  [32mPASS[0m rebuilds the late fee for EUR accounts [2m(521 ms)[22m
+[1;34mtests/reports/test_rebuilds_014.py[0m
+  [32mPASS[0m rebuilds an expired token across shards [2m(2875 ms)[22m
+  [32mPASS[0m skips unicode payee names with a stale cache [2m(3053 ms)[22m
+  [32mPASS[0m applies the late fee after a retry [2m(4106 ms)[22m
+  [32mPASS[0m retries duplicate events under load [2m(3729 ms)[22m
+[2K[38;2;120;120;120m[files done: 14] running…[0m[2K[1;34mtests/auth/test_retries_015.py[0m
+  [32mPASS[0m rebuilds duplicate events under load [2m(4263 ms)[22m
+  [32mPASS[0m caches an expired token in dry-run mode [2m(3094 ms)[22m
+  [32mPASS[0m merges an expired token for EUR accounts [2m(3031 ms)[22m
+[1;34mtests/notify/test_retries_016.py[0m
+  [32mPASS[0m settles an expired token in dry-run mode [2m(4324 ms)[22m
+  [32mPASS[0m caches the daylight-saving cutover with a stale cache [2m(4275 ms)[22m
+[1;34mtests/fx/test_merges_017.py[0m
+  [32mPASS[0m skips duplicate events across shards [2m(156 ms)[22m
+  [32mPASS[0m rebuilds the late fee under load [2m(29 ms)[22m
+  [32mPASS[0m rounds a zero-amount invoice with a stale cache [2m(4111 ms)[22m
+  [32mPASS[0m retries a partial refund for EUR accounts [2m(3665 ms)[22m
+  [32mPASS[0m skips duplicate events with a stale cache [2m(2660 ms)[22m
+[1;34mtests/notify/test_splits_018.py[0m
+  [32mPASS[0m skips a missing currency under load [2m(2794 ms)[22m
+  [32mPASS[0m merges an expired token across shards [2m(2291 ms)[22m
+  [32mPASS[0m retries the late fee in dry-run mode [2m(115 ms)[22m
+  [33mSKIP[39m rounds a zero-amount invoice after a retry [2m(3842 ms)[22m
+[1;34mtests/reports/test_settles_019.py[0m
+  [32mPASS[0m retries a zero-amount invoice in dry-run mode [2m(2541 ms)[22m
+  [32mPASS[0m rebuilds a partial refund in dry-run mode [2m(347 ms)[22m
+  [32mPASS[0m merges half-cent totals for EUR accounts [2m(1257 ms)[22m
+[2K[38;2;120;120;120m[files done: 19] running…[0m[2K[1;34mtests/auth/test_rebuilds_020.py[0m
+  [32mPASS[0m rejects an expired token for EUR accounts [2m(3152 ms)[22m
+  [32mPASS[0m caches the late fee for EUR accounts [2m(314 ms)[22m
+  [32mPASS[0m skips a zero-amount invoice across shards [2m(1224 ms)[22m
+  [32mPASS[0m rounds the late fee across shards [2m(4249 ms)[22m
+  [33mSKIP[39m retries half-cent totals across shards [2m(1366 ms)[22m
+[1;34mtests/fx/test_rounds_021.py[0m
+  [32mPASS[0m settles half-cent totals after a retry [2m(2280 ms)[22m
+  [32mPASS[0m skips unicode payee names with a stale cache [2m(1499 ms)[22m
+[1;34mtests/reports/test_caches_022.py[0m
+  [32mPASS[0m merges half-cent totals after a retry [2m(3625 ms)[22m
+  [32mPASS[0m rounds a partial refund after a retry [2m(2919 ms)[22m
+  [32mPASS[0m retries duplicate events for EUR accounts [2m(2697 ms)[22m
+  [32mPASS[0m caches the daylight-saving cutover after a retry [2m(2127 ms)[22m
+  [32mPASS[0m applies unicode payee names for EUR accounts [2m(2952 ms)[22m
+  [32mPASS[0m rebuilds a partial refund under load [2m(1293 ms)[22m
+[1;34mtests/reports/test_applies_023.py[0m
+  [33mSKIP[39m merges a missing currency for EUR accounts [2m(337 ms)[22m
+  [32mPASS[0m caches half-cent totals in dry-run mode [2m(3669 ms)[22m
+  [32mPASS[0m applies a partial refund under load [2m(2192 ms)[22m
+  [32mPASS[0m rounds a missing currency under load [2m(4728 ms)[22m
+[2K[38;2;120;120;120m[files done: 23] running…[0m[2K[1;34mtests/fx/test_splits_024.py[0m
+  [32mPASS[0m rejects the late fee in dry-run mode [2m(1029 ms)[22m
+  [32mPASS[0m retries half-cent totals in dry-run mode [2m(184 ms)[22m
+  [32mPASS[0m skips unicode payee names across shards [2m(731 ms)[22m
+  [32mPASS[0m retries a zero-amount invoice in dry-run mode [2m(4304 ms)[22m
+[1;34mtests/billing/test_applies_025.py[0m
+  [32mPASS[0m rounds a partial refund with a stale cache [2m(1238 ms)[22m
+  [32mPASS[0m rejects an empty batch after a retry [2m(741 ms)[22m
+  [32mPASS[0m applies a missing currency for EUR accounts [2m(96 ms)[22m
+[1;34mtests/auth/test_retries_026.py[0m
+  [32mPASS[0m retries an empty batch in dry-run mode [2m(2390 ms)[22m
+  [32mPASS[0m rebuilds an empty batch under load [2m(210 ms)[22m
+  [32mPASS[0m applies a missing currency under load [2m(1116 ms)[22m
+  [32mPASS[0m settles a partial refund for EUR accounts [2m(4193 ms)[22m
+  [32mPASS[0m applies unicode payee names across shards [2m(1875 ms)[22m
+[1;34mtests/fx/test_merges_027.py[0m
+  [32mPASS[0m applies the daylight-saving cutover under load [2m(4782 ms)[22m
+  [32mPASS[0m rebuilds a partial refund for EUR accounts [2m(2421 ms)[22m
+  [32mPASS[0m skips a partial refund across shards [2m(4798 ms)[22m
+  [33mSKIP[39m retries unicode payee names for EUR accounts [2m(1798 ms)[22m
+  [1;38;5;196mFAIL[0m skips unicode payee names in dry-run mode [2m(1688 ms)[22m
+    [31mAssertionError: expected 946.37, got 357.63[0m
+    see ]8;;file:///srv/ci/work/fx/report-5023-27.html\report 27]8;;\
+[1;34mtests/payouts/test_rejects_028.py[0m
+  [32mPASS[0m caches a zero-amount invoice for EUR accounts [2m(3149 ms)[22m
+  [32mPASS[0m splits an expired token with a stale cache [2m(2208 ms)[22m
+  [32mPASS[0m splits the late fee across shards [2m(3578 ms)[22m
+  [32mPASS[0m merges duplicate events across shards [2m(195 ms)[22m
+[1;34mtests/fx/test_merges_029.py[0m
+  [32mPASS[0m skips the daylight-saving cutover for EUR accounts [2m(3430 ms)[22m
+  [32mPASS[0m rejects a partial refund for EUR accounts [2m(4300 ms)[22m
+[1;34mtests/reports/test_splits_030.py[0m
+  [32mPASS[0m merges the late fee for EUR accounts [2m(406 ms)[22m
+  [32mPASS[0m splits an expired token across shards [2m(2212 ms)[22m
+  [32mPASS[0m rebuilds the daylight-saving cutover in dry-run mode [2m(4527 ms)[22m
+  [32mPASS[0m rejects an empty batch with a stale cache [2m(2136 ms)[22m
+  [32mPASS[0m skips a missing currency after a retry [2m(2239 ms)[22m
+  [32mPASS[0m skips an empty batch for EUR accounts [2m(4350 ms)[22m
+[1;34mtests/search/test_rejects_031.py[0m
+  [32mPASS[0m skips the late fee after a retry [2m(2876 ms)[22m
+  [32mPASS[0m skips duplicate events after a retry [2m(2091 ms)[22m
+[2K[38;2;120;120;120m[files done: 31] running…[0m[2K[1;34mtests/notify/test_rejects_032.py[0m
+  [1;38;5;196mFAIL[0m settles a missing currency under load [2m(1 ms)[22m
+    [31mAssertionError: expected 510.53, got 571.21[0m
+    see ]8;;file:///srv/ci/work/notify/report-5023-32.html\report 32]8;;\
+  [32mPASS[0m caches an empty batch in dry-run mode [2m(4440 ms)[22m
+  [33mSKIP[39m merges a partial refund in dry-run mode [2m(1195 ms)[22m
+  [33mSKIP[39m caches duplicate events in dry-run mode [2m(3021 ms)[22m
+  [33mSKIP[39m splits an empty batch under load [2m(3008 ms)[22m
+[1;34mtests/reports/test_rejects_033.py[0m
+  [1;38;5;196mFAIL[0m caches a missing currency under load [2m(442 ms)[22m
+    [31mAssertionError: expected 824.27, got 428.27[0m
+    see ]8;;file:///srv/ci/work/reports/report-5023-33.html\report 33]8;;\
+  [32mPASS[0m splits an expired token with a stale cache [2m(705 ms)[22m
+  [32mPASS[0m applies half-cent totals under load [2m(1925 ms)[22m
+  [32mPASS[0m rebuilds a zero-amount invoice with a stale cache [2m(3127 ms)[22m
+  [32mPASS[0m applies the daylight-saving cutover under load [2m(2894 ms)[22m
+  [32mPASS[0m rounds duplicate events in dry-run mode [2m(2543 ms)[22m
+[1;34mtests/reports/test_settles_034.py[0m
+  [32mPASS[0m rebuilds an expired token in dry-run mode [2m(81 ms)[22m
+  [32mPASS[0m rebuilds duplicate events after a retry [2m(1718 ms)[22m
+  [32mPASS[0m merges a partial refund with a stale cache [2m(4131 ms)[22m
+  [32mPASS[0m rebuilds a zero-amount invoice across shards [2m(3276 ms)[22m
+[1;34mtests/payouts/test_caches_035.py[0m
+  [32mPASS[0m applies a zero-amount invoice under load [2m(3381 ms)[22m
+  [32mPASS[0m retries a zero-amount invoice with a stale cache [2m(2911 ms)[22m
+[1;34mtests/auth/test_rounds_036.py[0m
+  [1;38;5;196mFAIL[0m splits the late fee for EUR accounts [2m(2094 ms)[22m
+    [31mAssertionError: expected 816.48, got 711.40[0m
+    see ]8;;file:///srv/ci/work/auth/report-5023-36.html\report 36]8;;\
+  [32mPASS[0m settles the daylight-saving cutover with a stale cache [2m(1413 ms)[22m
+[1;34mtests/search/test_rounds_037.py[0m
+  [32mPASS[0m settles the late fee after a retry [2m(206 ms)[22m
+  [32mPASS[0m rounds duplicate events with a stale cache [2m(1183 ms)[22m
+  [32mPASS[0m skips unicode payee names across shards [2m(4669 ms)[22m
+  [32mPASS[0m rejects duplicate events for EUR accounts [2m(1524 ms)[22m
+  [32mPASS[0m settles a missing currency under load [2m(48 ms)[22m
+  [32mPASS[0m rejects an empty batch under load [2m(2129 ms)[22m
+[1;34mtests/exports/test_rounds_038.py[0m
+  [32mPASS[0m merges the late fee under load [2m(2917 ms)[22m
+  [32mPASS[0m retries a missing currency for EUR accounts [2m(3180 ms)[22m
+  [32mPASS[0m settles a zero-amount invoice for EUR accounts [2m(773 ms)[22m
+[1;34mtests/fx/test_caches_039.py[0m
+  [32mPASS[0m rejects an empty batch in dry-run mode [2m(2879 ms)[22m
+  [32mPASS[0m rebuilds half-cent totals across shards [2m(3520 ms)[22m
+  [32mPASS[0m rebuilds a zero-amount invoice for EUR accounts [2m(4570 ms)[22m
+[1;34mtests/fx/test_rebuilds_040.py[0m
+  [32mPASS[0m applies a zero-amount invoice in dry-run mode [2m(3587 ms)[22m
+  [32mPASS[0m caches the daylight-saving cutover under load [2m(4651 ms)[22m
+  [32mPASS[0m applies unicode payee names under load [2m(606 ms)[22m
+  [32mPASS[0m caches an empty batch for EUR accounts [2m(2740 ms)[22m
+[1;34mtests/ledger/test_rounds_041.py[0m
+  [32mPASS[0m settles a partial refund in dry-run mode [2m(712 ms)[22m
+  [32mPASS[0m retries a missing currency across shards [2m(1029 ms)[22m
+[1;34mtests/notify/test_settles_042.py[0m
+  [32mPASS[0m applies an empty batch for EUR accounts [2m(4714 ms)[22m
+  [33mSKIP[39m skips the daylight-saving cutover in dry-run mode [2m(1696 ms)[22m
+  [32mPASS[0m applies duplicate events with a stale cache [2m(1539 ms)[22m
+  [32mPASS[0m rounds an expired token across shards [2m(3141 ms)[22m
+[1;34mtests/search/test_caches_043.py[0m
+  [32mPASS[0m merges a missing currency with a stale cache [2m(4353 ms)[22m
+  [32mPASS[0m rounds a missing currency with a stale cache [2m(1919 ms)[22m
+  [32mPASS[0m rounds the daylight-saving cutover for EUR accounts [2m(3063 ms)[22m
+  [32mPASS[0m caches duplicate events for EUR accounts [2m(3893 ms)[22m
+[1;34mtests/notify/test_skips_044.py[0m
+  [32mPASS[0m rebuilds an expired token in dry-run mode [2m(3364 ms)[22m
+  [32mPASS[0m settles the late fee across shards [2m(3894 ms)[22m
+  [32mPASS[0m rejects the daylight-saving cutover across shards [2m(3273 ms)[22m
+  [32mPASS[0m caches a missing currency with a stale cache [2m(2903 ms)[22m
+[1;34mtests/ledger/test_settles_045.py[0m
+  [32mPASS[0m splits a partial refund after a retry [2m(2459 ms)[22m
+  [32mPASS[0m retries duplicate events across shards [2m(429 ms)[22m
+  [32mPASS[0m rebuilds duplicate events for EUR accounts [2m(3127 ms)[22m
+[1;34mtests/ledger/test_rejects_046.py[0m
+  [32mPASS[0m rejects a missing currency for EUR accounts [2m(2681 ms)[22m
+  [32mPASS[0m caches a partial refund in dry-run mode [2m(3496 ms)[22m
+  [32mPASS[0m rebuilds the daylight-saving cutover across shards [2m(415 ms)[22m
+  [33mSKIP[39m retries half-cent totals after a retry [2m(34 ms)[22m
+[1;34mtests/fx/test_merges_047.py[0m
+  [32mPASS[0m skips unicode payee names after a retry [2m(905 ms)[22m
+  [32mPASS[0m applies the daylight-saving cutover after a retry [2m(2954 ms)[22m
+[2K[38;2;120;120;120m[files done: 47] running…[0m[2K[1;34mtests/payouts/test_splits_048.py[0m
+  [32mPASS[0m retries unicode payee names for EUR accounts [2m(2683 ms)[22m
+  [32mPASS[0m merges unicode payee names across shards [2m(3700 ms)[22m
+  [32mPASS[0m rejects half-cent totals under load [2m(234 ms)[22m
+  [32mPASS[0m settles an expired token after a retry [2m(750 ms)[22m
+  [33mSKIP[39m applies an empty batch after a retry [2m(3219 ms)[22m
+  [1;38;5;196mFAIL[0m settles the daylight-saving cutover after a retry [2m(3489 ms)[22m
+    [31mAssertionError: expected 442.20, got 222.89[0m
+    see ]8;;file:///srv/ci/work/payouts/report-5023-48.html\report 48]8;;\
+[2K[38;2;120;120;120m[files done: 48] running…[0m[2K[1;34mtests/ledger/test_settles_049.py[0m
+  [32mPASS[0m skips the late fee for EUR accounts [2m(270 ms)[22m
+  [32mPASS[0m merges unicode payee names for EUR accounts [2m(1456 ms)[22m
+[1;34mtests/reports/test_settles_050.py[0m
+  [32mPASS[0m settles duplicate events with a stale cache [2m(408 ms)[22m
+  [32mPASS[0m applies a missing currency after a retry [2m(2989 ms)[22m
+[1;34mtests/reports/test_splits_051.py[0m
+  [32mPASS[0m caches half-cent totals under load [2m(177 ms)[22m
+  [32mPASS[0m rounds an expired token in dry-run mode [2m(193 ms)[22m
+  [33mSKIP[39m retries a missing currency under load [2m(265 ms)[22m
+  [32mPASS[0m rebuilds a partial refund with a stale cache [2m(2498 ms)[22m
+  [32mPASS[0m caches the late fee after a retry [2m(1463 ms)[22m
+[1;34mtests/notify/test_applies_052.py[0m
+  [32mPASS[0m settles an expired token in dry-run mode [2m(3986 ms)[22m
+  [32mPASS[0m merges the daylight-saving cutover with a stale cache [2m(1768 ms)[22m
+  [32mPASS[0m caches the daylight-saving cutover under load [2m(394 ms)[22m
+  [32mPASS[0m rounds half-cent totals after a retry [2m(2550 ms)[22m
+  [32mPASS[0m skips duplicate events in dry-run mode [2m(129 ms)[22m
+[1;34mtests/search/test_settles_053.py[0m
+  [32mPASS[0m retries unicode payee names after a retry [2m(225 ms)[22m
+  [32mPASS[0m retries a partial refund for EUR accounts [2m(3185 ms)[22m
+  [32mPASS[0m settles the daylight-saving cutover with a stale cache [2m(4226 ms)[22m
+  [33mSKIP[39m applies the daylight-saving cutover under load [2m(2119 ms)[22m
+[2K[38;2;120;120;120m[files done: 53] running…[0m[2K[1;34mtests/exports/test_rebuilds_054.py[0m
+  [33mSKIP[39m skips a missing currency across shards [2m(998 ms)[22m
+  [32mPASS[0m skips an empty batch after a retry [2m(1699 ms)[22m
+  [32mPASS[0m settles duplicate events in dry-run mode [2m(2464 ms)[22m
+  [32mPASS[0m caches duplicate events after a retry [2m(4010 ms)[22m
+  [32mPASS[0m rounds unicode payee names for EUR accounts [2m(2157 ms)[22m
+[1;34mtests/notify/test_splits_055.py[0m
+  [32mPASS[0m splits a missing currency after a retry [2m(2413 ms)[22m
+  [32mPASS[0m merges a missing currency in dry-run mode [2m(1547 ms)[22m
+  [32mPASS[0m caches an empty batch with a stale cache [2m(1437 ms)[22m
+  [32mPASS[0m retries the late fee under load [2m(96 ms)[22m
+[1;34mtests/notify/test_retries_056.py[0m
+  [32mPASS[0m caches the late fee across shards [2m(1677 ms)[22m
+  [32mPASS[0m rounds the daylight-saving cutover under load [2m(1286 ms)[22m
+  [32mPASS[0m applies half-cent totals under load [2m(3291 ms)[22m
+  [32mPASS[0m merges an empty batch after a retry [2m(2828 ms)[22m
+[1;34mtests/webhooks/test_rounds_057.py[0m
+  [32mPASS[0m applies duplicate events across shards [2m(440 ms)[22m
+  [32mPASS[0m merges the daylight-saving cutover across shards [2m(772 ms)[22m
+  [32mPASS[0m rebuilds a partial refund under load [2m(1865 ms)[22m
+[1;34mtests/auth/test_settles_058.py[0m
+  [32mPASS[0m retries a partial refund after a retry [2m(1252 ms)[22m
+  [32mPASS[0m skips the late fee after a retry [2m(2076 ms)[22m
+[1;34mtests/billing/test_retries_059.py[0m
+  [32mPASS[0m retries a missing currency with a stale cache [2m(1343 ms)[22m
+  [32mPASS[0m rebuilds a missing currency after a retry [2m(1622 ms)[22m
+  [32mPASS[0m caches the daylight-saving cutover with a stale cache [2m(4286 ms)[22m
+  [32mPASS[0m rejects an expired token under load [2m(3524 ms)[22m
+  [32mPASS[0m rounds a zero-amount invoice for EUR accounts [2m(4089 ms)[22m
+  [32mPASS[0m rebuilds a partial refund in dry-run mode [2m(1774 ms)[22m
+[1;34mtests/fx/test_applies_060.py[0m
+  [33mSKIP[39m caches a zero-amount invoice with a stale cache [2m(137 ms)[22m
+  [33mSKIP[39m rounds unicode payee names in dry-run mode [2m(4303 ms)[22m
+[1;34mtests/notify/test_rounds_061.py[0m
+  [32mPASS[0m retries duplicate events for EUR accounts [2m(4118 ms)[22m
+  [33mSKIP[39m applies a missing currency with a stale cache [2m(539 ms)[22m
+  [32mPASS[0m caches the late fee for EUR accounts [2m(3519 ms)[22m
+  [32mPASS[0m settles unicode payee names for EUR accounts [2m(4090 ms)[22m
+  [32mPASS[0m merges a zero-amount invoice after a retry [2m(2119 ms)[22m
+  [32mPASS[0m applies half-cent totals with a stale cache [2m(2 ms)[22m
+[1;34mtests/payouts/test_rounds_062.py[0m
+  [33mSKIP[39m caches duplicate events under load [2m(3135 ms)[22m
+  [32mPASS[0m skips an empty batch across shards [2m(2260 ms)[22m
+  [32mPASS[0m caches the late fee with a stale cache [2m(1202 ms)[22m
+[1;34mtests/payouts/test_skips_063.py[0m
+  [32mPASS[0m merges a zero-amount invoice in dry-run mode [2m(2359 ms)[22m
+  [32mPASS[0m splits unicode payee names for EUR accounts [2m(2892 ms)[22m
+[1;34mtests/payouts/test_rebuilds_064.py[0m
+  [32mPASS[0m rounds a missing currency in dry-run mode [2m(939 ms)[22m
+  [32mPASS[0m retries an empty batch under load [2m(1923 ms)[22m
+[1;34mtests/fx/test_rejects_065.py[0m
+  [32mPASS[0m skips an expired token for EUR accounts [2m(812 ms)[22m
+  [32mPASS[0m skips half-cent totals with a stale cache [2m(3335 ms)[22m
+  [32mPASS[0m rejects a partial refund in dry-run mode [2m(1686 ms)[22m
+[1;34mtests/exports/test_skips_066.py[0m
+  [32mPASS[0m rounds an empty batch in dry-run mode [2m(1034 ms)[22m
+  [32mPASS[0m retries a missing currency in dry-run mode [2m(3261 ms)[22m
+  [32mPASS[0m rebuilds a partial refund after a retry [2m(1245 ms)[22m
+  [32mPASS[0m rebuilds an empty batch across shards [2m(1829 ms)[22m
+[1;34mtests/reports/test_skips_067.py[0m
+  [32mPASS[0m merges duplicate events with a stale cache [2m(4021 ms)[22m
+  [32mPASS[0m settles duplicate events for EUR accounts [2m(4130 ms)[22m
+  [32mPASS[0m retries the daylight-saving cutover across shards [2m(3693 ms)[22m
+  [32mPASS[0m rejects the late fee with a stale cache [2m(1952 ms)[22m
+  [32mPASS[0m retries half-cent totals in dry-run mode [2m(1205 ms)[22m
+[1;34mtests/webhooks/test_rebuilds_068.py[0m
+  [32mPASS[0m skips half-cent totals across shards [2m(3901 ms)[22m
+  [32mPASS[0m applies an empty batch after a retry [2m(3679 ms)[22m
+  [33mSKIP[39m settles the late fee in dry-run mode [2m(3003 ms)[22m
+  [32mPASS[0m merges the daylight-saving cutover across shards [2m(601 ms)[22m
+  [32mPASS[0m rounds duplicate events for EUR accounts [2m(3432 ms)[22m
+  [32mPASS[0m rebuilds an expired token across shards [2m(395 ms)[22m
+[1;34mtests/fx/test_merges_069.py[0m
+  [32mPASS[0m splits the late fee under load [2m(1221 ms)[22m
+  [32mPASS[0m retries a missing currency with a stale cache [2m(3060 ms)[22m
+  [32mPASS[0m rejects half-cent totals for EUR accounts [2m(186 ms)[22m
+  [32mPASS[0m splits an empty batch under load [2m(2302 ms)[22m
+[1;34mtests/exports/test_settles_070.py[0m
+  [32mPASS[0m merges a missing currency across shards [2m(4323 ms)[22m
+  [32mPASS[0m settles the late fee for EUR accounts [2m(2393 ms)[22m
+[1;34mtests/billing/test_settles_071.py[0m
+  [33mSKIP[39m settles the late fee under load [2m(4147 ms)[22m
+  [33mSKIP[39m rounds the late fee under load [2m(4160 ms)[22m
+  [32mPASS[0m rebuilds a partial refund in dry-run mode [2m(1271 ms)[22m
+  [1;38;5;196mFAIL[0m skips duplicate events under load [2m(1499 ms)[22m
+    [31mAssertionError: expected 406.52, got 822.91[0m
+    see ]8;;file:///srv/ci/work/billing/report-5023-71.html\report 71]8;;\
+[1;34mtests/fx/test_rejects_072.py[0m
+  [32mPASS[0m retries an empty batch after a retry [2m(4087 ms)[22m
+  [32mPASS[0m merges duplicate events for EUR accounts [2m(3744 ms)[22m
+  [32mPASS[0m rejects a partial refund in dry-run mode [2m(1806 ms)[22m
+[1;34mtests/webhooks/test_retries_073.py[0m
+  [32mPASS[0m caches duplicate events under load [2m(1556 ms)[22m
+  [1;38;5;196mFAIL[0m splits the late fee after a retry [2m(4513 ms)[22m
+    [31mAssertionError: expected 856.55, got 234.79[0m
+    see ]8;;file:///srv/ci/work/webhooks/report-5023-73.html\report 73]8;;\
+[2K[38;2;120;120;120m[files done: 73] running…[0m[2K[1;34mtests/payouts/test_caches_074.py[0m
+  [32mPASS[0m splits the daylight-saving cutover for EUR accounts [2m(4167 ms)[22m
+  [1;38;5;196mFAIL[0m rebuilds the late fee in dry-run mode [2m(65 ms)[22m
+    [31mAssertionError: expected 858.84, got 697.10[0m
+    see ]8;;file:///srv/ci/work/payouts/report-5023-74.html\report 74]8;;\
+  [32mPASS[0m splits the late fee with a stale cache [2m(4573 ms)[22m
+[1;34mtests/exports/test_rebuilds_075.py[0m
+  [32mPASS[0m rounds half-cent totals under load [2m(1779 ms)[22m
+  [32mPASS[0m caches duplicate events under load [2m(3962 ms)[22m
+  [32mPASS[0m caches half-cent totals across shards [2m(975 ms)[22m
+  [32mPASS[0m rebuilds half-cent totals in dry-run mode [2m(2887 ms)[22m
+  [32mPASS[0m applies an expired token after a retry [2m(4726 ms)[22m
+[1;34mtests/billing/test_rounds_076.py[0m
+  [1;38;5;196mFAIL[0m retries the daylight-saving cutover with a stale cache [2m(3759 ms)[22m
+    [31mAssertionError: expected 574.74, got 517.60[0m
+    see ]8;;file:///srv/ci/work/billing/report-5023-76.html\report 76]8;;\
+  [32mPASS[0m rounds unicode payee names with a stale cache [2m(3745 ms)[22m
+  [32mPASS[0m caches a zero-amount invoice under load [2m(2390 ms)[22m
+[2K[38;2;120;120;120m[files done: 76] running…[0m[2K[1;34mtests/auth/test_settles_077.py[0m
+  [33mSKIP[39m rebuilds a zero-amount invoice with a stale cache [2m(3950 ms)[22m
+  [32mPASS[0m merges the daylight-saving cutover after a retry [2m(3296 ms)[22m
+[1;34mtests/notify/test_splits_078.py[0m
+  [32mPASS[0m rounds a zero-amount invoice after a retry [2m(3612 ms)[22m
+  [32mPASS[0m rebuilds a missing currency for EUR accounts [2m(2344 ms)[22m
+  [32mPASS[0m merges an empty batch after a retry [2m(4496 ms)[22m
+  [32mPASS[0m rebuilds an expired token across shards [2m(2495 ms)[22m
+  [1;38;5;196mFAIL[0m skips the daylight-saving cutover for EUR accounts [2m(23 ms)[22m
+    [31mAssertionError: expected 608.96, got 31.98[0m
+    see ]8;;file:///srv/ci/work/notify/report-5023-78.html\report 78]8;;\
+[1;34mtests/search/test_splits_079.py[0m
+  [33mSKIP[39m splits a zero-amount invoice under load [2m(1640 ms)[22m
+  [32mPASS[0m applies a partial refund for EUR accounts [2m(4274 ms)[22m
+  [32mPASS[0m skips a zero-amount invoice for EUR accounts [2m(4695 ms)[22m
+[1;34mtests/auth/test_splits_080.py[0m
+  [32mPASS[0m settles a missing currency under load [2m(625 ms)[22m
+  [32mPASS[0m caches a missing currency for EUR accounts [2m(3302 ms)[22m
+[1;34mtests/billing/test_applies_081.py[0m
+  [32mPASS[0m settles a partial refund for EUR accounts [2m(1538 ms)[22m
+  [32mPASS[0m rebuilds a zero-amount invoice across shards [2m(3561 ms)[22m
+[2K[38;2;120;120;120m[files done: 81] running…[0m[2K[1;34mtests/billing/test_skips_082.py[0m
+  [32mPASS[0m caches duplicate events with a stale cache [2m(1563 ms)[22m
+  [32mPASS[0m retries the daylight-saving cutover after a retry [2m(4655 ms)[22m
+  [32mPASS[0m rounds an expired token for EUR accounts [2m(3204 ms)[22m
+  [33mSKIP[39m splits the daylight-saving cutover for EUR accounts [2m(2005 ms)[22m
+  [32mPASS[0m splits a zero-amount invoice with a stale cache [2m(1686 ms)[22m
+  [32mPASS[0m applies the late fee across shards [2m(485 ms)[22m
+[1;34mtests/notify/test_caches_083.py[0m
+  [32mPASS[0m rejects duplicate events for EUR accounts [2m(281 ms)[22m
+  [32mPASS[0m merges the daylight-saving cutover under load [2m(2090 ms)[22m
+  [32mPASS[0m rebuilds a zero-amount invoice for EUR accounts [2m(1546 ms)[22m
+[1;34mtests/exports/test_splits_084.py[0m
+  [32mPASS[0m rebuilds unicode payee names under load [2m(2068 ms)[22m
+  [32mPASS[0m rebuilds an expired token for EUR accounts [2m(2928 ms)[22m
+  [32mPASS[0m settles unicode payee names under load [2m(2770 ms)[22m
+
+[1;32m277 passed[0m, [1;31m13 failed[0m, [33m28 skipped[0m in 239.72s
+(B[m

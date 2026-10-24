@@ -1,0 +1,6 @@
+command = "strip-ansi"
+arms = ["tool", "shell", "model"]
+tags = ["scale", "sweep"]
+timeout_seconds = 600
+max_turns = 40
+max_budget_usd = 2.00

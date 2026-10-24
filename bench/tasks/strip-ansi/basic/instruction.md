@@ -1,0 +1,3 @@
+The file `/task/fixtures/build.log` is the output of a build, captured from a terminal, so it is full of terminal escape sequences: colors and text styles, cursor movement, line erasing, cursor hiding, a window title, and a hyperlink. Write it to `/out/build.log` with every escape sequence removed and nothing else changed: all other bytes, including carriage returns, tabs, line breaks, and non-ASCII text, stay exactly as they are, in order. Of the hyperlink, keep only its visible text.
+
+Done means `/out/build.log` is the original file minus its escape sequences, byte for byte. Do not ask questions; write the file and stop.
