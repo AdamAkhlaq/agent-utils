@@ -21,7 +21,7 @@ import (
 // datetimes become strings: offset date-times in RFC 3339, local date-times,
 // dates, and times as their TOML literal text.
 func TOMLToJSON(w io.Writer, r io.Reader) error {
-	data, err := readText(r)
+	data, err := ReadText(r)
 	if err != nil {
 		return err
 	}

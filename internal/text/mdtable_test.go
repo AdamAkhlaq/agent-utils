@@ -230,3 +230,29 @@ func TestMarkdownTableReadFailure(t *testing.T) {
 		})
 	}
 }
+
+func TestMarkdownTableRejectsNonUTF8(t *testing.T) {
+	tests := []struct {
+		name    string
+		render  func(io.Writer, io.Reader) error
+		input   string
+		wantErr string
+	}{
+		{name: "json invalid byte", render: MarkdownTable, input: "[{\"a\": \"x\xffy\"}]", wantErr: "invalid UTF-8 at line 1, column 10"},
+		{name: "csv invalid byte", render: MarkdownTableCSV, input: "a\nx\xffy\n", wantErr: "invalid UTF-8 at line 2, column 2"},
+		{name: "json UTF-16", render: MarkdownTable, input: "\xff\xfe[\x00]\x00", wantErr: "this is UTF-16LE"},
+		{name: "csv UTF-16", render: MarkdownTableCSV, input: "\xff\xfea\x00\n\x00", wantErr: "this is UTF-16LE"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var out bytes.Buffer
+			err := tt.render(&out, strings.NewReader(tt.input))
+			if err == nil || !strings.Contains(err.Error(), tt.wantErr) {
+				t.Fatalf("error = %v, want it to contain %q", err, tt.wantErr)
+			}
+			if out.Len() != 0 {
+				t.Errorf("wrote %q, want no output", out.String())
+			}
+		})
+	}
+}

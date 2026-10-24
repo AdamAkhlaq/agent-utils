@@ -71,6 +71,8 @@ func TestJWTDecode(t *testing.T) {
 		{name: "header not JSON", input: makeJWT("hi", `{}`), wantErr: "header is not valid JSON"},
 		{name: "payload not base64url", input: "e30.!!!.sig", wantErr: "decoding payload"},
 		{name: "payload not JSON", input: makeJWT(`{}`, "hi"), wantErr: "payload is not valid JSON"},
+		{name: "header invalid UTF-8", input: makeJWT("{\"alg\":\"x\xff\"}", `{}`), wantErr: "header is not valid JSON: invalid UTF-8 at byte offset 9 (0xff)"},
+		{name: "payload invalid UTF-8", input: makeJWT(`{}`, "{\"sub\":\"x\xffy\"}"), wantErr: "payload is not valid JSON: invalid UTF-8 at byte offset 9 (0xff)"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

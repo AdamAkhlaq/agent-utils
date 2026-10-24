@@ -413,6 +413,7 @@ func TestJSONSchemaValidateInputErrors(t *testing.T) {
 		{name: "duplicate key", instance: "{\"a\": 1,\n \"a\": 2}", wantErr: `duplicate key "a" at line 2, column 2`},
 		{name: "nested duplicate key", instance: `[{"b": {"x": 1, "x": 1}}]`, wantErr: `duplicate key "x" at line 1, column 17`},
 		{name: "invalid UTF-8", instance: "\"ok \xff\"", wantErr: "invalid UTF-8 at line 1, column 5"},
+		{name: "UTF-16", instance: "\xff\xfe{\x00}\x00", wantErr: "this is UTF-16LE"},
 		{name: "exponent out of range", instance: `{"n": 1e9999999}`, wantErr: "number 1e9999999 at line 1, column 7 is out of range"},
 		{name: "negative exponent out of range", instance: `[1e-1000001]`, wantErr: "number 1e-1000001 at line 1, column 2 is out of range"},
 	}

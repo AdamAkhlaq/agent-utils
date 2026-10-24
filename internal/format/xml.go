@@ -20,7 +20,7 @@ import (
 // key name as written. Object keys are emitted in sorted order, which makes
 // the output deterministic.
 func XMLToJSON(w io.Writer, r io.Reader) error {
-	data, err := readText(r)
+	data, err := ReadText(r)
 	if err != nil {
 		return err
 	}

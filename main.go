@@ -190,7 +190,7 @@ func registry() map[string]cli.Command {
 	}
 	jsonValid := func(r io.Reader) error {
 		err := format.JSONValid(r)
-		if errors.Is(err, format.ErrInvalidJSON) {
+		if errors.Is(err, format.ErrInvalidJSON) || errors.Is(err, format.ErrInvalidUTF8) {
 			return &cli.FalseError{Err: err}
 		}
 		return err

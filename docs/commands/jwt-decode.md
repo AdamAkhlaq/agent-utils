@@ -8,7 +8,7 @@ Decode a JWT's header and payload into one pretty-printed JSON document.
 agent-utils jwt-decode [file]
 ```
 
-This only decodes; it does **not** verify the signature, so never treat the claims as authentic on this basis alone. Claim order and number representation are preserved exactly. A leading `Bearer ` (as pasted from an `Authorization` header) is ignored, and the output is a single JSON object, so it pipes straight into `jq`.
+This only decodes; it does **not** verify the signature, so never treat the claims as authentic on this basis alone. Claim order and number representation are preserved exactly. A leading `Bearer ` (as pasted from an `Authorization` header) is ignored, and the output is a single JSON object, so it pipes straight into `jq`. A header or payload that is not valid base64url, not valid JSON, or not valid UTF-8 is an error (exit 1) naming the segment, so the output is always valid JSON.
 
 ## Examples
 

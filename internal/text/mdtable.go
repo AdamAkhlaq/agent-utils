@@ -25,7 +25,7 @@ import (
 // missing keys become empty cells. Nested objects and arrays are rejected:
 // table cells are flat.
 func MarkdownTable(w io.Writer, r io.Reader) error {
-	data, err := readInput(r)
+	data, err := format.ReadText(r)
 	if err != nil {
 		return err
 	}
@@ -283,15 +283,4 @@ func describeJSONToken(tok json.Token) string {
 	default:
 		return fmt.Sprintf("%v", tok)
 	}
-}
-
-// readInput reads all of r without a leading UTF-8 byte order mark: an
-// encoding signature some Windows tools write, not part of the first key or
-// header. The format package's converters apply the same rule.
-func readInput(r io.Reader) ([]byte, error) {
-	data, err := io.ReadAll(r)
-	if err != nil {
-		return nil, fmt.Errorf("reading input: %w", err)
-	}
-	return bytes.TrimPrefix(data, []byte("\xef\xbb\xbf")), nil
 }
