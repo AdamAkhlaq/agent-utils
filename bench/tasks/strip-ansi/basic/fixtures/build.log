@@ -1,0 +1,15 @@
+]0;forge build: atlas-api[?25l[1;36m==>[0m [1mResolving 214 packages for atlas-api[0m
+[2K[##..................] 31/214 fetching left-pad-ng@3.1.4[2K[#########...........] 97/214 fetching quillstream@0.9.2[2K[###############.....] 166/214 fetching tarnhelm@12.0.0-rc.3[2K[####################] 214/214 fetching zephyr-codec@2.2.8
+[32m✔[0m fetched 214 packages in 3.8s (cache hit rate 71%)
+[38;5;208mwarning[0m: tarnhelm@12.0.0-rc.3 is a pre-release; pin it in forge.lock
+[1;36m==>[0m [1mCompiling[0m
+  compiling core/ledger ...
+[1A[2K  compiling core/fx ...
+[1A[2K  compiling api/routes ...
+[1A[2K  compiling api/auth ...
+[1A[2K  compiled 4 units	2.43s
+[38;2;255;95;135merror[39m[E0412]: unused import `Ledger::rebase` in api/routes/settle.rs:88
+  [2m= note:[0m treated as an error because of deny(unused) in forge.toml
+[1;31m✘ build failed[0m → see ]8;;https://ci.example.invalid/atlas/runs/88213#step-4\run #88213, step 4]8;;\ for the full output
+(B[mZusammenfassung: 1 Fehler, 1 Warnung · durée 6,2 s
+[?25h

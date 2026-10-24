@@ -1,0 +1,16 @@
+]0;pytest-like: suite run 4417[1mcollected tests for run 4417 · runner zürich-2[0m
+
+[1;34mtests/payouts/test_rounds_001.py[0m
+  [32mPASS[0m settles half-cent totals after a retry [2m(1847 ms)[22m
+  [1;38;5;196mFAIL[0m rebuilds the late fee for EUR accounts [2m(791 ms)[22m
+    [31mAssertionError: expected 682.71, got 639.77[0m
+    see ]8;;file:///srv/ci/work/payouts/report-4417-1.html\report 1]8;;\
+  [32mPASS[0m rebuilds unicode payee names across shards [2m(3864 ms)[22m
+[2K[38;2;120;120;120m[files done: 1] running…[0m[2K[1;34mtests/notify/test_rounds_002.py[0m
+  [32mPASS[0m caches the late fee for EUR accounts [2m(4274 ms)[22m
+  [32mPASS[0m merges an empty batch in dry-run mode [2m(2613 ms)[22m
+  [32mPASS[0m caches unicode payee names under load [2m(241 ms)[22m
+  [33mSKIP[39m applies a zero-amount invoice for EUR accounts [2m(120 ms)[22m
+
+[1;32m5 passed[0m, [1;31m1 failed[0m, [33m1 skipped[0m in 382.69s
+(B[m

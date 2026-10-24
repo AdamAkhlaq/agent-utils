@@ -1,0 +1,11 @@
+[
+  {"name": "nightly-backup", "schedule": "15 2 * * *", "command": "pg_dump orders | gzip > /backups/orders.sql.gz", "owner": "Zoë Achterberg", "enabled": true, "cpu": 0.50, "timeout_s": 5400},
+  {"name": "rotate-logs", "schedule": "0 * * * *", "command": "logrotate /etc/logrotate.d/app", "owner": "ops", "enabled": true, "cpu": 0.25, "timeout_s": 300},
+  {"name": "reindex-search", "schedule": "40 3 * * 0", "command": "search-admin reindex --all", "owner": "Mateus Okafor", "enabled": false, "cpu": 2, "timeout_s": 10800, "notes": "paused until the cluster upgrade"},
+  {"name": "purge-sessions", "schedule": "*/20 * * * *", "command": "redis-cli --scan --pattern 'sess:*' | xargs redis-cli unlink", "owner": "ops", "enabled": true, "cpu": 0.10, "timeout_s": 120, "notes": null},
+  {"name": "export-invoices", "schedule": "0 6 1 * *", "command": "invoices export --month last", "owner": "Priya Raghunathan", "enabled": true, "cpu": 1.00, "timeout_s": 3600, "retries": 3},
+  {"name": "warm-cache", "schedule": "*/5 7-19 * * 1-5", "command": "curl -fsS http://cache.internal/warm | tee -a /var/log/warm.log", "owner": null, "enabled": true, "cpu": 0.05, "timeout_s": 60, "retries": 0},
+  {"name": "sync-fx-rates", "schedule": "30 */4 * * *", "command": "fx sync --source ecb", "owner": "Priya Raghunathan", "enabled": true, "cpu": 0.25, "timeout_s": 900, "notes": "falls back to the previous day's rates"},
+  {"name": "vacuum-analytics", "schedule": "0 4 * * 6", "command": "psql analytics -c 'VACUUM (ANALYZE)'", "owner": "Mateus Okafor", "enabled": false, "cpu": 1.50, "timeout_s": 14400, "retries": 1},
+  {"name": "prune-images", "schedule": "45 1 * * *", "command": "registry gc --keep 30 | grep -c deleted", "owner": "ops", "enabled": true, "cpu": 0.20, "timeout_s": 1800}
+]
