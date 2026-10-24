@@ -1,6 +1,7 @@
 package hue
 
 import (
+	"math/big"
 	"strings"
 	"testing"
 )
@@ -207,7 +208,7 @@ func TestRoundTrip(t *testing.T) {
 	})
 
 	// Rounding makes hex -> hsl lossy in general: 16.7M RGB values map onto
-	// roughly 3.7M rounded HSL triples, so near neighbors collapse. These
+	// roughly 2.4M rounded HSL triples, so near neighbors collapse. These
 	// pin the documented examples.
 	t.Run("hex to hsl to hex lossy neighbors", func(t *testing.T) {
 		for _, tt := range []struct{ in, out string }{
@@ -243,4 +244,139 @@ func TestRoundTrip(t *testing.T) {
 			}
 		}
 	})
+}
+
+// Exact halves must round up. The float64 conversions these replaced
+// rounded every case here down, except the hue wrap, which pins 359.5 to 0.
+func TestConversionsRoundExactHalvesUp(t *testing.T) {
+	toHSL := []struct {
+		name string
+		rgb  RGB
+		want HSL
+	}{
+		{name: "hue 122.5", rgb: RGB{0x00, 0x18, 0x01}, want: HSL{123, 100, 5}},
+		{name: "saturation 87.5", rgb: RGB{0x07, 0x07, 0x69}, want: HSL{240, 88, 22}},
+		{name: "hue 359.5 wraps to 0", rgb: RGB{0x7e, 0x06, 0x07}, want: HSL{0, 91, 26}},
+	}
+	for _, tt := range toHSL {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := ToHSL(tt.rgb); got != tt.want {
+				t.Errorf("ToHSL(%v) = %v, want %v", tt.rgb, got, tt.want)
+			}
+		})
+	}
+	fromHSL := []struct {
+		name string
+		hsl  HSL
+		want RGB
+	}{
+		{name: "red 25.5", hsl: HSL{0, 100, 5}, want: RGB{26, 0, 0}},
+		{name: "green and blue 25.5", hsl: HSL{0, 80, 50}, want: RGB{230, 26, 26}},
+		{name: "red 229.5", hsl: HSL{0, 60, 75}, want: RGB{230, 153, 153}},
+	}
+	for _, tt := range fromHSL {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := FromHSL(tt.hsl); got != tt.want {
+				t.Errorf("FromHSL(%v) = %v, want %v", tt.hsl, got, tt.want)
+			}
+		})
+	}
+}
+
+// TestConversionsAreExact checks every 11th integer hsl input and every 41st
+// RGB color against the CSS formulas evaluated in exact rationals. The float64
+// conversions this replaced fail it about 1,360 times on RGB and 250 times on
+// hsl. The full spaces (3.7M and 16.7M inputs) take half a minute, so they are
+// sampled.
+func TestConversionsAreExact(t *testing.T) {
+	for i := 0; i < 360*101*101; i += 11 {
+		v := HSL{H: i / (101 * 101), S: i / 101 % 101, L: i % 101}
+		if got, want := FromHSL(v), ratFromHSL(v); got != want {
+			t.Fatalf("FromHSL(%v) = %v, want %v", v, got, want)
+		}
+	}
+	for i := 0; i < 1<<24; i += 41 {
+		c := RGB{uint8(i >> 16), uint8(i >> 8), uint8(i)}
+		if got, want := ToHSL(c), ratToHSL(c); got != want {
+			t.Fatalf("ToHSL(%v) = %v, want %v", c, got, want)
+		}
+	}
+}
+
+func rat(n, d int64) *big.Rat { return big.NewRat(n, d) }
+
+// roundRat rounds a non-negative rational to the nearest integer, halves up.
+func roundRat(x *big.Rat) int {
+	n := new(big.Int).Add(new(big.Int).Mul(x.Num(), big.NewInt(2)), x.Denom())
+	return int(n.Quo(n, new(big.Int).Mul(x.Denom(), big.NewInt(2))).Int64())
+}
+
+func ratAbs(x *big.Rat) *big.Rat { return new(big.Rat).Abs(x) }
+
+func ratToHSL(c RGB) HSL {
+	r, g, b := rat(int64(c.R), 255), rat(int64(c.G), 255), rat(int64(c.B), 255)
+	hi, lo := r, r
+	for _, x := range []*big.Rat{g, b} {
+		if x.Cmp(hi) > 0 {
+			hi = x
+		}
+		if x.Cmp(lo) < 0 {
+			lo = x
+		}
+	}
+	l := new(big.Rat).Quo(new(big.Rat).Add(hi, lo), rat(2, 1))
+	if hi.Cmp(lo) == 0 {
+		return HSL{L: roundRat(new(big.Rat).Mul(l, rat(100, 1)))}
+	}
+	d := new(big.Rat).Sub(hi, lo)
+	twoLMinus1 := new(big.Rat).Sub(new(big.Rat).Mul(l, rat(2, 1)), rat(1, 1))
+	s := new(big.Rat).Quo(d, new(big.Rat).Sub(rat(1, 1), ratAbs(twoLMinus1)))
+	var sector *big.Rat
+	switch hi {
+	case r:
+		sector = new(big.Rat).Quo(new(big.Rat).Sub(g, b), d)
+		if sector.Sign() < 0 {
+			sector.Add(sector, rat(6, 1))
+		}
+	case g:
+		sector = new(big.Rat).Add(new(big.Rat).Quo(new(big.Rat).Sub(b, r), d), rat(2, 1))
+	default:
+		sector = new(big.Rat).Add(new(big.Rat).Quo(new(big.Rat).Sub(r, g), d), rat(4, 1))
+	}
+	return HSL{
+		H: roundRat(new(big.Rat).Mul(sector, rat(60, 1))) % 360,
+		S: roundRat(new(big.Rat).Mul(s, rat(100, 1))),
+		L: roundRat(new(big.Rat).Mul(l, rat(100, 1))),
+	}
+}
+
+func ratFromHSL(v HSL) RGB {
+	s, l := rat(int64(v.S), 100), rat(int64(v.L), 100)
+	twoLMinus1 := new(big.Rat).Sub(new(big.Rat).Mul(l, rat(2, 1)), rat(1, 1))
+	c := new(big.Rat).Mul(new(big.Rat).Sub(rat(1, 1), ratAbs(twoLMinus1)), s)
+	// h/60 mod 2, for an integer h in 0-359
+	hMod2 := rat(int64(v.H%120), 60)
+	x := new(big.Rat).Mul(c, new(big.Rat).Sub(rat(1, 1), ratAbs(new(big.Rat).Sub(hMod2, rat(1, 1)))))
+	m := new(big.Rat).Sub(l, new(big.Rat).Quo(c, rat(2, 1)))
+	zero := new(big.Rat)
+	var ch [3]*big.Rat
+	switch {
+	case v.H < 60:
+		ch = [3]*big.Rat{c, x, zero}
+	case v.H < 120:
+		ch = [3]*big.Rat{x, c, zero}
+	case v.H < 180:
+		ch = [3]*big.Rat{zero, c, x}
+	case v.H < 240:
+		ch = [3]*big.Rat{zero, x, c}
+	case v.H < 300:
+		ch = [3]*big.Rat{x, zero, c}
+	default:
+		ch = [3]*big.Rat{c, zero, x}
+	}
+	var out [3]uint8
+	for i, x := range ch {
+		out[i] = uint8(roundRat(new(big.Rat).Mul(new(big.Rat).Add(x, m), rat(255, 1))))
+	}
+	return RGB{out[0], out[1], out[2]}
 }

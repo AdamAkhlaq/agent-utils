@@ -7,7 +7,6 @@ package hue
 import (
 	"encoding/json"
 	"fmt"
-	"math"
 	"strconv"
 	"strings"
 )
@@ -157,65 +156,74 @@ func parseHSLFunc(s string) (RGB, error) {
 // ToHSL converts c using the standard HSL derivation (CSS Color Module,
 // hue from the dominant channel, lightness as the mid-range). Each component
 // is rounded to the nearest integer, halves away from zero; a rounded hue of
-// 360 wraps to 0 so hue stays in 0-359.
+// 360 wraps to 0 so hue stays in 0-359. The arithmetic is exact, in integers:
+// float64 puts many exact halves on the wrong side (the hue of #001801 is
+// 122.5 exactly, and comes out of float64 as 122.49999999999999).
 func ToHSL(c RGB) HSL {
-	r := float64(c.R) / 255
-	g := float64(c.G) / 255
-	b := float64(c.B) / 255
-	max := math.Max(r, math.Max(g, b))
-	min := math.Min(r, math.Min(g, b))
-	l := (max + min) / 2
-	var h, s float64
-	if max != min {
-		d := max - min
-		s = d / (1 - math.Abs(2*l-1))
-		switch max {
-		case r:
-			h = math.Mod((g-b)/d, 6)
-		case g:
-			h = (b-r)/d + 2
-		default:
-			h = (r-g)/d + 4
-		}
-		h *= 60
-		if h < 0 {
-			h += 360
-		}
+	r, g, b := int(c.R), int(c.G), int(c.B)
+	hi, lo := max(r, g, b), min(r, g, b)
+	d := hi - lo
+	// l = (hi+lo)/510, s = d/(255-|hi+lo-255|), and h = 60*sector/d with
+	// sector in [0, 6d), all in 0-255 channel units.
+	l := roundDiv(10*(hi+lo), 51)
+	if d == 0 {
+		return HSL{L: l}
 	}
-	return HSL{
-		H: int(math.Round(h)) % 360,
-		S: int(math.Round(s * 100)),
-		L: int(math.Round(l * 100)),
+	s := roundDiv(100*d, 255-abs(hi+lo-255))
+	var sector int
+	switch hi {
+	case r:
+		sector = (g - b + 6*d) % (6 * d)
+	case g:
+		sector = b - r + 2*d
+	default:
+		sector = r - g + 4*d
 	}
+	return HSL{H: roundDiv(60*sector, d) % 360, S: s, L: l}
 }
 
 // FromHSL converts v to RGB using the standard chroma/intermediate algorithm
 // (CSS Color Module: c = (1-|2l-1|)*s, x = c*(1-|(h/60 mod 2)-1|), m = l-c/2).
-// Each channel is rounded to the nearest integer, halves away from zero.
+// Each channel is rounded to the nearest integer, halves away from zero, with
+// exact integer arithmetic for the same reason as ToHSL: hsl(0, 100%, 5%) has
+// a red channel of 25.5 exactly, which float64 rounds to 25.
 func FromHSL(v HSL) RGB {
-	h := float64(v.H)
-	s := float64(v.S) / 100
-	l := float64(v.L) / 100
-	c := (1 - math.Abs(2*l-1)) * s
-	x := c * (1 - math.Abs(math.Mod(h/60, 2)-1))
-	m := l - c/2
-	var r, g, b float64
+	// Every quantity is scaled by 100 for s, 100 for l, and 60 for h, which
+	// keeps c, x, and m integers: c is even and carries the factor 60.
+	const scale = 100 * 100 * 60
+	c := (100 - abs(2*v.L-100)) * v.S * 60
+	x := c * (60 - abs(v.H%120-60)) / 60
+	m := v.L*100*60 - c/2
+	var r, g, b int
 	switch {
-	case h < 60:
+	case v.H < 60:
 		r, g, b = c, x, 0
-	case h < 120:
+	case v.H < 120:
 		r, g, b = x, c, 0
-	case h < 180:
+	case v.H < 180:
 		r, g, b = 0, c, x
-	case h < 240:
+	case v.H < 240:
 		r, g, b = 0, x, c
-	case h < 300:
+	case v.H < 300:
 		r, g, b = x, 0, c
 	default:
 		r, g, b = c, 0, x
 	}
-	channel := func(v float64) uint8 { return uint8(math.Round((v + m) * 255)) }
+	channel := func(v int) uint8 { return uint8(roundDiv(255*(v+m), scale)) }
 	return RGB{channel(r), channel(g), channel(b)}
+}
+
+// roundDiv returns n/d rounded to the nearest integer, halves up, for n >= 0
+// and d > 0.
+func roundDiv(n, d int) int {
+	return (2*n + d) / (2 * d)
+}
+
+func abs(n int) int {
+	if n < 0 {
+		return -n
+	}
+	return n
 }
 
 // Hex renders c as lowercase #rrggbb.
