@@ -37,17 +37,7 @@ func TOMLToJSON(w io.Writer, r io.Reader) error {
 		}
 		return fmt.Errorf("invalid TOML: %w", err)
 	}
-	var buf bytes.Buffer
-	enc := json.NewEncoder(&buf)
-	enc.SetEscapeHTML(false)
-	enc.SetIndent("", "  ")
-	if err := enc.Encode(jsonValue(doc)); err != nil {
-		return fmt.Errorf("encoding JSON: %w", err)
-	}
-	if _, err := w.Write(bytes.TrimSuffix(buf.Bytes(), []byte("\n"))); err != nil {
-		return fmt.Errorf("writing output: %w", err)
-	}
-	return nil
+	return writeJSON(w, jsonValue(doc), len(data))
 }
 
 // jsonValue rewrites go-toml's datetime types into their deterministic string

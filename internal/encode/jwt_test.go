@@ -71,6 +71,11 @@ func TestJWTDecode(t *testing.T) {
 		{name: "header not JSON", input: makeJWT("hi", `{}`), wantErr: "header is not valid JSON"},
 		{name: "payload not base64url", input: "e30.!!!.sig", wantErr: "decoding payload"},
 		{name: "payload not JSON", input: makeJWT(`{}`, "hi"), wantErr: "payload is not valid JSON"},
+		{name: "payload with trailing data", input: makeJWT(`{}`, `{}x`), wantErr: "payload is not valid JSON"},
+		// 27 KB nested 9,999 deep would be 200 MB of output.
+		{name: "payload nested too deep to pretty-print", input: makeJWT(`{"alg":"none"}`, `{"a":`+strings.Repeat("[", 9999)+strings.Repeat("]", 9999)+`}`),
+			wantErr: "output size limit: pretty-printed output would exceed 64 MiB (the larger of 64 MiB and 64 times the input size): the JSON nests 10001 levels deep, with 2 spaces of indentation per level"},
+		{name: "header nested too deep to pretty-print", input: makeJWT(strings.Repeat("[", 9999)+strings.Repeat("]", 9999), `{}`), wantErr: "output size limit"},
 		{name: "header invalid UTF-8", input: makeJWT("{\"alg\":\"x\xff\"}", `{}`), wantErr: "header is not valid JSON: invalid UTF-8 at byte offset 9 (0xff)"},
 		{name: "payload invalid UTF-8", input: makeJWT(`{}`, "{\"sub\":\"x\xffy\"}"), wantErr: "payload is not valid JSON: invalid UTF-8 at byte offset 9 (0xff)"},
 	}

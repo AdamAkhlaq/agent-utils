@@ -6,7 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"slices"
 	"strings"
+
+	"github.com/adamakhlaq/agent-utils/v2/internal/format"
 )
 
 // JWTDecode renders the JWT in r as one pretty-printed JSON document with
@@ -31,38 +34,39 @@ func JWTDecode(w io.Writer, r io.Reader) error {
 		return fmt.Errorf("not a JWT: expected 3 dot-separated parts, got %d", len(parts))
 	}
 
-	var out bytes.Buffer
-	out.WriteString("{\n  \"header\": ")
-	if err := writeJWTPart(&out, parts[0], "header"); err != nil {
+	header, err := decodeJWTPart(parts[0], "header")
+	if err != nil {
 		return err
 	}
-	out.WriteString(",\n  \"payload\": ")
-	if err := writeJWTPart(&out, parts[1], "payload"); err != nil {
+	payload, err := decodeJWTPart(parts[1], "payload")
+	if err != nil {
 		return err
 	}
-	out.WriteString("\n}")
-	if _, err := w.Write(out.Bytes()); err != nil {
-		return fmt.Errorf("writing output: %w", err)
-	}
-	return nil
+	// Header and payload are valid JSON, so the wrapper is too, and indenting
+	// it as one document sizes the whole output before any of it is written.
+	doc := slices.Concat([]byte(`{"header":`), header, []byte(`,"payload":`), payload, []byte(`}`))
+	return format.IndentJSON(w, doc, "  ", len(data))
 }
 
-// writeJWTPart decodes one base64url token segment and appends it to out as
-// JSON indented to sit inside the wrapper object.
-func writeJWTPart(out *bytes.Buffer, part, name string) error {
+// decodeJWTPart decodes one base64url token segment and checks that it is a
+// JSON document, without indenting it.
+func decodeJWTPart(part, name string) ([]byte, error) {
 	// RFC 7515 forbids padding, but some emitters add it anyway; stripping it
 	// is harmless and decodes their tokens too.
 	raw, err := base64.RawURLEncoding.DecodeString(strings.TrimRight(part, "="))
 	if err != nil {
-		return fmt.Errorf("decoding %s: %w", name, err)
+		return nil, fmt.Errorf("decoding %s: %w", name, err)
 	}
-	// json.Indent copies invalid UTF-8 through untouched, and JSON text
-	// must be UTF-8 (RFC 8259), so the output would not be JSON.
+	// Indenting copies the bytes of strings through untouched, and JSON text
+	// must be UTF-8 (RFC 8259), so invalid UTF-8 would leave the output
+	// not JSON.
 	if err := validUTF8(string(raw)); err != nil {
-		return fmt.Errorf("%s is not valid JSON: %w", name, err)
+		return nil, fmt.Errorf("%s is not valid JSON: %w", name, err)
 	}
-	if err := json.Indent(out, raw, "  ", "  "); err != nil {
-		return fmt.Errorf("%s is not valid JSON: %w", name, err)
+	if !json.Valid(raw) {
+		var scratch bytes.Buffer
+		err := json.Compact(&scratch, raw)
+		return nil, fmt.Errorf("%s is not valid JSON: %w", name, err)
 	}
-	return nil
+	return raw, nil
 }

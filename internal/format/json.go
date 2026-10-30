@@ -11,18 +11,26 @@ import (
 
 // JSON pretty-prints the JSON document in r into w, using indent as the
 // per-level indentation. It reformats the raw bytes rather than unmarshalling,
-// so key order and exact number representation survive untouched.
+// so key order and exact number representation survive untouched. The
+// document is validated before any output is written, and output over the
+// limit IndentJSON enforces is an error.
 func JSON(w io.Writer, r io.Reader, indent string) error {
-	data, err := readInput(r)
+	text, err := ReadText(r)
 	if err != nil {
 		return err
 	}
-	var buf bytes.Buffer
-	if err := json.Indent(&buf, data, "", indent); err != nil {
-		return syntaxError(data, err)
+	data := trimTrailingSpace(text)
+	if !json.Valid(data) {
+		if err := checkSyntax(data); err != nil {
+			return err
+		}
+		return ErrInvalidJSON
 	}
-	if _, err := w.Write(buf.Bytes()); err != nil {
-		return fmt.Errorf("writing output: %w", err)
+	if err := IndentJSON(w, data, indent, len(text)); err != nil {
+		if errors.Is(err, ErrOutputLimit) {
+			return fmt.Errorf("%w; use -c for compact output", err)
+		}
+		return err
 	}
 	return nil
 }
@@ -85,7 +93,11 @@ func readInput(r io.Reader) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return bytes.TrimRight(data, " \t\r\n"), nil
+	return trimTrailingSpace(data), nil
+}
+
+func trimTrailingSpace(data []byte) []byte {
+	return bytes.TrimRight(data, " \t\r\n")
 }
 
 // syntaxError converts encoding/json's byte-offset errors into line and

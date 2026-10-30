@@ -2,7 +2,6 @@ package format
 
 import (
 	"bytes"
-	"encoding/json"
 	"encoding/xml"
 	"fmt"
 	"io"
@@ -65,17 +64,7 @@ func XMLToJSON(w io.Writer, r io.Reader) error {
 	if !seenRoot {
 		return fmt.Errorf("invalid XML: no root element found")
 	}
-	var buf bytes.Buffer
-	enc := json.NewEncoder(&buf)
-	enc.SetEscapeHTML(false)
-	enc.SetIndent("", "  ")
-	if err := enc.Encode(map[string]any{rootKey: rootVal}); err != nil {
-		return fmt.Errorf("encoding JSON: %w", err)
-	}
-	if _, err := w.Write(bytes.TrimSuffix(buf.Bytes(), []byte("\n"))); err != nil {
-		return fmt.Errorf("writing output: %w", err)
-	}
-	return nil
+	return writeJSON(w, map[string]any{rootKey: rootVal}, len(data))
 }
 
 // decodeElement consumes tokens from start through its matching end tag and
