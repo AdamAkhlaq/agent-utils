@@ -1,0 +1,12 @@
+SHELL=/bin/bash
+MAILTO=ops-alerts@ledgerline.example
+
+# m   h       dom    mon          dow      command
+*/20  9-17    *      *            1-5      /opt/ledgerline/bin/sync-ledger
+45    2       *      *            SUN      /opt/ledgerline/bin/rotate-archives
+0     6       1-7    *            MON      /opt/ledgerline/bin/monthly-digest
+30    23      28-31  *            *        /opt/ledgerline/bin/close-period
+5     */7     *      *            *        /opt/ledgerline/bin/refresh-rates
+0     12      13     *            FRI      /opt/ledgerline/bin/audit-sample
+10    0       29     2            *        /opt/ledgerline/bin/leap-day-report
+0     8-18/5  *      JUN-AUG,DEC  MON-FRI  /opt/ledgerline/bin/summer-sweep
