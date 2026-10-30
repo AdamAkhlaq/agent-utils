@@ -1,0 +1,3 @@
+Each line of `/task/fixtures/deploys.log` starts with a Unix epoch in seconds, followed by a space and a message. The servers that wrote it are in Adelaide, South Australia. Rewrite the log to `/out/deploys.log`, replacing each epoch with the same instant written as an RFC 3339 timestamp on Adelaide's local clock (the IANA zone `Australia/Adelaide`), with the UTC offset in effect at that instant, such as `2026-01-02T15:04:05+10:30`. Keep the rest of each line, and the order of the lines, unchanged.
+
+Done means `/out/deploys.log` has one rewritten line for each line of the original. Do not ask questions; write the file and stop.
