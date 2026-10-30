@@ -1,6 +1,7 @@
 # Compiled Binary
 agent-utils
 dev-utils
+bench/bench
 
 # GoReleaser output
 dist/

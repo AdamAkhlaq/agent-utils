@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -8,10 +10,11 @@ import (
 )
 
 // TestSuiteStatic is the check CI runs on every task directory: the static
-// rules, the context files' equality of length, and the tool paragraph's
-// match with the README. It needs no Docker and no credential.
+// rules, the context files' equality of length, the tool paragraph's match
+// with the README, and a task for every command that is not excluded. It
+// needs no Docker and no credential.
 func TestSuiteStatic(t *testing.T) {
-	result, err := validate("..", "", false)
+	result, err := validate("..", "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -23,19 +26,60 @@ func TestSuiteStatic(t *testing.T) {
 	}
 }
 
-// TestSuiteCoverage fails when a command has no task and no exclusion. It
-// is skipped unless BENCH_COVERAGE=1 until the task suite covers every
-// command; that phase removes the skip.
-func TestSuiteCoverage(t *testing.T) {
-	if os.Getenv("BENCH_COVERAGE") != "1" {
-		t.Skip("set BENCH_COVERAGE=1 to require a task for every command (the suite is still being filled in)")
-	}
-	result, err := validate("..", "", true)
+// TestValidateCoverage runs "bench validate" on this repository with one
+// extra command page, so the suite has a gap: the whole suite fails on it,
+// and a -tasks glob, which restricts every check to its tasks, does not.
+func TestValidateCoverage(t *testing.T) {
+	repo, err := filepath.Abs("..")
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, p := range result.problems {
-		t.Error(p)
+	root := t.TempDir()
+	for _, name := range []string{"README.md", "bench"} {
+		if err := os.Symlink(filepath.Join(repo, name), filepath.Join(root, name)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	commands, err := commandNames(filepath.Join(repo, "docs", "commands"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	docs := filepath.Join(root, "docs", "commands")
+	if err := os.MkdirAll(docs, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range append(sortedKeys(commands), "uncovered") {
+		if err := os.WriteFile(filepath.Join(docs, name+".md"), nil, 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	tasks, _ := loadTasks(filepath.Join(repo, "bench", "tasks"))
+
+	tests := []struct {
+		name       string
+		args       []string
+		wantCode   int
+		wantStdout string
+		wantStderr string
+	}{
+		{"whole suite", nil, 1, "",
+			fmt.Sprintf("command \"uncovered\" has no task under bench/tasks/uncovered/ and no exclusion\n1 problem (%d tasks checked)\n", len(tasks))},
+		{"one command's tasks", []string{"-tasks", "jwt-decode/*"}, 0, "static checks: 2 tasks ok\n", ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var stdout, stderr bytes.Buffer
+			code := run(append([]string{"validate", "-static", "-root", root}, tt.args...), &stdout, &stderr)
+			if code != tt.wantCode {
+				t.Errorf("exit code = %d, want %d", code, tt.wantCode)
+			}
+			if stdout.String() != tt.wantStdout {
+				t.Errorf("stdout = %q, want %q", stdout.String(), tt.wantStdout)
+			}
+			if stderr.String() != tt.wantStderr {
+				t.Errorf("stderr = %q, want %q", stderr.String(), tt.wantStderr)
+			}
+		})
 	}
 }
 
@@ -60,7 +104,7 @@ func TestSuiteOracles(t *testing.T) {
 	if err := buildImages(root, version); err != nil {
 		t.Fatal(err)
 	}
-	result, err := validate(root, "", false)
+	result, err := validate(root, "")
 	if err != nil {
 		t.Fatal(err)
 	}

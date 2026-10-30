@@ -73,8 +73,8 @@ to, and say why in the PR when you deviate.
   `instruction.md`, fixtures, `oracle.sh`, `check.sh`), written to the rules in
   `bench/README.md`: the instruction states a goal and an output path under `/out/` and
   names no tool; the checker accepts any correct answer. `go run ./bench validate -tasks
-  '<name>/*'` must pass, Docker step included. A command without a task fails the
-  coverage test once the suite is complete.
+  '<name>/*'` must pass, Docker step included. A command without a task fails
+  `go test ./bench`.
 
 ## 4. Verify
 

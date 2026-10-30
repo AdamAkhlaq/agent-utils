@@ -2,7 +2,7 @@
 
 This directory holds the benchmark that measures what an agent gains from having `agent-utils` on its PATH: **speed** (wall-clock per task), **tokens and cost** (end to end, cache-aware), and **accuracy** (did the task get done right), compared with the same agent doing the same task without it. The method, the tasks, and the harness live here, and so will the per-trial data of every published run.
 
-**What exists today:** the task format, the task suite under `tasks/` (filled in one command category per PR; `bench validate` lists the commands still without a task), the Docker images, the two context paragraphs, and the three subcommands: `validate`, `run`, and `report`. No run has been published yet; `results/` and the README's measured numbers arrive with the first full run.
+**What exists today:** the task format, the task suite under `tasks/` (a task for every command but the exclusions under "Coverage rule"), the Docker images, the two context paragraphs, and the three subcommands: `validate`, `run`, and `report`. No run has been published yet; `results/` and the README's measured numbers arrive with the first full run.
 
 The tool's authors run the benchmark. The harness is public, every prompt and checker is open to review, raw transcripts are published with each run, and flat or negative results are published too.
 
@@ -69,7 +69,7 @@ claude -p "$(cat /task/instruction.md)" \
 
 ### Coverage rule
 
-Every command in `agent-utils` has at least one task under `tasks/`, except the exclusions in `task.go`, each with a reason: `video` (reaches the network), `commands` and `version` (meta). `go test ./bench` compares the command list with the task directories; a new command cannot merge without a benchmark task. (Until the suite covers every command, that test runs only with `BENCH_COVERAGE=1`, and `bench validate` prints the gaps as warnings.)
+Every command in `agent-utils` has at least one task under `tasks/`, except the exclusions in `task.go`, each with a reason: `video` (reaches the network), `commands` and `version` (meta). `go test ./bench` compares the command list with the task directories; a new command cannot merge without a benchmark task, and `bench validate` fails on the gap too. An exclusion that names a command that no longer exists, or one that now has a task, fails the same way.
 
 ### Layout
 
@@ -128,7 +128,7 @@ Checkers run in the base image, where agent-utils does not exist, with `/task` a
 - A task that lists the `model` arm has no binary fixture or output (by extension).
 - `oracle.sh` and `check.sh` exist, are executable, and start with `#!`.
 - `context/tool.md` is the README snippet verbatim, and `context/neutral.md` is within 5 estimated tokens of it.
-- Every command has a task or an exclusion (a warning until the suite is complete; `-coverage` makes it a failure).
+- Every command has a task or an exclusion, and every exclusion names a command without a task (checked only without `-tasks`, which restricts every check to the tasks it selects).
 - Each oracle's output passes its checker, in Docker: the oracle runs in the `tool` image, offline, and the checker in the base image.
 
 `-static` skips the Docker step, `-tasks 'jwt-decode/*'` restricts every check to the matching tasks, `-root` names the repository (default: found from the working directory), and `-agent-utils-version` chooses the release the tool image installs (default: the latest `v*` tag). Exit codes: 0 every check passed, 1 a check failed or Docker failed, 2 usage error (an unknown flag, a stray argument, a malformed glob, or a glob that matches no task).

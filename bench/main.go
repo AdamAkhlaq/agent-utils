@@ -1,6 +1,5 @@
 // Command bench is the agent-utils benchmark harness: it validates the task
-// suite under bench/tasks and, in later phases, runs the trial matrix and
-// reports on it. It is a development tool in this module, never part of the
+// suite under bench/tasks, runs the trial matrix, and reports on it. It is a development tool in this module, never part of the
 // released binary. Run it from the repository with "go run ./bench".
 package main
 
@@ -54,12 +53,11 @@ func validateMain(args []string, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("validate", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	static := fs.Bool("static", false, "skip Docker: run only the checks that need no daemon")
-	coverageRequired := fs.Bool("coverage", false, "fail when a command has no task (otherwise gaps are warnings)")
 	glob := fs.String("tasks", "", "validate only the tasks whose name matches this glob, such as 'jwt-decode/*'")
 	root := fs.String("root", "", "repository root (default: found from the working directory)")
 	version := fs.String("agent-utils-version", "", "release tag to install in the tool image (default: the latest v* tag)")
 	printUsage := func(w io.Writer) {
-		fmt.Fprintf(w, "usage: go run ./bench validate [-static] [-coverage] [-tasks glob] [-root dir] [-agent-utils-version vX.Y.Z]\n\n")
+		fmt.Fprintf(w, "usage: go run ./bench validate [-static] [-tasks glob] [-root dir] [-agent-utils-version vX.Y.Z]\n\n")
 		fs.SetOutput(w)
 		fs.PrintDefaults()
 		fs.SetOutput(io.Discard)
@@ -97,7 +95,7 @@ func validateMain(args []string, stdout, stderr io.Writer) int {
 	}
 	*root = abs
 
-	result, err := validate(*root, *glob, *coverageRequired)
+	result, err := validate(*root, *glob)
 	var noMatch errNoMatch
 	if errors.As(err, &noMatch) {
 		fmt.Fprintf(stderr, "bench validate: %v\n", err)
@@ -107,14 +105,11 @@ func validateMain(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintf(stderr, "bench validate: %v\n", err)
 		return 1
 	}
-	for _, w := range result.warnings {
-		fmt.Fprintf(stderr, "warning: %s\n", w)
-	}
 	for _, p := range result.problems {
 		fmt.Fprintf(stderr, "%s\n", p)
 	}
 	if len(result.problems) > 0 {
-		fmt.Fprintf(stderr, "%s in %s\n", plural(len(result.problems), "problem"), plural(len(result.tasks), "task"))
+		fmt.Fprintf(stderr, "%s (%s checked)\n", plural(len(result.problems), "problem"), plural(len(result.tasks), "task"))
 		return 1
 	}
 	// In the full run this line is progress, not a result: the result is the
@@ -175,13 +170,13 @@ func plural(n int, noun string) string {
 type validation struct {
 	tasks    []Task
 	problems []string
-	warnings []string
 }
 
 // validate runs every static check: each task's rules, the context files'
 // equality of length and the tool paragraph's match with the README, and the
-// coverage of the command list. Coverage gaps are warnings unless required.
-func validate(root, glob string, coverageRequired bool) (validation, error) {
+// coverage of the command list. Coverage is checked only without a -tasks
+// glob, because the glob restricts every check to the tasks it selects.
+func validate(root, glob string) (validation, error) {
 	var v validation
 	commands, err := commandNames(filepath.Join(root, "docs", "commands"))
 	if err != nil {
@@ -232,13 +227,8 @@ func validate(root, glob string, coverageRequired bool) (validation, error) {
 		v.problems = append(v.problems, "context/tool.md is not the README's agent snippet, verbatim")
 	}
 
-	gaps := coverage(commands, all)
-	switch {
-	case coverageRequired:
-		v.problems = append(v.problems, gaps...)
-	case len(gaps) > 0:
-		v.warnings = append(v.warnings, fmt.Sprintf("coverage: %d gaps (pass -coverage to fail on them)\n  %s",
-			len(gaps), strings.Join(gaps, "\n  ")))
+	if glob == "" {
+		v.problems = append(v.problems, coverage(commands, all)...)
 	}
 	return v, nil
 }

@@ -214,6 +214,8 @@ func TestCoverage(t *testing.T) {
 			[]string{`command "case" has no task under bench/tasks/case/ and no exclusion`}},
 		{"exclusion of a command that no longer exists", map[string]bool{"jwt-decode": true, "video": true, "commands": true},
 			[]Task{task("jwt-decode")}, []string{`excluded command "version" does not exist; remove the exclusion`}},
+		{"exclusion of a command that has a task", map[string]bool{"jwt-decode": true, "video": true, "commands": true, "version": true},
+			[]Task{task("jwt-decode"), task("video")}, []string{`excluded command "video" has a task; remove the exclusion`}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -57,8 +57,8 @@ func taskArms(t Task) []string {
 
 var tags = []string{"basic", "scale", "hard", "sweep"}
 
-// excludedCommands lists the commands that deliberately have no task, with
-// the reason the coverage check prints.
+// excludedCommands lists the commands that deliberately have no task, each
+// with the reason.
 var excludedCommands = map[string]string{
 	"video":    "reaches the network; the suite runs offline",
 	"commands": "meta: prints the command manifest",
@@ -396,8 +396,11 @@ func coverage(commands map[string]bool, tasks []Task) []string {
 		}
 	}
 	for _, c := range sortedKeys(excludedCommands) {
-		if !commands[c] {
+		switch {
+		case !commands[c]:
 			problems = append(problems, fmt.Sprintf("excluded command %q does not exist; remove the exclusion", c))
+		case covered[c]:
+			problems = append(problems, fmt.Sprintf("excluded command %q has a task; remove the exclusion", c))
 		}
 	}
 	return problems
