@@ -43,7 +43,7 @@ func TestRun(t *testing.T) {
 		{"validate stray argument", []string{"validate", "-static", "jwt-decode"}, 2, "", `unexpected argument "jwt-decode"`},
 		{"validate bad glob", []string{"validate", "-static", "-root", "..", "-tasks", "["}, 2, "", "-tasks \"[\": syntax error in pattern"},
 		{"validate no match", []string{"validate", "-static", "-root", "..", "-tasks", "nothing/*"}, 2, "", `-tasks "nothing/*" matches no task`},
-		{"validate static", []string{"validate", "-static", "-root", ".."}, 0, fmt.Sprintf("static checks: %d tasks ok", len(taskDirs)), "coverage:"},
+		{"validate static", []string{"validate", "-static", "-root", ".."}, 0, fmt.Sprintf("static checks: %d tasks ok", len(taskDirs)), ""},
 		{"validate one task", []string{"validate", "-static", "-root", "..", "-tasks", "jwt-decode/basic"}, 0, "static checks: 1 task ok", ""},
 		{"validate outside a repository", []string{"validate", "-static", "-root", t.TempDir()}, 1, "", "docs/commands: no such file or directory"},
 		{"run help", []string{"run", "-h"}, 0, "usage: go run ./bench run", ""},

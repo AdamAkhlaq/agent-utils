@@ -104,7 +104,7 @@ func runMain(args []string, stdout, stderr io.Writer) int {
 		}
 	}
 
-	result, err := validate(*root, *glob, false)
+	result, err := validate(*root, *glob)
 	if err != nil {
 		return fail(err)
 	}
