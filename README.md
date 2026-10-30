@@ -186,6 +186,7 @@ Every command follows the same rules, so a caller that has learned one command c
 - **Output files** are opt-in: the image commands and `strip-ansi` accept an output path as a second argument, and `qr` takes `-o`. The result is written to a temporary file beside it and renamed into place only on success, so a failed command never damages an existing file, and the output may be the input file.
 - **Results** go to `stdout` and nothing else does; diagnostics go to `stderr`. There are no colors, prompts, progress bars, or interactive modes.
 - **Structured results are JSON**, pretty-printed and ready for `jq`.
+- **Pretty-printed JSON is bounded.** It indents every line by its nesting depth, so a short, deeply nested input could otherwise expand ten-thousandfold. The commands that pretty-print a document from their input (`json-fmt`, `jwt-decode`, `toml2json`, `xml2json`, and `yaml2json`) allow 64 MiB of output or 64 times the input size, whichever is larger: when the output would be larger, the command fails with exit `1` and an error that names the limit, before writing anything.
 - **Output is deterministic**: the same input gives byte-identical output. The exceptions depend on something outside the input by design: randomness (`uuid` and `password`, drawn from the OS's secure random source), the clock (`time` with no argument or `now`, `cron` without `-from`, and `cert-decode`'s `expired` field), the machine (`time -z local` and `cron -z local`), or the network (`video`).
 - **Exit codes** mean the same thing everywhere:
 

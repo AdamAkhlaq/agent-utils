@@ -50,6 +50,8 @@ func TestExitCodes(t *testing.T) {
 	if err := png.Encode(&blankPNG, image.NewGray(image.Rect(0, 0, 64, 64))); err != nil {
 		t.Fatal(err)
 	}
+	// 20 KB nested 9,999 deep, which would pretty-print to 200 MB.
+	deepJSON := strings.Repeat("[", 9999) + strings.Repeat("]", 9999)
 	// The billion laughs: 9 levels of 9 aliases, a 414-byte alias bomb.
 	var laughs strings.Builder
 	laughs.WriteString("a0: &a0 [lol,lol,lol,lol,lol,lol,lol,lol,lol]\n")
@@ -130,6 +132,11 @@ func TestExitCodes(t *testing.T) {
 		{name: "json-fmt check invalid", args: []string{"json-fmt", "-check"}, stdin: `{"a": }`, want: 3},
 		{name: "json-fmt check missing file", args: []string{"json-fmt", "-check", missing}, want: 1},
 		{name: "json-fmt pretty invalid", args: []string{"json-fmt"}, stdin: `{"a": }`, want: 1},
+		{name: "json-fmt pretty output over the size limit", args: []string{"json-fmt"}, stdin: deepJSON, want: 1},
+		{name: "json-fmt compact of deep input", args: []string{"json-fmt", "-c"}, stdin: deepJSON, want: 0},
+		{name: "toml2json output over the size limit", args: []string{"toml2json"}, stdin: "a = " + deepJSON, want: 1},
+		{name: "xml2json output over the size limit", args: []string{"xml2json"}, stdin: strings.Repeat("<a>", 9999) + "x" + strings.Repeat("</a>", 9999), want: 1},
+		{name: "yaml2json output over the size limit", args: []string{"yaml2json"}, stdin: deepJSON, want: 1},
 		{name: "json-fmt check skips a leading byte order mark", args: []string{"json-fmt", "-check"}, stdin: "\xef\xbb\xbf{}", want: 0},
 		{name: "json-fmt check invalid UTF-8 answers no", args: []string{"json-fmt", "-check"}, stdin: "{\"a\":\"x\xffy\"}", want: 3},
 		{name: "json-fmt check UTF-16 answers no", args: []string{"json-fmt", "-check"}, stdin: "\xff\xfe{\x00}\x00", want: 3},

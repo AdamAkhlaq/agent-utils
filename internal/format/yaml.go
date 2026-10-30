@@ -34,10 +34,11 @@ const (
 // mappings, sequences, and merge keys.
 const maxYAMLDepth = 10_000
 
-// yamlLimits caps one conversion. YAMLToJSON uses the constants above; tests
-// use smaller limits to reach the edges without megabytes of output.
+// yamlLimits caps one conversion. YAMLToJSON uses the constants above and
+// the output floor IndentJSON uses; tests use smaller limits to reach the
+// edges without megabytes of output.
 type yamlLimits struct {
-	aliasNodes, aliasBytes, depth int
+	aliasNodes, aliasBytes, depth, outputFloor int
 }
 
 func (l yamlLimits) nodesError() error {
@@ -68,10 +69,11 @@ func byteCount(n int) string {
 // scalar, while mappings, sequences, anchors, aliases, and merge keys are
 // handled here, so key order survives, aliases and merge keys follow the
 // YAML spec, and alias expansion is bounded by maxAliasNodes and
-// maxAliasBytes. Nothing is written to w unless the whole conversion
+// maxAliasBytes. Its output is limited as IndentJSON limits it, checked as
+// it is written. Nothing is written to w unless the whole conversion
 // succeeds.
 func YAMLToJSON(w io.Writer, r io.Reader) error {
-	return yamlToJSON(w, r, yamlLimits{aliasNodes: maxAliasNodes, aliasBytes: maxAliasBytes, depth: maxYAMLDepth})
+	return yamlToJSON(w, r, yamlLimits{aliasNodes: maxAliasNodes, aliasBytes: maxAliasBytes, depth: maxYAMLDepth, outputFloor: outputFloor})
 }
 
 func yamlToJSON(w io.Writer, r io.Reader, limits yamlLimits) error {
@@ -98,6 +100,7 @@ func yamlToJSON(w io.Writer, r io.Reader, limits yamlLimits) error {
 func convertYAML(data []byte, limits yamlLimits) (*yamlConverter, error) {
 	c := &yamlConverter{
 		limits:  limits,
+		output:  outputLimit(limits.outputFloor, len(data)),
 		anchors: map[anchorName]anchorRef{},
 		open:    map[*ast.AnchorNode]bool{},
 		targets: map[*ast.AliasNode]ast.Node{},
@@ -134,7 +137,18 @@ func convertYAML(data []byte, limits yamlLimits) (*yamlConverter, error) {
 	if err := c.resolve(body, 0); err != nil {
 		return c, err
 	}
-	return c, c.value(body, 0)
+	if c.lines > c.output {
+		return c, outputLimitError(c.limits.outputFloor, c.output, c.nesting, 2)
+	}
+	if err := c.value(body, 0); err != nil {
+		return c, err
+	}
+	// newline keeps the output near its limit as it grows; this makes the
+	// limit exact, counting what follows the last line break.
+	if int64(c.out.Len()) > c.output {
+		return c, outputLimitError(c.limits.outputFloor, c.output, c.nesting, 2)
+	}
+	return c, nil
 }
 
 // tokenize splits data into go-yaml's tokens. go-yaml's lexer drops a tag
@@ -288,8 +302,12 @@ type anchorRef struct {
 // document's own pretty-printed size, which grows with nesting depth as
 // well as length.
 type yamlConverter struct {
-	limits yamlLimits
-	out    bytes.Buffer
+	limits  yamlLimits
+	out     bytes.Buffer
+	output  int64 // the most out may hold
+	nesting int   // the deepest mapping or sequence seen, counting from 1
+	lines   int64 // the least output resolve has found the document must write
+	merging int   // merge-key values being resolved, whose pairs are not counted in lines
 
 	// Set by resolve, before anything is written.
 	anchors map[anchorName]anchorRef
@@ -378,7 +396,12 @@ unwrap:
 		if level >= c.limits.depth {
 			return c.limits.depthError()
 		}
+		c.nesting = max(c.nesting, level+1)
+		if len(t.Values) > 0 {
+			c.countLine(level)
+		}
 		for _, v := range t.Values {
+			c.countLine(level + 1)
 			if err := c.resolve(v, level+1); err != nil {
 				return err
 			}
@@ -391,9 +414,15 @@ func (c *yamlConverter) resolvePairs(pairs []*ast.MappingValueNode, level int) e
 	if level >= c.limits.depth {
 		return c.limits.depthError()
 	}
+	c.nesting = max(c.nesting, level+1)
+	explicit := false
 	for _, p := range pairs {
-		if isMergeKey(p.Key) {
+		merge := isMergeKey(p.Key)
+		if merge {
 			c.merges[p] = true
+		} else {
+			c.countLine(level + 1)
+			explicit = true
 		}
 		if err := checkValueIndent(p); err != nil {
 			return err
@@ -401,11 +430,32 @@ func (c *yamlConverter) resolvePairs(pairs []*ast.MappingValueNode, level int) e
 		if err := c.resolve(p.Key, level+1); err != nil {
 			return err
 		}
-		if err := c.resolve(p.Value, level+1); err != nil {
+		if merge {
+			c.merging++
+		}
+		err := c.resolve(p.Value, level+1)
+		if merge {
+			c.merging--
+		}
+		if err != nil {
 			return err
 		}
 	}
+	if explicit {
+		c.countLine(level)
+	}
 	return nil
+}
+
+// countLine adds a line at level to the output the document must write: a
+// sequence item or an explicit mapping key, each written once on its own
+// line wherever it appears, or the closing line of a sequence or mapping
+// with one. Pairs inside a merge-key value are skipped, since a key there
+// may lose to one written explicitly.
+func (c *yamlConverter) countLine(level int) {
+	if c.merging == 0 {
+		c.lines += 1 + 2*int64(level)
+	}
 }
 
 // checkValueIndent rejects a block mapping that go-yaml placed under a key
@@ -548,6 +598,7 @@ func (c *yamlConverter) sequence(values []ast.Node, level int) error {
 	if level >= c.limits.depth {
 		return c.limits.depthError()
 	}
+	c.nesting = max(c.nesting, level+1)
 	if len(values) == 0 {
 		c.out.WriteString("[]")
 		return nil
@@ -557,12 +608,16 @@ func (c *yamlConverter) sequence(values []ast.Node, level int) error {
 		if i > 0 {
 			c.out.WriteByte(',')
 		}
-		c.newline(level + 1)
+		if err := c.newline(level + 1); err != nil {
+			return err
+		}
 		if err := c.value(v, level+1); err != nil {
 			return err
 		}
 	}
-	c.newline(level)
+	if err := c.newline(level); err != nil {
+		return err
+	}
 	c.out.WriteByte(']')
 	return nil
 }
@@ -575,6 +630,7 @@ func (c *yamlConverter) mapping(pairs []*ast.MappingValueNode, level int) error 
 	if level >= c.limits.depth {
 		return c.limits.depthError()
 	}
+	c.nesting = max(c.nesting, level+1)
 	for _, p := range pairs {
 		if c.merges[p] {
 			return c.mergedMapping(pairs, level)
@@ -618,7 +674,9 @@ func (c *yamlConverter) mapping(pairs []*ast.MappingValueNode, level int) error 
 			return err
 		}
 	}
-	c.newline(level)
+	if err := c.newline(level); err != nil {
+		return err
+	}
 	c.out.WriteByte('}')
 	return nil
 }
@@ -646,7 +704,9 @@ func (c *yamlConverter) mergedMapping(pairs []*ast.MappingValueNode, level int) 
 		c.out.WriteString("{}")
 		return nil
 	}
-	c.newline(level)
+	if err := c.newline(level); err != nil {
+		return err
+	}
 	c.out.WriteByte('}')
 	return nil
 }
@@ -732,7 +792,9 @@ func (c *yamlConverter) writeKey(k string, aliased bool, level int, first bool) 
 	} else {
 		c.out.WriteByte(',')
 	}
-	c.newline(level + 1)
+	if err := c.newline(level + 1); err != nil {
+		return err
+	}
 	c.writeString(k)
 	c.out.WriteString(": ")
 	if aliased {
@@ -1124,10 +1186,14 @@ func (c *yamlConverter) writeScalar(v any, at ast.Node, level int) error {
 			if i > 0 {
 				c.out.WriteByte(',')
 			}
-			c.newline(level + 1)
+			if err := c.newline(level + 1); err != nil {
+				return err
+			}
 			c.out.WriteString(strconv.Itoa(int(b)))
 		}
-		c.newline(level)
+		if err := c.newline(level); err != nil {
+			return err
+		}
 		c.out.WriteByte(']')
 	default:
 		return fmt.Errorf("value at %s has unsupported type %T", position(at), v)
@@ -1155,14 +1221,19 @@ func byteArraySize(x []byte, level int) int {
 const indentSpaces = "                                                                "
 
 // newline starts a line indented for level, as json.Indent with a
-// two-space indent would.
-func (c *yamlConverter) newline(level int) {
+// two-space indent would, unless the line would take the output past its
+// limit.
+func (c *yamlConverter) newline(level int) error {
+	if int64(c.out.Len())+1+2*int64(level) > c.output {
+		return outputLimitError(c.limits.outputFloor, c.output, c.nesting, 2)
+	}
 	c.out.WriteByte('\n')
 	for n := 2 * level; n > 0; {
 		chunk := min(n, len(indentSpaces))
 		c.out.WriteString(indentSpaces[:chunk])
 		n -= chunk
 	}
+	return nil
 }
 
 // writeString writes s as a JSON string with the escapes Go's strconv.Quote

@@ -964,7 +964,7 @@ func TestYAMLToJSONAnchorHeavyConfigs(t *testing.T) {
 	}
 }
 
-var realYAMLLimits = yamlLimits{aliasNodes: maxAliasNodes, aliasBytes: maxAliasBytes, depth: maxYAMLDepth}
+var realYAMLLimits = yamlLimits{aliasNodes: maxAliasNodes, aliasBytes: maxAliasBytes, depth: maxYAMLDepth, outputFloor: outputFloor}
 
 // maxYAMLWork bounds yamlConverter.work for an input: each scalar's text is
 // decoded at most twice (once where it is written, once for every alias that
@@ -1025,7 +1025,7 @@ func TestYAMLToJSONAliasOutputCharged(t *testing.T) {
 	if c.aliasBytes > maxAliasBytes {
 		t.Errorf("aliases wrote %d bytes before failing, want at most %d", c.aliasBytes, maxAliasBytes)
 	}
-	small := yamlLimits{aliasNodes: 1000, aliasBytes: 64 << 10, depth: 50}
+	small := yamlLimits{aliasNodes: 1000, aliasBytes: 64 << 10, depth: 50, outputFloor: outputFloor}
 	for _, tt := range []struct {
 		name    string
 		over    int
@@ -1054,7 +1054,7 @@ func TestYAMLToJSONAliasOutputCharged(t *testing.T) {
 // use small limits, which exercise the same code as the real ones without
 // writing megabytes; the rest check the real limits themselves.
 func TestYAMLToJSONAliasLimit(t *testing.T) {
-	small := yamlLimits{aliasNodes: 1000, aliasBytes: 64 << 10, depth: 50}
+	small := yamlLimits{aliasNodes: 1000, aliasBytes: 64 << 10, depth: 50, outputFloor: outputFloor}
 	tests := []struct {
 		name    string
 		limits  yamlLimits // the real limits when zero
@@ -1251,8 +1251,14 @@ func FuzzYAMLToJSON(f *testing.F) {
 		if len(input) > 4096 {
 			return
 		}
-		if c, _ := convertYAML([]byte(input), realYAMLLimits); c.work > maxYAMLWork(input) {
+		c, cerr := convertYAML([]byte(input), realYAMLLimits)
+		if c.work > maxYAMLWork(input) {
 			t.Fatalf("convertYAML(%q) did %d work, want at most %d", input, c.work, maxYAMLWork(input))
+		}
+		// The lines counted before writing must never exceed what is written,
+		// or a document that fits the output limit could be rejected.
+		if cerr == nil && c.lines > int64(c.out.Len()) {
+			t.Fatalf("convertYAML(%q) counted %d bytes of lines before writing, then wrote %d", input, c.lines, c.out.Len())
 		}
 		var out bytes.Buffer
 		err := YAMLToJSON(&out, strings.NewReader(input))
@@ -1291,4 +1297,60 @@ func FuzzYAMLToJSON(f *testing.F) {
 			t.Fatalf("YAMLToJSON(%q) = %q, go-yaml writes %q", input, got, want)
 		}
 	})
+}
+
+// TestYAMLToJSONOutputLimit pins the output limit at its exact edge: each
+// document converts with a floor of exactly its output size and fails one
+// byte below it. The documents nest 300 deep, so the floor rather than 64
+// times the input is the limit. The merge case checks that what resolve
+// counts before writing never exceeds what is written, as keys from a merge
+// can lose to explicit ones.
+func TestYAMLToJSONOutputLimit(t *testing.T) {
+	nest := func(inner string) string { return strings.Repeat("[", 300) + inner + strings.Repeat("]", 300) }
+	for _, tt := range []struct {
+		name  string
+		input string
+	}{
+		{name: "sequences", input: nest("")},
+		{name: "mapping with a scalar", input: nest("{a: hello}")},
+		{name: "merge whose keys lose", input: nest("{a: 1, b: 2, <<: {a: 3, b: 4, c: 5}}")},
+		{name: "merge through an alias", input: "x: &x {a: 3, b: 4}\ny: " + nest("{a: 1, <<: *x}")},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			var want bytes.Buffer
+			if err := yamlToJSON(&want, strings.NewReader(tt.input), realYAMLLimits); err != nil {
+				t.Fatal(err)
+			}
+			if 64*len(tt.input) >= want.Len() {
+				t.Fatalf("output is %d bytes, not over 64 times the %d-byte input", want.Len(), len(tt.input))
+			}
+			limits := realYAMLLimits
+			limits.outputFloor = want.Len()
+			var out bytes.Buffer
+			if err := yamlToJSON(&out, strings.NewReader(tt.input), limits); err != nil || out.String() != want.String() {
+				t.Fatalf("at a floor of exactly the output size: error = %v, output equal %v", err, out.String() == want.String())
+			}
+			limits.outputFloor--
+			out.Reset()
+			err := yamlToJSON(&out, strings.NewReader(tt.input), limits)
+			if !errors.Is(err, ErrOutputLimit) {
+				t.Fatalf("one byte below: error = %v, want the output limit", err)
+			}
+			if out.Len() != 0 {
+				t.Errorf("one byte below: wrote %d bytes before failing", out.Len())
+			}
+		})
+	}
+
+	// Far past the limit, the lines resolve counts fail the document
+	// before anything is written.
+	limits := realYAMLLimits
+	limits.outputFloor = 1000
+	c, err := convertYAML([]byte(nest("")), limits)
+	if !errors.Is(err, ErrOutputLimit) || !strings.Contains(err.Error(), "would exceed 38400 bytes (the larger of 1000 bytes and 64 times the input size): the JSON nests 300 levels deep") {
+		t.Fatalf("convertYAML() error = %v, want the output limit", err)
+	}
+	if c.out.Len() != 0 {
+		t.Errorf("wrote %d bytes before failing, want none", c.out.Len())
+	}
 }
