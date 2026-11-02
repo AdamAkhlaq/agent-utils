@@ -135,6 +135,8 @@ func TestExitCodes(t *testing.T) {
 		{name: "json-fmt pretty output over the size limit", args: []string{"json-fmt"}, stdin: deepJSON, want: 1},
 		{name: "json-fmt compact of deep input", args: []string{"json-fmt", "-c"}, stdin: deepJSON, want: 0},
 		{name: "toml2json output over the size limit", args: []string{"toml2json"}, stdin: "a = " + deepJSON, want: 1},
+		{name: "toml2json nesting past the depth limit", args: []string{"toml2json"}, stdin: strings.Repeat("a.", 1_000_000) + "a = 1", want: 1},
+		{name: "toml2json infinity", args: []string{"toml2json"}, stdin: "a = inf", want: 1},
 		{name: "xml2json output over the size limit", args: []string{"xml2json"}, stdin: strings.Repeat("<a><a/>", 4999) + "<a/>" + strings.Repeat("</a>", 4999), want: 1},
 		{name: "xml2json nesting past the depth limit", args: []string{"xml2json"}, stdin: strings.Repeat("<a>", 1_000_000), want: 1},
 		{name: "xml2json repeated siblings past the depth limit", args: []string{"xml2json"}, stdin: strings.Repeat("<a><a/>", 5001) + strings.Repeat("</a>", 5001), want: 1},
