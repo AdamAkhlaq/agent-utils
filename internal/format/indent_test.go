@@ -127,7 +127,7 @@ func TestPrettyOutputLimit(t *testing.T) {
 			convert: func(w *bytes.Buffer, in string) error { return JSON(w, strings.NewReader(in), "        ") }},
 		{name: "toml2json", input: "a = " + brackets, wantErr: "nests 10000 levels deep",
 			convert: func(w *bytes.Buffer, in string) error { return TOMLToJSON(w, strings.NewReader(in)) }},
-		{name: "xml2json", input: strings.Repeat("<a>", 9999) + "x" + strings.Repeat("</a>", 9999), wantErr: "nests 9999 levels deep",
+		{name: "xml2json", input: strings.Repeat("<a><a/>", 4999) + "<a/>" + strings.Repeat("</a>", 4999), wantErr: "nests 9999 levels deep",
 			convert: func(w *bytes.Buffer, in string) error { return XMLToJSON(w, strings.NewReader(in)) }},
 		{name: "yaml2json", input: brackets, wantErr: "nests 9999 levels deep",
 			convert: func(w *bytes.Buffer, in string) error { return YAMLToJSON(w, strings.NewReader(in)) }},
