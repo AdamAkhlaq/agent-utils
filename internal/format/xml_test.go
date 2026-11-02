@@ -196,28 +196,25 @@ func TestXMLDepthLimit(t *testing.T) {
 	}
 }
 
-// TestXMLDepthLimitEncodes checks maxXMLDepth against encoding/json's own
-// nesting limit with the deepest JSON an element tree can produce: every
-// level a repeated sibling (so an object inside an array), down to an
-// element with attributes (an object, not a string).
+// TestXMLDepthLimitEncodes checks maxXMLDepth against the 10,000 levels of
+// nesting encoding/json accepts (enforced when encoding from Go 1.27), with
+// the deepest JSON an element tree can produce: every level a repeated
+// sibling (so an object inside an array), down to an element with
+// attributes (an object, not a string). The limit must reach exactly
+// 10,000 levels: no further, or encoding fails, and no less, or the limit
+// is lower than it needs to be.
 func TestXMLDepthLimitEncodes(t *testing.T) {
-	worstCase := func(depth int) []byte {
-		return []byte(strings.Repeat("<a><a/>", depth-1) + `<a id="1"/>` + strings.Repeat("</a>", depth-1))
-	}
-	doc, err := xmlDocument(worstCase(maxXMLDepth), maxXMLDepth)
+	worstCase := strings.Repeat("<a><a/>", maxXMLDepth-1) + `<a id="1"/>` + strings.Repeat("</a>", maxXMLDepth-1)
+	doc, err := xmlDocument([]byte(worstCase), maxXMLDepth)
 	if err != nil {
 		t.Fatalf("xmlDocument() at the depth limit error = %v", err)
 	}
-	if _, err := json.Marshal(doc); err != nil {
+	out, err := json.Marshal(doc)
+	if err != nil {
 		t.Fatalf("json.Marshal() of a tree at the depth limit error = %v", err)
 	}
-	// One level more would not encode, so the limit is as high as it can be.
-	doc, err = xmlDocument(worstCase(maxXMLDepth+1), maxXMLDepth+1)
-	if err != nil {
-		t.Fatalf("xmlDocument() one level past the depth limit error = %v", err)
-	}
-	if _, err := json.Marshal(doc); err == nil {
-		t.Fatal("json.Marshal() of a tree one level past the depth limit succeeded; maxXMLDepth can be raised")
+	if _, nesting := indentedSize(out, 0); nesting != 10_000 {
+		t.Errorf("the deepest tree within the depth limit nests %d levels of JSON, want 10000", nesting)
 	}
 }
 

@@ -31,7 +31,8 @@ func XMLToJSON(w io.Writer, r io.Reader) error {
 }
 
 // maxXMLDepth caps element nesting so that every tree within it encodes:
-// encoding/json refuses nesting past 10,000 levels, and in the worst case
+// encoding/json refuses nesting past 10,000 levels (from Go 1.27), and the
+// limit keeps output within that whatever the toolchain. In the worst case
 // each element level costs two JSON levels (an object inside the array its
 // repeated siblings collapse into), plus the object the root's name adds and
 // the object of an innermost element with attributes.
