@@ -1,6 +1,6 @@
 module github.com/adamakhlaq/agent-utils/v2
 
-go 1.26.0
+go 1.26.10
 
 require (
 	github.com/goccy/go-yaml v1.19.2
