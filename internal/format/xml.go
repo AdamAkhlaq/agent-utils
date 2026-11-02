@@ -23,11 +23,29 @@ func XMLToJSON(w io.Writer, r io.Reader) error {
 	if err != nil {
 		return err
 	}
+	doc, err := xmlDocument(data, maxXMLDepth)
+	if err != nil {
+		return err
+	}
+	return writeJSON(w, doc, len(data))
+}
+
+// maxXMLDepth caps element nesting so that every tree within it encodes:
+// encoding/json refuses nesting past 10,000 levels (from Go 1.27), and the
+// limit keeps output within that whatever the toolchain. In the worst case
+// each element level costs two JSON levels (an object inside the array its
+// repeated siblings collapse into), plus the object the root's name adds and
+// the object of an innermost element with attributes.
+const maxXMLDepth = 5_000
+
+// xmlDocument parses data into the JSON value XMLToJSON writes, failing on
+// elements nested deeper than maxDepth.
+func xmlDocument(data []byte, maxDepth int) (any, error) {
 	if len(bytes.TrimSpace(data)) == 0 {
-		return fmt.Errorf("empty input")
+		return nil, fmt.Errorf("empty input")
 	}
 	dec := xml.NewDecoder(bytes.NewReader(data))
-	var ns nsStack
+	d := xmlDecoder{dec: dec, maxDepth: maxDepth}
 	var rootKey string
 	var rootVal any
 	seenRoot := false
@@ -37,7 +55,7 @@ func XMLToJSON(w io.Writer, r io.Reader) error {
 			break
 		}
 		if err != nil {
-			return fmt.Errorf("invalid XML: %w", err)
+			return nil, fmt.Errorf("invalid XML: %w", err)
 		}
 		switch t := tok.(type) {
 		case xml.StartElement:
@@ -45,52 +63,63 @@ func XMLToJSON(w io.Writer, r io.Reader) error {
 			// (verified empirically), so a single root is enforced here.
 			if seenRoot {
 				line, _ := dec.InputPos()
-				return fmt.Errorf("invalid XML: second root element <%s> at line %d; an XML document has exactly one root", ns.name(t.Name), line)
+				return nil, fmt.Errorf("invalid XML: second root element <%s> at line %d; an XML document has exactly one root", d.ns.name(t.Name), line)
 			}
 			seenRoot = true
-			rootKey, rootVal, err = decodeElement(dec, t, &ns)
+			rootKey, rootVal, err = d.element(t, 1)
 			if err != nil {
-				return err
+				return nil, err
 			}
 		case xml.CharData:
 			// Same story: text outside the root comes through as a plain
 			// token, not a decoder error.
 			if len(bytes.TrimSpace(t)) > 0 {
 				line, _ := dec.InputPos()
-				return fmt.Errorf("invalid XML: text outside the root element at line %d", line)
+				return nil, fmt.Errorf("invalid XML: text outside the root element at line %d", line)
 			}
 		}
 	}
 	if !seenRoot {
-		return fmt.Errorf("invalid XML: no root element found")
+		return nil, fmt.Errorf("invalid XML: no root element found")
 	}
-	return writeJSON(w, map[string]any{rootKey: rootVal}, len(data))
+	return map[string]any{rootKey: rootVal}, nil
 }
 
-// decodeElement consumes tokens from start through its matching end tag and
-// returns the element's key and JSON value.
-func decodeElement(dec *xml.Decoder, start xml.StartElement, ns *nsStack) (string, any, error) {
-	ns.push(start.Attr)
-	defer ns.pop()
+type xmlDecoder struct {
+	dec      *xml.Decoder
+	ns       nsStack
+	maxDepth int
+}
+
+// element consumes tokens from start, the element at the given depth (the
+// root is 1), through its matching end tag and returns the element's key and
+// JSON value.
+func (d *xmlDecoder) element(start xml.StartElement, depth int) (string, any, error) {
+	if depth > d.maxDepth {
+		line, _ := d.dec.InputPos()
+		return "", nil, fmt.Errorf("invalid XML: nesting exceeds the depth limit of %d levels at line %d", d.maxDepth, line)
+	}
+	d.ns.push(start.Attr)
+	defer d.ns.pop()
 	obj := make(map[string]any)
 	for _, a := range start.Attr {
-		obj["@"+ns.name(a.Name)] = a.Value
+		obj["@"+d.ns.name(a.Name)] = a.Value
 	}
 	var text strings.Builder
 	for {
-		tok, err := dec.Token()
+		tok, err := d.dec.Token()
 		if err != nil {
 			return "", nil, fmt.Errorf("invalid XML: %w", err)
 		}
 		switch t := tok.(type) {
 		case xml.StartElement:
-			key, val, err := decodeElement(dec, t, ns)
+			key, val, err := d.element(t, depth+1)
 			if err != nil {
 				return "", nil, err
 			}
 			addChild(obj, key, val)
 		case xml.EndElement:
-			name := ns.name(start.Name)
+			name := d.ns.name(start.Name)
 			content := strings.TrimSpace(text.String())
 			if len(obj) == 0 {
 				return name, content, nil

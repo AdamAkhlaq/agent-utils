@@ -2,6 +2,8 @@ package format
 
 import (
 	"bytes"
+	"encoding/json"
+	"fmt"
 	"strings"
 	"testing"
 )
@@ -156,4 +158,112 @@ func TestXMLToJSONOutputIsValidJSON(t *testing.T) {
 	if err := JSONValid(&out); err != nil {
 		t.Errorf("XMLToJSON() output is not valid JSON: %v", err)
 	}
+}
+
+func TestXMLDepthLimit(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   string
+		want    string
+		wantErr string
+	}{
+		{name: "at the limit", input: "<a><b><c>x</c></b></a>", want: `{"a":{"b":{"c":"x"}}}`},
+		{name: "attributes at the limit", input: `<a><b><c id="1"/></b></a>`, want: `{"a":{"b":{"c":{"@id":"1"}}}}`},
+		{name: "past the limit", input: "<a><b><c><d/></c></b></a>", wantErr: "invalid XML: nesting exceeds the depth limit of 3 levels at line 1"},
+		{name: "past the limit in a later sibling", input: "<a>\n<b><c/></b>\n<b><c><d/></c></b>\n</a>", wantErr: "depth limit of 3 levels at line 3"},
+		{name: "unclosed past the limit", input: "<a><a><a><a>", wantErr: "depth limit of 3 levels"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			doc, err := xmlDocument([]byte(tt.input), 3)
+			if tt.wantErr != "" {
+				if err == nil || !strings.Contains(err.Error(), tt.wantErr) {
+					t.Fatalf("xmlDocument() error = %v, want it to contain %q", err, tt.wantErr)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("xmlDocument() error = %v", err)
+			}
+			got, err := json.Marshal(doc)
+			if err != nil {
+				t.Fatalf("json.Marshal() error = %v", err)
+			}
+			if string(got) != tt.want {
+				t.Errorf("xmlDocument() = %s, want %s", got, tt.want)
+			}
+		})
+	}
+}
+
+// TestXMLDepthLimitEncodes checks maxXMLDepth against the 10,000 levels of
+// nesting encoding/json accepts (enforced when encoding from Go 1.27), with
+// the deepest JSON an element tree can produce: every level a repeated
+// sibling (so an object inside an array), down to an element with
+// attributes (an object, not a string). The limit must reach exactly
+// 10,000 levels: no further, or encoding fails, and no less, or the limit
+// is lower than it needs to be.
+func TestXMLDepthLimitEncodes(t *testing.T) {
+	worstCase := strings.Repeat("<a><a/>", maxXMLDepth-1) + `<a id="1"/>` + strings.Repeat("</a>", maxXMLDepth-1)
+	doc, err := xmlDocument([]byte(worstCase), maxXMLDepth)
+	if err != nil {
+		t.Fatalf("xmlDocument() at the depth limit error = %v", err)
+	}
+	out, err := json.Marshal(doc)
+	if err != nil {
+		t.Fatalf("json.Marshal() of a tree at the depth limit error = %v", err)
+	}
+	if _, nesting := indentedSize(out, 0); nesting != 10_000 {
+		t.Errorf("the deepest tree within the depth limit nests %d levels of JSON, want 10000", nesting)
+	}
+}
+
+func TestXMLToJSONDepthLimit(t *testing.T) {
+	tests := map[string]string{
+		"one level past the limit":         strings.Repeat("<a>", maxXMLDepth+1) + strings.Repeat("</a>", maxXMLDepth+1),
+		"repeated siblings past the limit": strings.Repeat("<a><a/>", maxXMLDepth) + strings.Repeat("</a>", maxXMLDepth),
+		"a million levels":                 strings.Repeat("<a>", 1_000_000) + strings.Repeat("</a>", 1_000_000),
+		"a million unclosed levels":        strings.Repeat("<a>", 1_000_000),
+	}
+	for name, input := range tests {
+		t.Run(name, func(t *testing.T) {
+			var out bytes.Buffer
+			err := XMLToJSON(&out, strings.NewReader(input))
+			want := fmt.Sprintf("invalid XML: nesting exceeds the depth limit of %d levels at line 1", maxXMLDepth)
+			if err == nil || err.Error() != want {
+				t.Fatalf("XMLToJSON() error = %v, want %q", err, want)
+			}
+			if out.Len() != 0 {
+				t.Errorf("XMLToJSON() wrote %d bytes before failing", out.Len())
+			}
+		})
+	}
+}
+
+// FuzzXMLToJSON checks that XMLToJSON never panics and writes valid JSON or
+// nothing at all.
+func FuzzXMLToJSON(f *testing.F) {
+	seeds := []string{
+		"<name>Ada</name>",
+		`<user id="7" role="admin">Ada<b/></user>`,
+		"<list><item>a</item><item>b</item><item>c</item></list>",
+		`<r xmlns="u" xmlns:x="v"><x:a x:k="1"/><b xmlns:x="w"><x:c/></b></r>`,
+		"<?xml version=\"1.0\"?><!DOCTYPE a><!-- c --><a><![CDATA[<x>]]>&amp;&#65;</a>",
+		"<a><b>1</a>",
+		"<a>1</a><b>2</b>",
+		strings.Repeat("<a>", 20) + strings.Repeat("</a>", 20),
+	}
+	for _, s := range seeds {
+		f.Add(s)
+	}
+	f.Fuzz(func(t *testing.T, input string) {
+		var out bytes.Buffer
+		err := XMLToJSON(&out, strings.NewReader(input))
+		if err != nil && out.Len() != 0 {
+			t.Fatalf("XMLToJSON() wrote %d bytes before failing: %v", out.Len(), err)
+		}
+		if err == nil && !json.Valid(out.Bytes()) {
+			t.Fatalf("XMLToJSON() output is not valid JSON: %q", out.String())
+		}
+	})
 }
