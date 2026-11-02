@@ -67,7 +67,7 @@ func TestTOMLToJSON(t *testing.T) {
 		{name: "whitespace only", input: "  \n\n", wantErr: "empty input"},
 		{name: "invalid toml with position", input: "a = 1\nb = ?", wantErr: "invalid TOML at line 2, column 5"},
 		{name: "duplicate key", input: "a = 1\na = 2", wantErr: "already defined"},
-		{name: "integer overflow rejected at parse", input: "n = 92233720368547758080", wantErr: "too large"},
+		{name: "integer overflow rejected at parse", input: "n = 92233720368547758080", wantErr: "integer 92233720368547758080 does not fit in a 64-bit signed integer"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

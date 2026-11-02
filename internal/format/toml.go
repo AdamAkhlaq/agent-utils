@@ -3,23 +3,22 @@ package format
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"maps"
 	"regexp"
 	"slices"
 	"strings"
-	"time"
 
 	"github.com/pelletier/go-toml/v2"
 )
 
 // TOMLToJSON converts the TOML document in r to pretty-printed JSON in w.
-// Object keys are emitted in sorted order (TOML decodes into Go maps, which
-// have no order, so sorting is what makes the output deterministic). TOML
-// datetimes become strings: offset date-times in RFC 3339, local date-times,
-// dates, and times as their TOML literal text.
+// Object keys are emitted in sorted order (TOML tables have no order worth
+// keeping, so sorting is what makes the output deterministic). TOML
+// datetimes become strings: offset date-times in RFC 3339, local
+// date-times, dates, and times as their TOML literal text. Nesting deeper
+// than maxTOMLDepth levels is an error.
 func TOMLToJSON(w io.Writer, r io.Reader) error {
 	data, err := ReadText(r)
 	if err != nil {
@@ -28,42 +27,11 @@ func TOMLToJSON(w io.Writer, r io.Reader) error {
 	if len(bytes.TrimSpace(data)) == 0 {
 		return fmt.Errorf("empty input")
 	}
-	var doc map[string]any
-	if err := toml.Unmarshal(data, &doc); err != nil {
-		var derr *toml.DecodeError
-		if errors.As(err, &derr) {
-			row, col := derr.Position()
-			return fmt.Errorf("invalid TOML at line %d, column %d: %w", row, col, err)
-		}
-		return fmt.Errorf("invalid TOML: %w", err)
+	doc, err := tomlDocument(data, maxTOMLDepth)
+	if err != nil {
+		return err
 	}
-	return writeJSON(w, jsonValue(doc), len(data))
-}
-
-// jsonValue rewrites go-toml's datetime types into their deterministic string
-// forms so encoding/json never sees them (it would render the local types as
-// structs).
-func jsonValue(v any) any {
-	switch v := v.(type) {
-	case map[string]any:
-		out := make(map[string]any, len(v))
-		for k, e := range v {
-			out[k] = jsonValue(e)
-		}
-		return out
-	case []any:
-		out := make([]any, len(v))
-		for i, e := range v {
-			out[i] = jsonValue(e)
-		}
-		return out
-	case time.Time:
-		return v.Format(time.RFC3339Nano)
-	case toml.LocalDateTime, toml.LocalDate, toml.LocalTime:
-		return fmt.Sprint(v)
-	default:
-		return v
-	}
+	return writeJSON(w, doc, len(data))
 }
 
 // JSONToTOML converts the JSON document in r to TOML in w, the inverse of
