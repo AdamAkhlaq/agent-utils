@@ -13,7 +13,7 @@ Working with an AI coding agent? [CLAUDE.md](CLAUDE.md) holds the rules it shoul
 
 ## Development setup
 
-You need Go 1.26 or newer.
+You need Go 1.26.10 or newer; an older Go (1.21 or later) downloads it automatically when you build.
 
 ```sh
 git clone https://github.com/AdamAkhlaq/agent-utils.git

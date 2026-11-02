@@ -69,7 +69,7 @@ On macOS, a binary downloaded through a browser is quarantined by Gatekeeper bec
 
 ### `go install`
 
-Requires Go 1.26 or newer.
+Requires Go 1.26.10 or newer, the first release with fixes for every standard-library vulnerability known to affect agent-utils. With an older Go (1.21 or later), `go install` downloads Go 1.26.10 and builds with it.
 
 ```sh
 go install github.com/adamakhlaq/agent-utils/v2@latest
