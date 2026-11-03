@@ -54,6 +54,16 @@ func TestExitCodes(t *testing.T) {
 	deepJSON := strings.Repeat("[", 9999) + strings.Repeat("]", 9999)
 	// 60 KB of objects nested 10,000 deep, which would be 100 MB of YAML or TOML.
 	deepObjects := strings.Repeat(`{"a":`, 10_000) + "1" + strings.Repeat("}", 10_000)
+	// 300 KB of CSV, 100 header names of 1,000 bytes over 2,000 rows of empty
+	// cells, which would be 203 MB of JSON.
+	var wideCSV strings.Builder
+	for i := range 100 {
+		if i > 0 {
+			wideCSV.WriteByte(',')
+		}
+		fmt.Fprintf(&wideCSV, "%01000d", i)
+	}
+	wideCSV.WriteString(strings.Repeat("\n"+strings.Repeat(",", 99), 2000))
 	// The billion laughs: 9 levels of 9 aliases, a 414-byte alias bomb.
 	var laughs strings.Builder
 	laughs.WriteString("a0: &a0 [lol,lol,lol,lol,lol,lol,lol,lol,lol]\n")
@@ -158,6 +168,7 @@ func TestExitCodes(t *testing.T) {
 		{name: "toml2json skips a leading byte order mark", args: []string{"toml2json"}, stdin: "\xef\xbb\xbfa = 1", want: 0},
 		{name: "byte order mark alone is empty input", args: []string{"csv2json"}, stdin: "\xef\xbb\xbf", want: 1},
 		{name: "csv2json bare carriage return is bad data", args: []string{"csv2json"}, stdin: "a\r1\r", want: 1},
+		{name: "csv2json output over the size limit", args: []string{"csv2json"}, stdin: wideCSV.String(), want: 1},
 		{name: "csv2json quote separator is a usage error", args: []string{"csv2json", "-sep", `"`}, stdin: "a\n", want: 2},
 		{name: "json2csv line feed separator is a usage error", args: []string{"json2csv", "-sep", "\n"}, stdin: `[{"a":1}]`, want: 2},
 		{name: "hash verify match", args: []string{"hash", "-c", "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"}, stdin: "abc", want: 0},

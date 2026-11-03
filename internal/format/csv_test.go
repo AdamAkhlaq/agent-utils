@@ -3,6 +3,8 @@ package format
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"reflect"
 	"strings"
 	"testing"
@@ -259,4 +261,120 @@ func TestCSVToJSONOutputIsValidJSON(t *testing.T) {
 	if err := JSONValid(&out); err != nil {
 		t.Errorf("CSVToJSON() output is not valid JSON: %v", err)
 	}
+}
+
+// wideCSV is a header of cols names, each length bytes long, and rows rows of
+// empty cells: one byte of input per cell, and a whole header name of output.
+func wideCSV(cols, length, rows int) string {
+	names := make([]string, cols)
+	for i := range names {
+		names[i] = fmt.Sprintf("%0*d", length, i)
+	}
+	return strings.Join(names, ",") + strings.Repeat("\n"+strings.Repeat(",", cols-1), rows)
+}
+
+// TestCSVToJSONOutputLimit checks the limit at its edge, and that nothing is
+// written past it.
+func TestCSVToJSONOutputLimit(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   string
+		wantErr string
+	}{
+		{name: "long header names", input: wideCSV(10, 100, 200), wantErr: "200 rows each repeat all 10 header names as JSON keys, 1020 bytes of them per row; split the rows across several files, each with the header row"},
+		{name: "many columns", input: wideCSV(1000, 100, 150), wantErr: "150 rows each repeat all 1000 header names as JSON keys, 102000 bytes of them per row"},
+		{name: "escaped header name", input: strings.Repeat("<", 100) + strings.Repeat("\n\"\"", 300), wantErr: "300 rows each repeat the header name as a JSON key, 602 bytes per row"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var want bytes.Buffer
+			if err := CSVToJSON(&want, strings.NewReader(tt.input), ','); err != nil {
+				t.Fatal(err)
+			}
+			if 64*len(tt.input) >= want.Len() {
+				t.Fatalf("output is %d bytes, not over 64 times the %d-byte input", want.Len(), len(tt.input))
+			}
+			var out bytes.Buffer
+			if err := csvToJSON(&out, strings.NewReader(tt.input), ',', want.Len()); err != nil || out.String() != want.String() {
+				t.Fatalf("at a floor of exactly the output size: error = %v, output equal %v", err, out.String() == want.String())
+			}
+			out.Reset()
+			err := csvToJSON(&out, strings.NewReader(tt.input), ',', want.Len()-1)
+			if !errors.Is(err, ErrOutputLimit) || !strings.Contains(err.Error(), fmt.Sprintf("JSON output would exceed %d bytes (the larger of %[1]d bytes and 64 times the input size): %s", want.Len()-1, tt.wantErr)) {
+				t.Fatalf("one byte below: error = %v, want the output limit", err)
+			}
+			if out.Len() != 0 {
+				t.Errorf("one byte below: wrote %d bytes before failing", out.Len())
+			}
+		})
+	}
+}
+
+// TestCSVToJSONDataErrorsFirst checks that a malformed record is reported
+// even when it comes after the output has passed its limit.
+func TestCSVToJSONDataErrorsFirst(t *testing.T) {
+	input := wideCSV(100, 1000, 2000) + "\n,,"
+	err := CSVToJSON(&bytes.Buffer{}, strings.NewReader(input), ',')
+	if err == nil || !strings.Contains(err.Error(), "invalid CSV at line 2002: record has 3 fields but the header row has 100") {
+		t.Fatalf("CSVToJSON() error = %v, want the malformed record", err)
+	}
+}
+
+func TestCSVToJSONWriteError(t *testing.T) {
+	err := CSVToJSON(failWriter{}, strings.NewReader("a,b\n1,2"), ',')
+	if err == nil || err.Error() != "writing output: disk full" {
+		t.Fatalf("CSVToJSON() error = %v, want the write error", err)
+	}
+}
+
+// FuzzCSVToJSON checks that a failed conversion writes nothing, that the
+// output is valid JSON holding exactly the records CSVReader reads, and that
+// the count measures exactly what is written: at a floor of the output size
+// the conversion passes, and one byte below it fails without writing.
+func FuzzCSVToJSON(f *testing.F) {
+	for _, s := range []string{"a,b\n1,2\n", "a,b\r\n\"x\r\ny\",<&>\n", "a\n\"say \"\"hi\"\"\"\n", "a,a\n1,2", "a\n\"open\n", "a,b\n1\n",
+		"\ufeffa\n\u2028\n", "a\tb\n\x01\t\x7f\n", strings.Repeat("<", 100) + strings.Repeat("\n\"\"", 300)} {
+		f.Add(s, uint8(0))
+	}
+	f.Add(strings.Repeat("k", 300)+","+strings.Repeat("j", 300)+strings.Repeat("\n,", 50), uint8(0))
+	separators := []rune{',', '\t', ';', '\u00e9', '\u65e5', '\U0001f600'}
+	f.Fuzz(func(t *testing.T, input string, sepIndex uint8) {
+		sep := separators[int(sepIndex)%len(separators)]
+		var out bytes.Buffer
+		if err := CSVToJSON(&out, strings.NewReader(input), sep); err != nil {
+			if out.Len() != 0 {
+				t.Fatalf("CSVToJSON() wrote %d bytes before failing: %v", out.Len(), err)
+			}
+			return
+		}
+		records, err := readAllCSV(input, sep)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var rows []map[string]string
+		if err := json.Unmarshal(out.Bytes(), &rows); err != nil {
+			t.Fatalf("output is not a JSON array of objects: %v\n%s", err, out.String())
+		}
+		if len(rows) != len(records)-1 {
+			t.Fatalf("output has %d rows, input has %d", len(rows), len(records)-1)
+		}
+		for i, row := range rows {
+			for j, h := range records[0] {
+				if row[h] != records[i+1][j] {
+					t.Fatalf("row %d, column %q = %q, want %q", i, h, row[h], records[i+1][j])
+				}
+			}
+		}
+		var edge bytes.Buffer
+		if err := csvToJSON(&edge, strings.NewReader(input), sep, out.Len()); err != nil || edge.String() != out.String() {
+			t.Fatalf("at a floor of exactly the output size: error = %v, output equal %v", err, edge.String() == out.String())
+		}
+		if 64*len(strings.TrimPrefix(input, "\ufeff")) >= out.Len() {
+			return
+		}
+		edge.Reset()
+		if err := csvToJSON(&edge, strings.NewReader(input), sep, out.Len()-1); !errors.Is(err, ErrOutputLimit) || edge.Len() != 0 {
+			t.Fatalf("one byte below: error = %v, wrote %d bytes", err, edge.Len())
+		}
+	})
 }

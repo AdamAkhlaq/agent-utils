@@ -679,13 +679,13 @@ func displayValue(v any) string {
 	}
 }
 
-// count renders n with the noun, pluralized: "1 item", "2 items".
+// count renders n with the noun, pluralized: "1 item", "2 items", "2 properties", "2 keys".
 func count(n int, noun string) string {
 	if n == 1 {
 		return "1 " + noun
 	}
-	if strings.HasSuffix(noun, "y") {
-		noun = strings.TrimSuffix(noun, "y") + "ie"
+	if len(noun) > 1 && noun[len(noun)-1] == 'y' && !strings.ContainsRune("aeiou", rune(noun[len(noun)-2])) {
+		noun = noun[:len(noun)-1] + "ie"
 	}
 	return strconv.Itoa(n) + " " + noun + "s"
 }
