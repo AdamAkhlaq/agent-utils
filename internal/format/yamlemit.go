@@ -1,6 +1,7 @@
 package format
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -17,25 +18,45 @@ import (
 // plain only when no YAML 1.1 or 1.2 reader could take it for anything but
 // that string. Like every converter here it leaves the final line break to
 // the CLI, and a literal block that ends the document needs it to keep its
-// own final line break. Nothing is written to w unless the whole conversion
-// succeeds.
+// own final line break. Output is limited as IndentJSON limits it. Nothing
+// is written to w unless the whole conversion succeeds.
 func JSONToYAML(w io.Writer, r io.Reader) error {
-	data, err := readInput(r)
+	return jsonToYAML(w, r, outputFloor)
+}
+
+// jsonToYAML is JSONToYAML with the output limit's floor as a parameter, so
+// tests can reach its edge without writing 64 MiB.
+func jsonToYAML(w io.Writer, r io.Reader, floor int) error {
+	text, err := ReadText(r)
 	if err != nil {
 		return err
 	}
+	data := trimTrailingSpace(text)
 	if len(data) == 0 {
 		return fmt.Errorf("empty input")
 	}
 	if err := checkSyntax(data); err != nil {
 		return err
 	}
-	e := yamlEmitter{data: data, dec: json.NewDecoder(bytes.NewReader(data))}
-	e.dec.UseNumber()
-	if err := e.value(0, atRoot); err != nil {
+	// The document is emitted twice: first only counting the output, which
+	// finds every error and checks the size before anything is written, and
+	// then writing it, which cannot fail on the same input except in the
+	// write itself. Building the output in memory instead would cost up to
+	// three times the limit as the buffer grows. Counting a line's
+	// indentation takes constant time, so the count takes time in proportion
+	// to the input however large the output would be.
+	count := newYAMLEmitter(data, nil)
+	if err := count.value(0, atRoot); err != nil {
 		return err
 	}
-	if _, err := w.Write(e.buf.Bytes()); err != nil {
+	if limit := outputLimit(floor, len(text)); count.size > limit {
+		return count.limitError(floor, limit)
+	}
+	out := bufio.NewWriterSize(w, 64<<10)
+	if err := newYAMLEmitter(data, out).value(0, atRoot); err != nil {
+		return err
+	}
+	if err := out.Flush(); err != nil {
 		return fmt.Errorf("writing output: %w", err)
 	}
 	return nil
@@ -59,10 +80,32 @@ const maxImplicitKey = 1024
 type yamlEmitter struct {
 	data []byte
 	dec  *json.Decoder
-	buf  bytes.Buffer
+	// out receives the output, or is nil when the output is only counted.
+	out  *bufio.Writer
+	size int64 // bytes of output so far
 	// quoteNext is set for the value of a tagged or explicit key, where
 	// go-yaml cannot read a literal block.
 	quoteNext bool
+}
+
+func newYAMLEmitter(data []byte, out *bufio.Writer) *yamlEmitter {
+	e := &yamlEmitter{data: data, dec: json.NewDecoder(bytes.NewReader(data)), out: out}
+	e.dec.UseNumber()
+	return e
+}
+
+func (e *yamlEmitter) write(s string) {
+	e.size += int64(len(s))
+	if e.out != nil {
+		e.out.WriteString(s)
+	}
+}
+
+func (e *yamlEmitter) writeByte(c byte) {
+	e.size++
+	if e.out != nil {
+		e.out.WriteByte(c)
+	}
 }
 
 func (e *yamlEmitter) value(indent int, at yamlPlace) error {
@@ -133,12 +176,12 @@ func (e *yamlEmitter) entry(key string, indent int) error {
 	e.quoteNext = key == "<<"
 	if utf8.RuneCountInString(k) > maxImplicitKey {
 		e.quoteNext = true
-		e.buf.WriteString("? " + k)
+		e.write("? " + k)
 		e.newline(indent)
-		e.buf.WriteString(": ")
+		e.write(": ")
 		return e.value(indent, afterIndicator)
 	}
-	e.buf.WriteString(k + ":")
+	e.write(k + ":")
 	return e.value(indent, afterKey)
 }
 
@@ -156,7 +199,7 @@ func (e *yamlEmitter) sequence(indent int, at yamlPlace) error {
 		if !first || at == afterKey {
 			e.newline(indent)
 		}
-		e.buf.WriteString("- ")
+		e.write("- ")
 		if err := e.value(indent, afterIndicator); err != nil {
 			return err
 		}
@@ -229,9 +272,9 @@ func (e *yamlEmitter) closing() error {
 
 func (e *yamlEmitter) scalar(s string, at yamlPlace) {
 	if at == afterKey {
-		e.buf.WriteByte(' ')
+		e.writeByte(' ')
 	}
-	e.buf.WriteString(s)
+	e.write(s)
 }
 
 // string writes s as a literal block when it spans lines, reads back exactly
@@ -249,19 +292,33 @@ func (e *yamlEmitter) string(s string, indent int, at yamlPlace, quote bool) {
 	}
 	for _, line := range strings.Split(s, "\n") {
 		if line == "" {
-			e.buf.WriteByte('\n')
-		} else {
-			e.newline(indent + 2)
-			e.buf.WriteString(line)
+			e.writeByte('\n')
+			continue
 		}
+		e.newline(indent + 2)
+		e.write(line)
 	}
 }
 
+// spaces is written in pieces to indent a line.
+var spaces = strings.Repeat(" ", 256)
+
+// newline starts a line indented by indent spaces.
 func (e *yamlEmitter) newline(indent int) {
-	e.buf.WriteByte('\n')
-	for range indent {
-		e.buf.WriteByte(' ')
+	e.writeByte('\n')
+	if e.out == nil {
+		e.size += int64(indent)
+		return
 	}
+	for ; indent > len(spaces); indent -= len(spaces) {
+		e.write(spaces)
+	}
+	e.write(spaces[:indent])
+}
+
+func (e *yamlEmitter) limitError(floor int, limit int64) error {
+	_, nesting := indentedSize(e.data, 0)
+	return limitError("YAML output", floor, limit, fmt.Sprintf("the JSON nests %d levels deep, and YAML indents nested lines by up to 2 spaces per level", nesting))
 }
 
 // yamlNumber returns a JSON number as YAML. JSON's number syntax is a subset

@@ -2,8 +2,14 @@ package format
 
 import (
 	"bytes"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"math"
 	"strings"
 	"testing"
+
+	"github.com/pelletier/go-toml/v2"
 )
 
 func TestTOMLToJSON(t *testing.T) {
@@ -198,4 +204,141 @@ func TestTOMLToJSONOutputIsValidJSON(t *testing.T) {
 	if err := JSONValid(&out); err != nil {
 		t.Errorf("TOMLToJSON() output is not valid JSON: %v", err)
 	}
+}
+
+// TestJSONToTOMLOutputLimit checks the limit at its edge on output that grows
+// with depth in each way TOML headers do: nested tables and nested arrays of
+// tables. At a floor one byte below the output, the headers alone still fit,
+// so the size is caught after encoding.
+func TestJSONToTOMLOutputLimit(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   string
+		wantErr string
+	}{
+		{name: "nested tables", input: strings.Repeat(`{"a":`, 1000) + "1" + strings.Repeat("}", 1000),
+			wantErr: "the document has 999 tables, and each table's header spells out its full dotted key, up to 999 keys and 1999 bytes long"},
+		{name: "nested arrays of tables ending in a header", input: strings.Repeat(`{"a":[`, 1000) + "{}" + strings.Repeat("]}", 1000),
+			wantErr: "the document has 1000 tables, and each table's header spells out its full dotted key, up to 1000 keys and 2003 bytes long"},
+		{name: "quoted keys", input: strings.Repeat(`{"a b":`, 1000) + "1" + strings.Repeat("}", 1000),
+			wantErr: "the document has 999 tables, and each table's header spells out its full dotted key, up to 999 keys and 5995 bytes long"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var want bytes.Buffer
+			if err := JSONToTOML(&want, strings.NewReader(tt.input)); err != nil {
+				t.Fatal(err)
+			}
+			if 64*len(tt.input) >= want.Len() {
+				t.Fatalf("output is %d bytes, not over 64 times the %d-byte input", want.Len(), len(tt.input))
+			}
+			var out bytes.Buffer
+			if err := jsonToTOML(&out, strings.NewReader(tt.input), want.Len()); err != nil || out.String() != want.String() {
+				t.Fatalf("at a floor of exactly the output size: error = %v, output equal %v", err, out.String() == want.String())
+			}
+			for _, floor := range []int{want.Len() - 1, want.Len() / 2} {
+				out.Reset()
+				err := jsonToTOML(&out, strings.NewReader(tt.input), floor)
+				if !errors.Is(err, ErrOutputLimit) || !strings.Contains(err.Error(), fmt.Sprintf("(the larger of %d bytes and 64 times the input size): %s", floor, tt.wantErr)) {
+					t.Fatalf("floor %d: error = %v, want the output limit", floor, err)
+				}
+				if out.Len() != 0 {
+					t.Errorf("floor %d: wrote %d bytes before failing", floor, out.Len())
+				}
+			}
+		})
+	}
+}
+
+// TestTOMLHeaders checks the header count against go-toml's own output: it
+// must equal the bytes of the header lines, so a go-toml release that writes
+// headers differently fails here rather than loosening the limit.
+func TestTOMLHeaders(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+	}{
+		{name: "no tables", input: `{"a":1,"b":[1,2],"c":[]}`},
+		{name: "nested tables", input: `{"a":{"x":1,"b":{"c":1}},"d":{"e":{}}}`},
+		{name: "array of tables", input: `{"a":[{"b":{"c":1}},{"b":{"d":2}}]}`},
+		{name: "arrays of tables nested", input: `{"a":[{"b":[{"c":{"d":1}}]}]}`},
+		{name: "objects in mixed arrays are inline", input: `{"a":[1,{"b":{"c":1}}],"e":[[{"f":{}}]],"g":[{}]}`},
+		{name: "literal keys", input: `{"a b":{"é":{"x.y":{"":{"\"":{"\\":{}}}}}}}`},
+		{name: "escaped keys", input: `{"a'b":{"\u0001":{"\u007f\b\f\n\r\t":{"'\"\\é":{}}}}}`},
+		{name: "raw delete byte", input: "{\"\x7f\x7f\":{\"x\":{}}}"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dec := json.NewDecoder(strings.NewReader(tt.input))
+			dec.UseNumber()
+			var doc any
+			if err := dec.Decode(&doc); err != nil {
+				t.Fatal(err)
+			}
+			value, err := tomlValue(doc, nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var buf bytes.Buffer
+			if err := toml.NewEncoder(&buf).Encode(value); err != nil {
+				t.Fatal(err)
+			}
+			want := 0
+			for line := range strings.Lines(buf.String()) {
+				if strings.HasPrefix(line, "[") {
+					want += len(line)
+				}
+			}
+			h := tomlHeaders{limit: math.MaxInt64 - 1}
+			h.table(value.(map[string]any), 0, 0)
+			if h.size != int64(want) {
+				t.Errorf("counted %d bytes of headers, go-toml wrote %d:\n%s", h.size, want, buf.String())
+			}
+		})
+	}
+}
+
+// FuzzJSONToTOML checks that a failed conversion writes nothing, and that the
+// header count equals the bytes of the headers go-toml writes.
+func FuzzJSONToTOML(f *testing.F) {
+	for _, seed := range []string{
+		`{"a":{"b":{"c":1}},"d":[{"e":{}},{"f":[{"g":1}]}]}`,
+		`{"a b":{"é":{"x.y":{"":{}}}},"a'b":{"\u0001":{"\"":{}}}}`,
+		"{\"\x7f\":{\"\\\\\":{}}}",
+		`{"a":[1,{"b":{"c":1}}],"e":[[{"f":{}}]],"g":[{}],"h":[]}`,
+		`{"a":null}`,
+		`[1]`,
+	} {
+		f.Add(seed)
+	}
+	f.Fuzz(func(t *testing.T, input string) {
+		var out bytes.Buffer
+		if err := JSONToTOML(&out, strings.NewReader(input)); err != nil {
+			if out.Len() != 0 {
+				t.Fatalf("JSONToTOML() wrote %d bytes before failing: %v", out.Len(), err)
+			}
+			return
+		}
+		dec := json.NewDecoder(strings.NewReader(input))
+		dec.UseNumber()
+		var doc any
+		if err := dec.Decode(&doc); err != nil {
+			t.Fatal(err)
+		}
+		value, err := tomlValue(doc, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		written := 0
+		for line := range strings.Lines(out.String() + "\n") {
+			if strings.HasPrefix(line, "[") {
+				written += len(line)
+			}
+		}
+		h := tomlHeaders{limit: math.MaxInt64 - 1}
+		h.table(value.(map[string]any), 0, 0)
+		if h.size != int64(written) {
+			t.Fatalf("counted %d bytes of headers, go-toml wrote %d:\n%s", h.size, written, out.String())
+		}
+	})
 }

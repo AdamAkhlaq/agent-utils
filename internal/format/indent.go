@@ -11,17 +11,18 @@ import (
 
 // Pretty-printed JSON indents every line by its nesting depth, so its size
 // grows with depth times indent width for each byte of input: 20 KB of
-// brackets nested 9,999 deep is 200 MB at two spaces. Output may be the
-// larger of outputFloor and outputFactor times the input size, so no input
-// under 1 MiB can fail unless it is built to, and the size is checked before
-// any output is written.
+// brackets nested 9,999 deep is 200 MB at two spaces. YAML's indentation and
+// TOML's table headers grow the same way. Output may be the larger of
+// outputFloor and outputFactor times the input size, so no input under 1 MiB
+// can fail unless it is built to, and nothing is written when it would be
+// larger.
 const (
 	outputFloor  = 64 << 20
 	outputFactor = 64
 )
 
-// ErrOutputLimit is wrapped by every error that reports pretty-printed output
-// over its size limit.
+// ErrOutputLimit is wrapped by every error that reports output over its size
+// limit.
 var ErrOutputLimit = errors.New("output size limit")
 
 func outputLimit(floor, inputSize int) int64 {
@@ -33,8 +34,14 @@ func outputLimitError(floor int, limit int64, nesting, indentWidth int) error {
 	if indentWidth == 1 {
 		spaces = "space"
 	}
-	return fmt.Errorf("%w: pretty-printed output would exceed %s (the larger of %s and %d times the input size): the JSON nests %d levels deep, with %d %s of indentation per level",
-		ErrOutputLimit, byteCount(int(limit)), byteCount(floor), outputFactor, nesting, indentWidth, spaces)
+	return limitError("pretty-printed output", floor, limit, fmt.Sprintf("the JSON nests %d levels deep, with %d %s of indentation per level", nesting, indentWidth, spaces))
+}
+
+// limitError reports that output, described by what, would pass limit, and
+// why it grew that large.
+func limitError(what string, floor int, limit int64, why string) error {
+	return fmt.Errorf("%w: %s would exceed %s (the larger of %s and %d times the input size): %s",
+		ErrOutputLimit, what, byteCount(int(limit)), byteCount(floor), outputFactor, why)
 }
 
 // IndentJSON writes the valid JSON document doc to w, indented by indent per

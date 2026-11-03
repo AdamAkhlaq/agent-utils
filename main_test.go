@@ -52,6 +52,8 @@ func TestExitCodes(t *testing.T) {
 	}
 	// 20 KB nested 9,999 deep, which would pretty-print to 200 MB.
 	deepJSON := strings.Repeat("[", 9999) + strings.Repeat("]", 9999)
+	// 60 KB of objects nested 10,000 deep, which would be 100 MB of YAML or TOML.
+	deepObjects := strings.Repeat(`{"a":`, 10_000) + "1" + strings.Repeat("}", 10_000)
 	// The billion laughs: 9 levels of 9 aliases, a 414-byte alias bomb.
 	var laughs strings.Builder
 	laughs.WriteString("a0: &a0 [lol,lol,lol,lol,lol,lol,lol,lol,lol]\n")
@@ -175,6 +177,8 @@ func TestExitCodes(t *testing.T) {
 		{name: "json2yaml duplicate key is bad data", args: []string{"json2yaml"}, stdin: `{"a":1,"a":2}`, want: 1},
 		{name: "json2yaml lone surrogate is bad data", args: []string{"json2yaml"}, stdin: `{"a":"\ud800"}`, want: 1},
 		{name: "json2yaml unknown flag is a usage error", args: []string{"json2yaml", "-x"}, stdin: `{}`, want: 2},
+		{name: "json2yaml output over the size limit", args: []string{"json2yaml"}, stdin: deepObjects, want: 1},
+		{name: "json2toml output over the size limit", args: []string{"json2toml"}, stdin: deepObjects, want: 1},
 		{name: "yaml2json tag on an alias is bad data", args: []string{"yaml2json"}, stdin: "a: &x 5\nb: !!str *x", want: 1},
 		{name: "json-schema valid", args: []string{"json-schema", schema}, stdin: `{"id": 1}`, want: 0},
 		{name: "json-schema invalid", args: []string{"json-schema", schema}, stdin: `{}`, want: 3},
