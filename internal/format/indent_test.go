@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"io"
+	"math"
 	"strings"
 	"testing"
 )
@@ -110,15 +112,18 @@ type failWriter struct{}
 
 func (failWriter) Write([]byte) (int, error) { return 0, errors.New("disk full") }
 
-// TestPrettyOutputLimit runs the issue's inputs through every pretty-printer:
-// 20 KB nested 9,999 deep would be 200 MB of output, so each fails at once
-// and writes nothing.
-func TestPrettyOutputLimit(t *testing.T) {
+// TestOutputLimit runs short, deeply nested inputs through every command
+// whose output grows with nesting depth: 20 KB nested 9,999 deep would be
+// 200 MB of pretty-printed JSON, and 60 KB of objects nested 10,000 deep would
+// be 100 MB of YAML or TOML, so each fails at once and writes nothing.
+func TestOutputLimit(t *testing.T) {
 	brackets := string(deepJSON(9999))
+	objects := strings.Repeat(`{"a":`, 10_000) + "1" + strings.Repeat("}", 10_000)
 	tests := []struct {
 		name    string
 		convert func(w *bytes.Buffer, input string) error
 		input   string
+		output  string // what the error calls the output, if not pretty-printed output
 		wantErr string
 	}{
 		{name: "json-fmt", input: brackets, wantErr: "nests 9999 levels deep, with 2 spaces of indentation per level; use -c for compact output",
@@ -133,6 +138,16 @@ func TestPrettyOutputLimit(t *testing.T) {
 			convert: func(w *bytes.Buffer, in string) error { return YAMLToJSON(w, strings.NewReader(in)) }},
 		{name: "yaml2json flow mappings", input: strings.Repeat("{a: ", 9999) + "1" + strings.Repeat("}", 9999), wantErr: "nests 9999 levels deep",
 			convert: func(w *bytes.Buffer, in string) error { return YAMLToJSON(w, strings.NewReader(in)) }},
+		{name: "json2yaml", input: objects, output: "YAML output", wantErr: "the JSON nests 10000 levels deep, and YAML indents nested lines by up to 2 spaces per level",
+			convert: func(w *bytes.Buffer, in string) error { return JSONToYAML(w, strings.NewReader(in)) }},
+		{name: "json2toml", input: objects, output: "TOML output", wantErr: "the document has 9999 tables, and each table's header spells out its full dotted key, up to 9999 keys and 19999 bytes long",
+			convert: func(w *bytes.Buffer, in string) error { return JSONToTOML(w, strings.NewReader(in)) }},
+		{name: "json2toml arrays of tables", input: strings.Repeat(`{"abcdefgh":[`, 4999) + "{}" + strings.Repeat("]}", 4999), output: "TOML output", wantErr: "the document has 4999 tables",
+			convert: func(w *bytes.Buffer, in string) error { return JSONToTOML(w, strings.NewReader(in)) }},
+		{name: "json2toml keys escaped six bytes per byte", input: strings.Repeat(`{"`+strings.Repeat("\x7f", 64)+`":`, 1400) + "1" + strings.Repeat("}", 1400), output: "TOML output", wantErr: "up to 1399 keys and 541414 bytes long",
+			convert: func(w *bytes.Buffer, in string) error { return JSONToTOML(w, strings.NewReader(in)) }},
+		{name: "json2toml one long key repeated", input: `{"` + strings.Repeat("k", 5000) + `":[` + strings.Repeat("{},", 13999) + "{}]}", output: "TOML output", wantErr: "the document has 14000 tables, and each table's header spells out its full dotted key, up to 1 key and 5004 bytes long",
+			convert: func(w *bytes.Buffer, in string) error { return JSONToTOML(w, strings.NewReader(in)) }},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -141,7 +156,11 @@ func TestPrettyOutputLimit(t *testing.T) {
 			if err == nil || !strings.Contains(err.Error(), tt.wantErr) {
 				t.Fatalf("error = %v, want it to contain %q", err, tt.wantErr)
 			}
-			if !strings.Contains(err.Error(), "pretty-printed output would exceed 64 MiB (the larger of 64 MiB and 64 times the input size)") {
+			output := tt.output
+			if output == "" {
+				output = "pretty-printed output"
+			}
+			if !strings.Contains(err.Error(), output+" would exceed 64 MiB (the larger of 64 MiB and 64 times the input size)") {
 				t.Errorf("error = %v, want it to name the limit", err)
 			}
 			if out.Len() != 0 {
@@ -187,4 +206,26 @@ func FuzzIndentedSize(f *testing.F) {
 			}
 		}
 	})
+}
+
+// TestOutputLimitCountsTrailingSpace checks that the limit is 64 times the
+// whole input, trailing whitespace included, as json-fmt counts it.
+func TestOutputLimitCountsTrailingSpace(t *testing.T) {
+	doc := strings.Repeat(`{"a":`, 1000) + "1" + strings.Repeat("}", 1000)
+	for name, convert := range map[string]func(io.Writer, io.Reader, int) error{"json2yaml": jsonToYAML, "json2toml": jsonToTOML} {
+		var want bytes.Buffer
+		if err := convert(&want, strings.NewReader(doc), math.MaxInt32); err != nil {
+			t.Fatal(err)
+		}
+		if 64*len(doc) >= want.Len() {
+			t.Fatalf("%s: output is %d bytes, not over 64 times the %d-byte document", name, want.Len(), len(doc))
+		}
+		padded := doc + strings.Repeat(" ", (want.Len()+63)/64-len(doc))
+		if err := convert(&bytes.Buffer{}, strings.NewReader(padded), 1); err != nil {
+			t.Errorf("%s with trailing spaces: error = %v, want the output to fit", name, err)
+		}
+		if err := convert(&bytes.Buffer{}, strings.NewReader(padded[:len(padded)-1]), 1); !errors.Is(err, ErrOutputLimit) {
+			t.Errorf("%s with one space fewer: error = %v, want the output limit", name, err)
+		}
+	}
 }

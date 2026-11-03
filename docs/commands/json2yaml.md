@@ -20,6 +20,8 @@ The inverse of [`yaml2json`](yaml2json.md). The output is block-style YAML that 
 
 **Errors.** Invalid JSON is reported with its line and column, and so are a duplicate key in one object (YAML does not allow one), invalid UTF-8, and a `\uXXXX` escape of an unpaired UTF-16 surrogate (such as `\ud800`), which has no UTF-8 form. Input that starts with a UTF-16 or UTF-32 byte order mark is reported as that encoding.
 
+**Output size.** Output is limited to 64 MiB or 64 times the input size, whichever is larger, because YAML indents nested lines by their depth: 60 KB of objects nested 10,000 levels deep would print 100 MB. The output is measured before any of it is written, so input like that fails at once with an error that names the limit, and nothing goes to `stdout`.
+
 **Reading it back with `yaml2json`.** `yaml2json` reads integers past the 64-bit range and floats past the 64-bit range as strings, and floats only to 64-bit precision, so a round trip keeps every value within those ranges.
 
 ## Examples

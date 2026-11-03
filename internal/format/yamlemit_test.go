@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math"
 	"math/big"
 	"strconv"
@@ -216,6 +217,10 @@ func FuzzJSONToYAML(f *testing.F) {
 			}
 			return
 		}
+		count := newYAMLEmitter(trimTrailingSpace([]byte(input)), nil)
+		if err := count.value(0, atRoot); err != nil || count.size != int64(out.Len()) {
+			t.Fatalf("counted %d bytes (error %v), wrote %d", count.size, err, out.Len())
+		}
 		checkReadsBack(t, input)
 	})
 }
@@ -339,4 +344,62 @@ func beyondYAMLToJSON(n string) bool {
 	}
 	f, _ := strconv.ParseFloat(n, 64)
 	return math.IsInf(f, 0)
+}
+
+// TestJSONToYAMLOutputLimit checks the limit at its edge on output that
+// grows with depth in each way YAML indents it: nested mappings, items after
+// the first in nested sequences, and the lines of a literal block.
+func TestJSONToYAMLOutputLimit(t *testing.T) {
+	lines := `"` + strings.Repeat(`a\n`, 1000) + `"`
+	tests := []struct {
+		name  string
+		input string
+	}{
+		{name: "nested mappings", input: strings.Repeat(`{"a":`, 1000) + "1" + strings.Repeat("}", 1000)},
+		{name: "nested sequences", input: strings.Repeat("[", 1000) + "1" + strings.Repeat(",2]", 1000)},
+		{name: "literal block", input: strings.Repeat(`{"a":`, 200) + lines + strings.Repeat("}", 200)},
+		{name: "explicit key", input: strings.Repeat(`{"a":`, 1000) + `{"` + strings.Repeat("k", maxImplicitKey+1) + `":[1,2]}` + strings.Repeat("}", 1000)},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var want bytes.Buffer
+			if err := JSONToYAML(&want, strings.NewReader(tt.input)); err != nil {
+				t.Fatal(err)
+			}
+			if 64*len(tt.input) >= want.Len() {
+				t.Fatalf("output is %d bytes, not over 64 times the %d-byte input", want.Len(), len(tt.input))
+			}
+			var out bytes.Buffer
+			if err := jsonToYAML(&out, strings.NewReader(tt.input), want.Len()); err != nil || out.String() != want.String() {
+				t.Fatalf("at a floor of exactly the output size: error = %v, output equal %v", err, out.String() == want.String())
+			}
+			out.Reset()
+			err := jsonToYAML(&out, strings.NewReader(tt.input), want.Len()-1)
+			if !errors.Is(err, ErrOutputLimit) || !strings.Contains(err.Error(), fmt.Sprintf("YAML output would exceed %d bytes (the larger of %[1]d bytes and 64 times the input size)", want.Len()-1)) {
+				t.Fatalf("one byte below: error = %v, want the output limit", err)
+			}
+			if out.Len() != 0 {
+				t.Errorf("one byte below: wrote %d bytes before failing", out.Len())
+			}
+		})
+	}
+}
+
+// TestJSONToYAMLDataErrorsFirst checks that bad data is reported even when
+// it comes after the output has passed its limit, as json2toml does.
+func TestJSONToYAMLDataErrorsFirst(t *testing.T) {
+	for _, inner := range []string{`{"b":1,"b":2}`, `"\ud800"`} {
+		input := strings.Repeat(`{"a":`, 9998) + inner + strings.Repeat("}", 9998)
+		err := JSONToYAML(&bytes.Buffer{}, strings.NewReader(input))
+		if err == nil || errors.Is(err, ErrOutputLimit) {
+			t.Errorf("JSONToYAML(%s nested 9,998 deep) error = %v, want the data error", inner, err)
+		}
+	}
+}
+
+func TestJSONToYAMLWriteError(t *testing.T) {
+	err := JSONToYAML(failWriter{}, strings.NewReader(`{"a":[1,2]}`))
+	if err == nil || err.Error() != "writing output: disk full" {
+		t.Fatalf("JSONToYAML() error = %v, want the write error", err)
+	}
 }
