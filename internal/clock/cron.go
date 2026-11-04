@@ -1,7 +1,6 @@
 package clock
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
@@ -12,6 +11,8 @@ import (
 	"strings"
 	"time"
 	"unicode"
+
+	"github.com/adamakhlaq/agent-utils/v2/internal/jsonout"
 )
 
 // Cron expressions follow Vixie cron and cronie: five fields, lists, ranges,
@@ -505,11 +506,11 @@ func CronJSON(expr string, from time.Time, loc *time.Location, n int) (string, e
 	if s.domStar || s.dowStar {
 		repr.DayMatch = "both"
 	}
-	out, err := json.MarshalIndent(repr, "", "  ")
+	out, err := jsonout.Marshal(repr)
 	if err != nil {
 		return "", fmt.Errorf("encoding schedule: %w", err)
 	}
-	return string(out), nil
+	return out, nil
 }
 
 func cronRuns(expr string, from time.Time, loc *time.Location, n int) (cronSchedule, []string, error) {

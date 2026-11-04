@@ -434,6 +434,16 @@ func TestCertJSON(t *testing.T) {
 	}
 }
 
+func TestCertJSONHTMLCharacters(t *testing.T) {
+	out, err := CertJSON([]Certificate{{Subject: "CN=<test>,O=AT&T"}})
+	if err != nil {
+		t.Fatalf("CertJSON() error = %v", err)
+	}
+	if want := `"subject": "CN=<test>,O=AT&T"`; !strings.Contains(out, want) {
+		t.Errorf("CertJSON() = %s, want it to contain %s", out, want)
+	}
+}
+
 func equalStrings(got, want []string) bool {
 	if len(got) != len(want) {
 		return false

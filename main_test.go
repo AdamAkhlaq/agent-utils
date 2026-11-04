@@ -283,6 +283,9 @@ func TestCommandsManifest(t *testing.T) {
 	if len(entries) != len(registry()) {
 		t.Errorf("manifest lists %d commands, registry has %d", len(entries), len(registry()))
 	}
+	if !bytes.Contains(stdout.Bytes(), []byte("-to <snake|")) {
+		t.Errorf("manifest does not write case's usage with < as is")
+	}
 	for _, e := range entries {
 		if e.Name == "hash" && len(e.Flags) != 2 {
 			t.Errorf("hash flags = %+v, want -a and -c", e.Flags)

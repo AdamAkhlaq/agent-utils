@@ -39,6 +39,11 @@ func TestCSVToJSON(t *testing.T) {
 			want:  "[\n  {\n    \"id\": \"1\",\n    \"note\": \"line one\\r\\nline two\"\n  }\n]",
 		},
 		{
+			name:  "html characters written as is",
+			input: "<k>\n<b>&amp;</b> ",
+			want:  "[\n  {\n    \"<k>\": \"<b>&amp;</b>\\u2028\"\n  }\n]",
+		},
+		{
 			name:  "crlf line endings",
 			input: "a,b\r\n1,2\r\n",
 			want:  "[\n  {\n    \"a\": \"1\",\n    \"b\": \"2\"\n  }\n]",
@@ -283,7 +288,7 @@ func TestCSVToJSONOutputLimit(t *testing.T) {
 	}{
 		{name: "long header names", input: wideCSV(10, 100, 200), wantErr: "200 rows each repeat all 10 header names as JSON keys, 1020 bytes of them per row; split the rows across several files, each with the header row"},
 		{name: "many columns", input: wideCSV(1000, 100, 150), wantErr: "150 rows each repeat all 1000 header names as JSON keys, 102000 bytes of them per row"},
-		{name: "escaped header name", input: strings.Repeat("<", 100) + strings.Repeat("\n\"\"", 300), wantErr: "300 rows each repeat the header name as a JSON key, 602 bytes per row"},
+		{name: "escaped header name", input: strings.Repeat("\x01", 100) + strings.Repeat("\n\"\"", 300), wantErr: "300 rows each repeat the header name as a JSON key, 602 bytes per row"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

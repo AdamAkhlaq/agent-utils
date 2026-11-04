@@ -14,6 +14,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/adamakhlaq/agent-utils/v2/internal/jsonout"
 )
 
 // Integers at or above this are epoch milliseconds, below it epoch seconds.
@@ -145,11 +147,11 @@ func JSON(t time.Time, zone string) (string, error) {
 		Zone:    loc.String(),
 	}
 	repr.ISOYear, repr.ISOWeek = in.ISOWeek()
-	out, err := json.MarshalIndent(repr, "", "  ")
+	out, err := jsonout.Marshal(repr)
 	if err != nil {
 		return "", fmt.Errorf("encoding representations: %w", err)
 	}
-	return string(out), nil
+	return out, nil
 }
 
 // minTime and maxTime bound every result: the int64 epoch-millisecond range,
@@ -658,9 +660,9 @@ func DiffJSON(from, to time.Time, loc *time.Location) (string, error) {
 			Seconds: json.Number(decimalSeconds(d.Seconds%60, d.Nanos)),
 		},
 	}
-	out, err := json.MarshalIndent(repr, "", "  ")
+	out, err := jsonout.Marshal(repr)
 	if err != nil {
 		return "", fmt.Errorf("encoding difference: %w", err)
 	}
-	return string(out), nil
+	return out, nil
 }

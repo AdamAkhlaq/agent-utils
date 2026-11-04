@@ -9,12 +9,13 @@
 package netcalc
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"math/big"
 	"net/netip"
 	"strings"
+
+	"github.com/adamakhlaq/agent-utils/v2/internal/jsonout"
 )
 
 // Details describes one prefix. TotalAddresses is a decimal string because
@@ -65,11 +66,11 @@ func Info(prefix string) (Details, error) {
 
 // JSON renders d as pretty-printed JSON.
 func JSON(d Details) (string, error) {
-	out, err := json.MarshalIndent(d, "", "  ")
+	out, err := jsonout.Marshal(d)
 	if err != nil {
 		return "", fmt.Errorf("encoding JSON: %w", err)
 	}
-	return string(out), nil
+	return out, nil
 }
 
 // Contains reports whether ip lies inside prefix. Host bits set on the

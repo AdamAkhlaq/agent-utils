@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -36,14 +37,14 @@ func CommandsCommand(commands map[string]Command) Command {
 				entries = append(entries, entry)
 			}
 			sort.Slice(entries, func(i, j int) bool { return entries[i].Name < entries[j].Name })
-			out, err := json.MarshalIndent(entries, "", "  ")
-			if err != nil {
+			var out bytes.Buffer
+			enc := json.NewEncoder(&out)
+			enc.SetEscapeHTML(false)
+			enc.SetIndent("", "  ")
+			if err := enc.Encode(entries); err != nil {
 				return fmt.Errorf("encoding command list: %w", err)
 			}
-			if _, err := stdout.Write(out); err != nil {
-				return err
-			}
-			_, err = fmt.Fprintln(stdout)
+			_, err := stdout.Write(out.Bytes())
 			return err
 		},
 	}

@@ -1,6 +1,7 @@
 package format
 
 import (
+	"bytes"
 	"encoding/json"
 	"strings"
 	"testing"
@@ -18,10 +19,10 @@ func TestAppendJSONString(t *testing.T) {
 	}
 }
 
-// FuzzAppendJSONString holds appendJSONString to json.Marshal's output on
-// every string, so csv2json's output does not change with the encoder. For
-// invalid UTF-8 it compares with the string whose invalid bytes are already
-// U+FFFD, where json.Marshal agrees across Go releases.
+// FuzzAppendJSONString holds appendJSONString to the output of a json.Encoder
+// with HTML escaping off on every string. For invalid UTF-8 it compares with
+// the string whose invalid bytes are already U+FFFD, where encoding/json
+// agrees across Go releases.
 func FuzzAppendJSONString(f *testing.F) {
 	for _, s := range jsonStringSeeds {
 		f.Add(s)
@@ -30,11 +31,14 @@ func FuzzAppendJSONString(f *testing.F) {
 }
 
 func checkJSONString(t *testing.T, s string) {
-	want, err := json.Marshal(replaceInvalidBytes(s))
-	if err != nil {
+	var buf bytes.Buffer
+	enc := json.NewEncoder(&buf)
+	enc.SetEscapeHTML(false)
+	if err := enc.Encode(replaceInvalidBytes(s)); err != nil {
 		t.Fatal(err)
 	}
-	if got := appendJSONString([]byte("x"), s); string(got) != "x"+string(want) {
+	want := strings.TrimSuffix(buf.String(), "\n")
+	if got := appendJSONString([]byte("x"), s); string(got) != "x"+want {
 		t.Errorf("appendJSONString(%q) = %s, want %s", s, got[1:], want)
 	}
 }
