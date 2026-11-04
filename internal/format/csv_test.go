@@ -1,10 +1,13 @@
 package format
 
 import (
+	"bufio"
 	"bytes"
+	"encoding/csv"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"reflect"
 	"strings"
 	"testing"
@@ -40,7 +43,7 @@ func TestCSVToJSON(t *testing.T) {
 		},
 		{
 			name:  "html characters written as is",
-			input: "<k>\n<b>&amp;</b> ",
+			input: "<k>\n<b>&amp;</b>\u2028",
 			want:  "[\n  {\n    \"<k>\": \"<b>&amp;</b>\\u2028\"\n  }\n]",
 		},
 		{
@@ -168,6 +171,10 @@ func TestJSONToCSV(t *testing.T) {
 		{name: "duplicate key", input: `[{"a":"1","a":"2"}]`, wantErr: `array element 1: duplicate key "a"`},
 		{name: "objects without keys", input: `[{},{}]`, wantErr: "no columns to write"},
 		{name: "trailing data", input: `[] "extra"`, wantErr: "unexpected data after the JSON array"},
+		{name: "quote separator", input: `[{"a":"1"}]`, sep: '"', wantErr: "invalid CSV separator"},
+		{name: "newline separator", input: `[{"a":"1"}]`, sep: '\n', wantErr: "invalid CSV separator"},
+		{name: "first column missing", input: `[{"a":"x"},{"b":"y"}]`, want: "a,b\nx,\n,y\n"},
+		{name: "one column, missing value", input: `[{"a":"x"},{}]`, want: "a\nx\n\"\"\n"},
 		{name: "invalid JSON", input: `[{"a":}]`, wantErr: "invalid JSON"},
 		{name: "truncated input", input: `[{"a":"1"}`, wantErr: "invalid JSON"},
 	}
@@ -193,6 +200,9 @@ func TestJSONToCSV(t *testing.T) {
 			}
 			if got := out.String(); got != tt.want {
 				t.Errorf("JSONToCSV() = %q, want %q", got, tt.want)
+			}
+			if out.Len() > 0 {
+				checkCSVTableSize(t, tt.input, sep, out.Len())
 			}
 		})
 	}
@@ -379,6 +389,188 @@ func FuzzCSVToJSON(f *testing.F) {
 		}
 		edge.Reset()
 		if err := csvToJSON(&edge, strings.NewReader(input), sep, out.Len()-1); !errors.Is(err, ErrOutputLimit) || edge.Len() != 0 {
+			t.Fatalf("one byte below: error = %v, wrote %d bytes", err, edge.Len())
+		}
+	})
+}
+
+// checkCSVTableSize checks that tableSize computes exactly the size of the
+// CSV that JSONToCSV wrote for input.
+func checkCSVTableSize(t *testing.T, input string, sep rune, written int) {
+	t.Helper()
+	data, err := ReadText(strings.NewReader(input))
+	if err != nil {
+		t.Fatal(err)
+	}
+	table, err := decodeJSONTable(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cw := &csvWriter{sep: sep, sepStr: string(sep)}
+	if size := cw.tableSize(table, math.MaxInt64); size != int64(written) {
+		t.Fatalf("tableSize() = %d, JSONToCSV wrote %d bytes", size, written)
+	}
+}
+
+// distinctKeysJSON is an array of n objects, each with its own key: about 11
+// bytes of input per object, and n cells per row of output.
+func distinctKeysJSON(n int) string {
+	objects := make([]string, n)
+	for i := range objects {
+		objects[i] = fmt.Sprintf(`{"k%d":1}`, i)
+	}
+	return "[" + strings.Join(objects, ",") + "]"
+}
+
+// TestJSONToCSVOutputLimit checks the limit at its edge, and that nothing is
+// written past it.
+func TestJSONToCSVOutputLimit(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   string
+		sep     rune
+		wantErr string
+	}{
+		{name: "distinct keys", input: distinctKeysJSON(1000), sep: ',', wantErr: "1000 rows each have a cell, even an empty one, in all 1000 columns (one per distinct key across the objects); convert objects with different keys separately"},
+		{name: "multibyte separator", input: distinctKeysJSON(300), sep: '\U0001f600', wantErr: "300 rows each have a cell, even an empty one, in all 300 columns"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var want bytes.Buffer
+			if err := JSONToCSV(&want, strings.NewReader(tt.input), tt.sep); err != nil {
+				t.Fatal(err)
+			}
+			if 64*len(tt.input) >= want.Len() {
+				t.Fatalf("output is %d bytes, not over 64 times the %d-byte input", want.Len(), len(tt.input))
+			}
+			var out bytes.Buffer
+			if err := jsonToCSV(&out, strings.NewReader(tt.input), tt.sep, want.Len()); err != nil || out.String() != want.String() {
+				t.Fatalf("at a floor of exactly the output size: error = %v, output equal %v", err, out.String() == want.String())
+			}
+			out.Reset()
+			err := jsonToCSV(&out, strings.NewReader(tt.input), tt.sep, want.Len()-1)
+			if !errors.Is(err, ErrOutputLimit) || !strings.Contains(err.Error(), fmt.Sprintf("CSV output would exceed %d bytes (the larger of %[1]d bytes and 64 times the input size): %s", want.Len()-1, tt.wantErr)) {
+				t.Fatalf("one byte below: error = %v, want the output limit", err)
+			}
+			if out.Len() != 0 {
+				t.Errorf("one byte below: wrote %d bytes before failing", out.Len())
+			}
+		})
+	}
+}
+
+// referenceCSVRecord is record as json2csv wrote it before it counted its
+// output: through encoding/csv's Writer, with the first field quoted by hand
+// where a reader would otherwise lose it.
+func referenceCSVRecord(record []string, sep rune) string {
+	var b strings.Builder
+	cw := csv.NewWriter(&b)
+	cw.Comma = sep
+	first := record[0]
+	if (len(record) > 1 || first != "") && !strings.HasPrefix(first, "\ufeff") {
+		_ = cw.Write(record)
+		cw.Flush()
+		return b.String()
+	}
+	b.WriteString(`"` + strings.ReplaceAll(first, `"`, `""`) + `"`)
+	if len(record) == 1 {
+		return b.String() + "\n"
+	}
+	b.WriteRune(sep)
+	_ = cw.Write(record[1:])
+	cw.Flush()
+	return b.String()
+}
+
+var csvSeparators = []rune{',', '\t', ';', '\u00e9', '\u65e5', '\U0001f600'}
+
+// FuzzCSVRecord holds csvWriter's record and recordSize to
+// referenceCSVRecord, on records of fields split at NUL.
+func FuzzCSVRecord(f *testing.F) {
+	for _, s := range []string{"a\x00b", "", "\x00", `\.`, ` \.`, " a", "\u00a0x\x00y", "\ufeffa\x00b", "\ufeff", `say "hi"`, "x\r\ny\x00\r", "a;b\x00c", "\u65e5\x00\u672c", "\xff\x00\xfe", "\x00\x00"} {
+		f.Add(s, uint8(0))
+		f.Add(s, uint8(5))
+	}
+	f.Fuzz(func(t *testing.T, joined string, sepIndex uint8) {
+		record := strings.Split(joined, "\x00")
+		sep := csvSeparators[int(sepIndex)%len(csvSeparators)]
+		want := referenceCSVRecord(record, sep)
+		var buf bytes.Buffer
+		out := bufio.NewWriter(&buf)
+		cw := &csvWriter{out: out, sep: sep, sepStr: string(sep)}
+		cw.record(record)
+		if err := out.Flush(); err != nil {
+			t.Fatal(err)
+		}
+		if buf.String() != want {
+			t.Fatalf("record(%q) = %q, want %q", record, buf.String(), want)
+		}
+		if size := cw.recordSize(record); size != int64(len(want)) {
+			t.Fatalf("recordSize(%q) = %d, wrote %d", record, size, len(want))
+		}
+	})
+}
+
+// FuzzJSONToCSV checks that every value survives a round trip through
+// csv2json, and the output limit at its edge.
+func FuzzJSONToCSV(f *testing.F) {
+	for _, s := range []string{`[{"a":"1","b":null}]`, `[{"a":""},{"a":"x"},{"a":null}]`, `[{"\ufeffa":"1","b":"2"}]`, `[{"k":"\\."},{"j":" lead"}]`,
+		`[{"q":"say \"hi\"","n":"x\r\ny"}]`, `[{"n":1.10,"b":true}]`, `[{"a":1,"a":2}]`, `[{"a":{"b":1}}]`, `[{}]`, `[]`, distinctKeysJSON(40)} {
+		f.Add(s, uint8(0))
+	}
+	f.Fuzz(func(t *testing.T, input string, sepIndex uint8) {
+		sep := csvSeparators[int(sepIndex)%len(csvSeparators)]
+		var out bytes.Buffer
+		if err := JSONToCSV(&out, strings.NewReader(input), sep); err != nil {
+			if out.Len() != 0 {
+				t.Fatalf("JSONToCSV() wrote %d bytes before failing: %v", out.Len(), err)
+			}
+			return
+		}
+		if out.Len() == 0 {
+			return
+		}
+		dec := json.NewDecoder(strings.NewReader(strings.TrimPrefix(input, "\ufeff")))
+		dec.UseNumber()
+		var objects []map[string]any
+		if err := dec.Decode(&objects); err != nil {
+			t.Fatal(err)
+		}
+		var back bytes.Buffer
+		if err := CSVToJSON(&back, bytes.NewReader(out.Bytes()), sep); err != nil {
+			t.Fatalf("CSVToJSON() of %q: %v", out.String(), err)
+		}
+		var rows []map[string]string
+		if err := json.Unmarshal(back.Bytes(), &rows); err != nil {
+			t.Fatal(err)
+		}
+		if len(rows) != len(objects) {
+			t.Fatalf("%d rows came back, want %d", len(rows), len(objects))
+		}
+		for i, row := range rows {
+			for key, value := range objects[i] {
+				if _, ok := row[key]; !ok {
+					t.Fatalf("row %d has no column %q", i, key)
+				}
+				want := ""
+				if value != nil {
+					want = fmt.Sprint(value)
+				}
+				if row[key] != want {
+					t.Fatalf("row %d, column %q = %q, want %q", i, key, row[key], want)
+				}
+			}
+		}
+		checkCSVTableSize(t, input, sep, out.Len())
+		var edge bytes.Buffer
+		if err := jsonToCSV(&edge, strings.NewReader(input), sep, out.Len()); err != nil || edge.String() != out.String() {
+			t.Fatalf("at a floor of exactly the output size: error = %v, output equal %v", err, edge.String() == out.String())
+		}
+		if 64*len(strings.TrimPrefix(input, "\ufeff")) >= out.Len() {
+			return
+		}
+		edge.Reset()
+		if err := jsonToCSV(&edge, strings.NewReader(input), sep, out.Len()-1); !errors.Is(err, ErrOutputLimit) || edge.Len() != 0 {
 			t.Fatalf("one byte below: error = %v, wrote %d bytes", err, edge.Len())
 		}
 	})
