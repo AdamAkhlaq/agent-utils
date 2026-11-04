@@ -5,10 +5,11 @@
 package hue
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/adamakhlaq/agent-utils/v2/internal/jsonout"
 )
 
 // RGB is an 8-bit-per-channel color, the package's canonical representation.
@@ -276,11 +277,11 @@ func JSON(input string) (string, error) {
 		RGB: jsonRGB{R: c.R, G: c.G, B: c.B, CSS: CSSRGB(c)},
 		HSL: jsonHSL{H: h.H, S: h.S, L: h.L, CSS: CSSHSL(h)},
 	}
-	out, err := json.MarshalIndent(repr, "", "  ")
+	out, err := jsonout.Marshal(repr)
 	if err != nil {
 		return "", fmt.Errorf("encoding representations: %w", err)
 	}
-	return string(out), nil
+	return out, nil
 }
 
 type jsonRGB struct {

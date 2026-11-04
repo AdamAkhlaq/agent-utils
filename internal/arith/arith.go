@@ -5,13 +5,14 @@
 package arith
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"math/big"
 	"strconv"
 	"strings"
 	"unicode"
+
+	"github.com/adamakhlaq/agent-utils/v2/internal/jsonout"
 )
 
 const (
@@ -103,15 +104,15 @@ func Format(x *big.Rat, scale int) (string, bool) {
 // strings so that no JSON consumer can lose precision.
 func JSON(x *big.Rat, scale int) (string, error) {
 	result, exact := Format(x, scale)
-	out, err := json.MarshalIndent(struct {
+	out, err := jsonout.Marshal(struct {
 		Result   string `json:"result"`
 		Fraction string `json:"fraction"`
 		Exact    bool   `json:"exact"`
-	}{result, x.String(), exact}, "", "  ")
+	}{result, x.String(), exact})
 	if err != nil {
 		return "", fmt.Errorf("encoding result: %w", err)
 	}
-	return string(out), nil
+	return out, nil
 }
 
 // decimalPlaces reports whether x has a terminating decimal expansion, which

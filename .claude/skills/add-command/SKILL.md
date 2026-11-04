@@ -41,7 +41,7 @@ to, and say why in the PR when you deviate.
 | Modes | A positional word after the flags: `cidr info`, `time add`, `time diff`. Flags go before the mode; a flag after it is a usage error that says to move it. |
 | Error class | Bad data, including a malformed value argument: exit 1. Bad flag value or wrong argument count: exit 2 (`cron -from` garbage is a flag value, so 2). A predicate that answers no: `cli.FalseError`, exit 3. |
 | Yes/no output | Print the answer and exit 0 or 3: `true`/`false` (`cidr contains`), nothing (`json-fmt -check`, `hash -c`), or a JSON report (`json-schema`, which always includes `errors`). |
-| JSON shape | Pretty-printed, two-space indent, `snake_case` keys, every field always present (empty `[]` rather than omitted) unless it is meaningless for the input (`cidr`'s IPv4-only fields). |
+| JSON shape | Pretty-printed, two-space indent, `snake_case` keys, every field always present (empty `[]` rather than omitted) unless it is meaningless for the input (`cidr`'s IPv4-only fields). Render a document with `jsonout.Marshal`, never `json.MarshalIndent`, which writes `<`, `>`, and `&` as `\u003c`, `\u003e`, and `\u0026`. |
 | Big or exact numbers | A JSON string when precision could be lost (`cidr`'s `total_addresses`, `calc`'s `result`); a JSON number when it is exact and `jq` arithmetic matters (`time diff`'s `total_seconds`). |
 | Optional numeric flag | `optionalInt` in `internal/cli/flags.go`, so the `commands` manifest doesn't advertise a misleading zero default (`calc -scale`). |
 | Time | Inject `time.Now` from `main.go`. Timestamps without an offset go through `clock.ParseIn` in the `-z` zone, which resolves DST gaps forward and repeats to the earlier instant. |

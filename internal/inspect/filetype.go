@@ -4,12 +4,13 @@ package inspect
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"image"
 	"io"
 	"net/http"
 	"strings"
+
+	"github.com/adamakhlaq/agent-utils/v2/internal/jsonout"
 
 	_ "image/gif"
 	_ "image/jpeg"
@@ -73,9 +74,9 @@ func JSON(info Info) (string, error) {
 		Width  int    `json:"width,omitempty"`
 		Height int    `json:"height,omitempty"`
 	}{info.MIME, info.Bytes, info.Width, info.Height}
-	out, err := json.MarshalIndent(repr, "", "  ")
+	out, err := jsonout.Marshal(repr)
 	if err != nil {
 		return "", fmt.Errorf("encoding file info: %w", err)
 	}
-	return string(out), nil
+	return out, nil
 }

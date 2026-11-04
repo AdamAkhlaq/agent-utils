@@ -8,12 +8,13 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/hex"
-	"encoding/json"
 	"encoding/pem"
 	"fmt"
 	"io"
 	"strings"
 	"time"
+
+	"github.com/adamakhlaq/agent-utils/v2/internal/jsonout"
 )
 
 // Certificate is one decoded X.509 certificate, shaped for JSON output. The
@@ -72,11 +73,11 @@ func Certificates(r io.Reader, now time.Time) ([]Certificate, error) {
 // CertJSON renders certs as a pretty-printed JSON array. The result is always
 // an array, even for a single certificate, so the shape is stable.
 func CertJSON(certs []Certificate) (string, error) {
-	out, err := json.MarshalIndent(certs, "", "  ")
+	out, err := jsonout.Marshal(certs)
 	if err != nil {
 		return "", fmt.Errorf("encoding certificates: %w", err)
 	}
-	return string(out), nil
+	return out, nil
 }
 
 func parseCertificates(data []byte) ([]*x509.Certificate, error) {
