@@ -729,3 +729,24 @@ func TestComparePointers(t *testing.T) {
 		})
 	}
 }
+
+func TestCount(t *testing.T) {
+	tests := []struct {
+		n    int
+		noun string
+		want string
+	}{
+		{1, "item", "1 item"},
+		{0, "item", "0 items"},
+		{2, "property", "2 properties"},
+		{2, "key", "2 keys"},
+		{2, "day", "2 days"},
+		{1, "property", "1 property"},
+		{3, "y", "3 ys"},
+	}
+	for _, tt := range tests {
+		if got := count(tt.n, tt.noun); got != tt.want {
+			t.Errorf("count(%d, %q) = %q, want %q", tt.n, tt.noun, got, tt.want)
+		}
+	}
+}

@@ -49,7 +49,7 @@ func (c *CSVReader) Read() ([]string, error) {
 		return nil, io.EOF
 	}
 	start := c.pos
-	var record []string
+	record := make([]string, 0, max(c.fields, 1))
 	for {
 		field, err := c.field()
 		if err != nil {

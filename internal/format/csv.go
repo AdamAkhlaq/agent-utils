@@ -1,6 +1,7 @@
 package format
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/csv"
 	"encoding/json"
@@ -13,11 +14,20 @@ import (
 
 // CSVToJSON converts CSV from r (first record is the header row, read by
 // CSVReader) to a pretty-printed JSON array of objects in w, one object per
-// data row with the headers as keys in column order. Every value stays a JSON string: CSV
-// carries no type information, and inferring types corrupts data (a zip code
-// "01234" must not become the number 1234). The JSON is assembled by hand
-// because marshalling through a map would lose column order.
+// data row with the headers as keys in column order. Every value stays a JSON
+// string: CSV carries no type information, and inferring types corrupts data
+// (a zip code "01234" must not become the number 1234). The JSON is assembled
+// by hand because marshalling through a map would lose column order. Every
+// row repeats every header name, so output is limited as IndentJSON limits
+// it. Every record is read and the size checked before anything is written,
+// so once writing starts only a failed write can stop it.
 func CSVToJSON(w io.Writer, r io.Reader, sep rune) error {
+	return csvToJSON(w, r, sep, outputFloor)
+}
+
+// csvToJSON is CSVToJSON with the output limit's floor as a parameter, so
+// tests can reach its edge without writing 64 MiB.
+func csvToJSON(w io.Writer, r io.Reader, sep rune, floor int) error {
 	cr, err := NewCSVReader(r, sep)
 	if err != nil {
 		return err
@@ -36,15 +46,77 @@ func CSVToJSON(w io.Writer, r io.Reader, sep rune) error {
 			return fmt.Errorf("duplicate header %q", h)
 		}
 		seen[h] = true
-		key, err := json.Marshal(h)
-		if err != nil {
-			return fmt.Errorf("encoding header %q: %w", h, err)
-		}
-		keys[i] = key
+		keys[i] = appendJSONString(nil, h)
 	}
-	var buf bytes.Buffer
-	buf.WriteByte('[')
-	rows := 0
+	// The rows are converted twice: first only counting the output, which
+	// finds every malformed record and checks the size before anything is
+	// written, and then writing it, which cannot fail on the same input
+	// except in the write itself. Building the output in memory instead
+	// would cost up to three times the limit as the buffer grows.
+	body := cr.pos
+	limit := outputLimit(floor, len(cr.data))
+	counted := newCSVJSON(keys, nil, limit)
+	if err := counted.array(cr); err != nil {
+		return err
+	}
+	if counted.size > limit {
+		return counted.limitError(floor)
+	}
+	cr.pos = body
+	out := bufio.NewWriterSize(w, 64<<10)
+	written := newCSVJSON(keys, out, limit)
+	if err := written.array(cr); err != nil {
+		return err
+	}
+	if err := out.Flush(); err != nil {
+		return fmt.Errorf("writing output: %w", err)
+	}
+	return nil
+}
+
+// csvJSON writes CSV records as a pretty-printed JSON array of objects, or
+// only counts its bytes when out is nil.
+type csvJSON struct {
+	keys  [][]byte // the header names, encoded as JSON strings
+	out   *bufio.Writer
+	err   error // the first failed write
+	limit int64
+	size  int64 // bytes of output so far, counted until they pass limit
+	rows  int
+	emit  func(string)
+}
+
+func newCSVJSON(keys [][]byte, out *bufio.Writer, limit int64) *csvJSON {
+	j := &csvJSON{keys: keys, out: out, limit: limit}
+	j.emit = j.writeString
+	return j
+}
+
+// count adds n bytes to the size. It stops once the size passes the limit,
+// so it cannot overflow: output can grow with the square of the input.
+func (j *csvJSON) count(n int) {
+	if j.size <= j.limit {
+		j.size += int64(n)
+	}
+}
+
+func (j *csvJSON) write(b []byte) {
+	j.count(len(b))
+	if j.out != nil && j.err == nil {
+		_, j.err = j.out.Write(b)
+	}
+}
+
+func (j *csvJSON) writeString(s string) {
+	j.count(len(s))
+	if j.out != nil && j.err == nil {
+		_, j.err = j.out.WriteString(s)
+	}
+}
+
+// array converts the records left in cr.
+func (j *csvJSON) array(cr *CSVReader) error {
+	j.writeString("[")
 	for {
 		record, err := cr.Read()
 		if errors.Is(err, io.EOF) {
@@ -53,34 +125,43 @@ func CSVToJSON(w io.Writer, r io.Reader, sep rune) error {
 		if err != nil {
 			return err
 		}
-		if rows > 0 {
-			buf.WriteByte(',')
+		if j.err != nil {
+			return fmt.Errorf("writing output: %w", j.err)
 		}
-		rows++
-		buf.WriteString("\n  {")
+		if j.rows > 0 {
+			j.writeString(",")
+		}
+		j.rows++
+		j.writeString("\n  {")
 		for i, field := range record {
-			value, err := json.Marshal(field)
-			if err != nil {
-				return fmt.Errorf("encoding value %q: %w", field, err)
-			}
 			if i > 0 {
-				buf.WriteByte(',')
+				j.writeString(",")
 			}
-			buf.WriteString("\n    ")
-			buf.Write(keys[i])
-			buf.WriteString(": ")
-			buf.Write(value)
+			j.writeString("\n    ")
+			j.write(j.keys[i])
+			j.writeString(": ")
+			escapeJSONString(field, j.emit)
 		}
-		buf.WriteString("\n  }")
+		j.writeString("\n  }")
 	}
-	if rows > 0 {
-		buf.WriteByte('\n')
+	if j.rows > 0 {
+		j.writeString("\n")
 	}
-	buf.WriteByte(']')
-	if _, err := w.Write(buf.Bytes()); err != nil {
-		return fmt.Errorf("writing output: %w", err)
-	}
+	j.writeString("]")
 	return nil
+}
+
+func (j *csvJSON) limitError(floor int) error {
+	keyBytes := 0
+	for _, k := range j.keys {
+		keyBytes += len(k)
+	}
+	repeat := fmt.Sprintf("all %d header names as JSON keys, %d bytes of them", len(j.keys), keyBytes)
+	if len(j.keys) == 1 {
+		repeat = fmt.Sprintf("the header name as a JSON key, %d bytes", keyBytes)
+	}
+	return limitError("JSON output", floor, j.limit, fmt.Sprintf("%s each repeat %s per row; split the rows across several files, each with the header row",
+		count(j.rows, "row"), repeat))
 }
 
 // JSONToCSV converts a JSON array of flat objects from r to CSV in w, header

@@ -156,14 +156,7 @@ func (h *tomlHeaders) over() bool {
 
 func (h *tomlHeaders) limitError(floor int) error {
 	return limitError("TOML output", floor, h.limit, fmt.Sprintf("the document has %s, and each table's header spells out its full dotted key, up to %s and %d bytes long",
-		plural(h.count, "table"), plural(h.deepest, "key"), h.longest))
-}
-
-func plural(n int, noun string) string {
-	if n == 1 {
-		return "1 " + noun
-	}
-	return fmt.Sprintf("%d %ss", n, noun)
+		count(h.count, "table"), count(h.deepest, "key"), h.longest))
 }
 
 // tomlKeyLen returns the length of k as go-toml writes it in a header, by
