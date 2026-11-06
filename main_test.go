@@ -64,6 +64,13 @@ func TestExitCodes(t *testing.T) {
 		fmt.Fprintf(&wideCSV, "%01000d", i)
 	}
 	wideCSV.WriteString(strings.Repeat("\n"+strings.Repeat(",", 99), 2000))
+	// 379 KB of objects that each have their own key, which would be 900 MB
+	// of CSV.
+	keys := make([]string, 30_000)
+	for i := range keys {
+		keys[i] = fmt.Sprintf(`{"k%d":1}`, i)
+	}
+	distinctKeys := "[" + strings.Join(keys, ",") + "]"
 	// The billion laughs: 9 levels of 9 aliases, a 414-byte alias bomb.
 	var laughs strings.Builder
 	laughs.WriteString("a0: &a0 [lol,lol,lol,lol,lol,lol,lol,lol,lol]\n")
@@ -169,6 +176,7 @@ func TestExitCodes(t *testing.T) {
 		{name: "byte order mark alone is empty input", args: []string{"csv2json"}, stdin: "\xef\xbb\xbf", want: 1},
 		{name: "csv2json bare carriage return is bad data", args: []string{"csv2json"}, stdin: "a\r1\r", want: 1},
 		{name: "csv2json output over the size limit", args: []string{"csv2json"}, stdin: wideCSV.String(), want: 1},
+		{name: "json2csv output over the size limit", args: []string{"json2csv"}, stdin: distinctKeys, want: 1},
 		{name: "csv2json quote separator is a usage error", args: []string{"csv2json", "-sep", `"`}, stdin: "a\n", want: 2},
 		{name: "json2csv line feed separator is a usage error", args: []string{"json2csv", "-sep", "\n"}, stdin: `[{"a":1}]`, want: 2},
 		{name: "hash verify match", args: []string{"hash", "-c", "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"}, stdin: "abc", want: 0},

@@ -23,11 +23,20 @@ type CSVReader struct {
 	fields int
 }
 
+// checkCSVSeparator rejects a field separator that cannot delimit CSV
+// fields unambiguously.
+func checkCSVSeparator(sep rune) error {
+	if sep == 0 || sep == '"' || sep == '\r' || sep == '\n' || sep == utf8.RuneError || !utf8.ValidRune(sep) {
+		return fmt.Errorf("invalid CSV separator %q", sep)
+	}
+	return nil
+}
+
 // NewCSVReader reads all of r and returns a reader over its records, with
 // sep as the field separator.
 func NewCSVReader(r io.Reader, sep rune) (*CSVReader, error) {
-	if sep == 0 || sep == '"' || sep == '\r' || sep == '\n' || sep == utf8.RuneError || !utf8.ValidRune(sep) {
-		return nil, fmt.Errorf("invalid CSV separator %q", sep)
+	if err := checkCSVSeparator(sep); err != nil {
+		return nil, err
 	}
 	data, err := ReadText(r)
 	if err != nil {

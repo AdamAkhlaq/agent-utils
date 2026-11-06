@@ -150,6 +150,8 @@ func TestOutputLimit(t *testing.T) {
 			convert: func(w *bytes.Buffer, in string) error { return JSONToTOML(w, strings.NewReader(in)) }},
 		{name: "csv2json", input: wideCSV(100, 1000, 2000), output: "JSON output", wantErr: "2000 rows each repeat all 100 header names as JSON keys, 100200 bytes of them per row",
 			convert: func(w *bytes.Buffer, in string) error { return CSVToJSON(w, strings.NewReader(in), ',') }},
+		{name: "json2csv", input: distinctKeysJSON(10_000), output: "CSV output", wantErr: "10000 rows each have a cell, even an empty one, in all 10000 columns",
+			convert: func(w *bytes.Buffer, in string) error { return JSONToCSV(w, strings.NewReader(in), ',') }},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

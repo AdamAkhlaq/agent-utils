@@ -3,13 +3,14 @@ package format
 import (
 	"bufio"
 	"bytes"
-	"encoding/csv"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"strconv"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 )
 
 // CSVToJSON converts CSV from r (first record is the header row, read by
@@ -171,49 +172,138 @@ func (j *csvJSON) limitError(floor int) error {
 // as-is, numbers keep their exact source form ("1.10" stays "1.10"), booleans
 // become true/false, and null and missing keys become empty cells. Nested
 // objects and arrays are rejected: CSV cells are flat, and any flattening
-// scheme would be lossy.
+// scheme would be lossy. Every row has a cell for every column, so output is
+// limited as IndentJSON limits it, checked before anything is written.
 func JSONToCSV(w io.Writer, r io.Reader, sep rune) error {
+	return jsonToCSV(w, r, sep, outputFloor)
+}
+
+// jsonToCSV is JSONToCSV with the output limit's floor as a parameter, so
+// tests can reach its edge without writing 64 MiB.
+func jsonToCSV(w io.Writer, r io.Reader, sep rune, floor int) error {
+	if err := checkCSVSeparator(sep); err != nil {
+		return err
+	}
 	data, err := ReadText(r)
 	if err != nil {
 		return err
 	}
+	table, err := decodeJSONTable(data)
+	if err != nil {
+		return err
+	}
+	if len(table.ends) == 0 {
+		return nil
+	}
+	if len(table.columns) == 0 {
+		return fmt.Errorf("no columns to write: none of the array's objects has any keys")
+	}
+	out := bufio.NewWriterSize(w, 64<<10)
+	cw := &csvWriter{out: out, sep: sep, sepStr: string(sep)}
+	limit := outputLimit(floor, len(data))
+	if cw.tableSize(table, limit) > limit {
+		return limitError("CSV output", floor, limit, fmt.Sprintf("%s each have a cell, even an empty one, in all %s (one per distinct key across the objects); convert objects with different keys separately",
+			count(len(table.ends), "row"), count(len(table.columns), "column")))
+	}
+	cw.table(table)
+	if cw.err == nil {
+		cw.err = out.Flush()
+	}
+	if cw.err != nil {
+		return fmt.Errorf("writing CSV: %w", cw.err)
+	}
+	return nil
+}
+
+// jsonTable is a JSON array of flat objects: its columns, the distinct keys
+// in first-seen order, and every object's cells. The cells are numbered in
+// document order and kept in fixed-size chunks, which never move once
+// allocated, unlike one slice that copies everything each time it grows;
+// ends holds where each object's cells end, so an empty object costs one int.
+type jsonTable struct {
+	columns []string
+	chunks  [][]jsonCell
+	cells   int
+	ends    []int
+}
+
+// jsonCell is one key's value in an object, by its column's index.
+type jsonCell struct {
+	column int
+	value  string
+}
+
+const cellChunk = 4096
+
+func (t *jsonTable) add(c jsonCell) {
+	if t.cells%cellChunk == 0 {
+		t.chunks = append(t.chunks, make([]jsonCell, 0, cellChunk))
+	}
+	last := len(t.chunks) - 1
+	t.chunks[last] = append(t.chunks[last], c)
+	t.cells++
+}
+
+// row calls fn for each cell of object i.
+func (t *jsonTable) row(i int, fn func(jsonCell)) {
+	start := 0
+	if i > 0 {
+		start = t.ends[i-1]
+	}
+	for k := start; k < t.ends[i]; k++ {
+		fn(t.chunks[k/cellChunk][k%cellChunk])
+	}
+}
+
+// decodeJSONTable decodes a JSON array of flat objects.
+func decodeJSONTable(data []byte) (*jsonTable, error) {
 	dec := json.NewDecoder(bytes.NewReader(data))
 	dec.UseNumber()
 	tok, err := dec.Token()
 	if err != nil {
 		if errors.Is(err, io.EOF) {
-			return fmt.Errorf("empty input")
+			return nil, fmt.Errorf("empty input")
 		}
-		return fmt.Errorf("invalid JSON: %w", err)
+		return nil, fmt.Errorf("invalid JSON: %w", err)
 	}
 	if delim, ok := tok.(json.Delim); !ok || delim != '[' {
-		return fmt.Errorf("input must be a JSON array of objects, got %s", describeJSONToken(tok))
+		return nil, fmt.Errorf("input must be a JSON array of objects, got %s", describeJSONToken(tok))
 	}
-	var columns []string
-	seen := make(map[string]bool)
-	var rows []map[string]string
+	t := &jsonTable{}
+	index := make(map[string]int)
+	// lastRow holds, for each column, the 1-based number of the last
+	// object that had its key, which finds a duplicate key in an object
+	// without a map per object.
+	var lastRow []int
 	for dec.More() {
-		elem := len(rows) + 1
+		elem := len(t.ends) + 1
 		tok, err := dec.Token()
 		if err != nil {
-			return fmt.Errorf("invalid JSON: %w", err)
+			return nil, fmt.Errorf("invalid JSON: %w", err)
 		}
 		if delim, ok := tok.(json.Delim); !ok || delim != '{' {
-			return fmt.Errorf("array element %d must be an object, got %s", elem, describeJSONToken(tok))
+			return nil, fmt.Errorf("array element %d must be an object, got %s", elem, describeJSONToken(tok))
 		}
-		row := make(map[string]string)
 		for dec.More() {
 			keyTok, err := dec.Token()
 			if err != nil {
-				return fmt.Errorf("invalid JSON: %w", err)
+				return nil, fmt.Errorf("invalid JSON: %w", err)
 			}
 			key := keyTok.(string)
-			if _, exists := row[key]; exists {
-				return fmt.Errorf("array element %d: duplicate key %q", elem, key)
+			col, ok := index[key]
+			if !ok {
+				col = len(t.columns)
+				index[key] = col
+				t.columns = append(t.columns, key)
+				lastRow = append(lastRow, 0)
 			}
+			if lastRow[col] == elem {
+				return nil, fmt.Errorf("array element %d: duplicate key %q", elem, key)
+			}
+			lastRow[col] = elem
 			valTok, err := dec.Token()
 			if err != nil {
-				return fmt.Errorf("invalid JSON: %w", err)
+				return nil, fmt.Errorf("invalid JSON: %w", err)
 			}
 			var cell string
 			switch v := valTok.(type) {
@@ -223,85 +313,139 @@ func JSONToCSV(w io.Writer, r io.Reader, sep rune) error {
 				cell = v.String()
 			case bool:
 				cell = strconv.FormatBool(v)
-			case nil:
-				cell = ""
 			case json.Delim:
 				kind := "object"
 				if v == '[' {
 					kind = "array"
 				}
-				return fmt.Errorf("array element %d, key %q: nested %ss are not supported; values must be strings, numbers, booleans, or null", elem, key, kind)
+				return nil, fmt.Errorf("array element %d, key %q: nested %ss are not supported; values must be strings, numbers, booleans, or null", elem, key, kind)
 			}
-			if !seen[key] {
-				seen[key] = true
-				columns = append(columns, key)
-			}
-			row[key] = cell
+			t.add(jsonCell{col, cell})
 		}
 		if _, err := dec.Token(); err != nil {
-			return fmt.Errorf("invalid JSON: %w", err)
+			return nil, fmt.Errorf("invalid JSON: %w", err)
 		}
-		rows = append(rows, row)
+		t.ends = append(t.ends, t.cells)
 	}
 	if _, err := dec.Token(); err != nil {
-		return fmt.Errorf("invalid JSON: %w", err)
+		return nil, fmt.Errorf("invalid JSON: %w", err)
 	}
 	if _, err := dec.Token(); !errors.Is(err, io.EOF) {
 		if err != nil {
-			return fmt.Errorf("invalid JSON: %w", err)
+			return nil, fmt.Errorf("invalid JSON: %w", err)
 		}
-		return fmt.Errorf("unexpected data after the JSON array")
+		return nil, fmt.Errorf("unexpected data after the JSON array")
 	}
-	if len(rows) == 0 {
-		return nil
-	}
-	if len(columns) == 0 {
-		return fmt.Errorf("no columns to write: none of the array's objects has any keys")
-	}
-	cw := csv.NewWriter(w)
-	cw.Comma = sep
-	if err := writeRecord(cw, w, columns, sep); err != nil {
-		return fmt.Errorf("writing CSV header: %w", err)
-	}
-	record := make([]string, len(columns))
-	for _, row := range rows {
-		for i, col := range columns {
-			record[i] = row[col]
-		}
-		if err := writeRecord(cw, w, record, sep); err != nil {
-			return fmt.Errorf("writing CSV: %w", err)
-		}
-	}
-	cw.Flush()
-	if err := cw.Error(); err != nil {
-		return fmt.Errorf("writing CSV: %w", err)
-	}
-	return nil
+	return t, nil
 }
 
-// writeRecord writes record through cw, quoting the first field by hand where
-// encoding/csv would leave it bare and a reader would then lose data: a record
-// of one empty field is a blank line, which CSV readers skip (Python's
-// csv.writer writes "" for the same reason), and a first field starting with
-// U+FEFF reads as a byte order mark at the start of the output.
-func writeRecord(cw *csv.Writer, w io.Writer, record []string, sep rune) error {
-	first := record[0]
-	if (len(record) > 1 || first != "") && !strings.HasPrefix(first, "\ufeff") {
-		return cw.Write(record)
+// csvWriter writes CSV records ending in LF. It quotes a field exactly where
+// encoding/csv's Writer does, and also where encoding/csv would leave it bare
+// and a reader would then lose data: a record of one empty field is a blank
+// line, which CSV readers skip (Python's csv.writer writes "" for the same
+// reason), and a first field starting with U+FEFF reads as a byte order mark
+// at the start of the output.
+type csvWriter struct {
+	out    *bufio.Writer
+	err    error // the first failed write
+	sep    rune
+	sepStr string
+}
+
+func (w *csvWriter) writeString(s string) {
+	if w.err == nil {
+		_, w.err = w.out.WriteString(s)
 	}
-	cw.Flush()
-	if err := cw.Error(); err != nil {
-		return err
+}
+
+// table writes the header row and one record per object.
+func (w *csvWriter) table(t *jsonTable) {
+	w.record(t.columns)
+	record := make([]string, len(t.columns))
+	for i := range t.ends {
+		t.row(i, func(c jsonCell) { record[c.column] = c.value })
+		w.record(record)
+		t.row(i, func(c jsonCell) { record[c.column] = "" })
 	}
-	quoted := `"` + strings.ReplaceAll(first, `"`, `""`) + `"`
-	if len(record) == 1 {
-		_, err := io.WriteString(w, quoted+"\n")
-		return err
+}
+
+func (w *csvWriter) record(fields []string) {
+	for i, field := range fields {
+		if i > 0 {
+			w.writeString(w.sepStr)
+		}
+		if !w.quoted(field, i, len(fields)) {
+			w.writeString(field)
+			continue
+		}
+		w.writeString(`"`)
+		for {
+			quote := strings.IndexByte(field, '"')
+			if quote < 0 {
+				break
+			}
+			w.writeString(field[:quote+1])
+			w.writeString(`"`)
+			field = field[quote+1:]
+		}
+		w.writeString(field)
+		w.writeString(`"`)
 	}
-	if _, err := io.WriteString(w, quoted+string(sep)); err != nil {
-		return err
+	w.writeString("\n")
+}
+
+// tableSize returns the size of the table as table writes it, computed from
+// the cells each object has rather than by walking every column of every
+// row, so it costs time in proportion to the input. It stops counting once
+// the size passes limit.
+func (w *csvWriter) tableSize(t *jsonTable, limit int64) int64 {
+	size := w.recordSize(t.columns)
+	n := len(t.columns)
+	perRow := int64(n-1)*int64(len(w.sepStr)) + 1
+	for i := 0; i < len(t.ends) && size <= limit; i++ {
+		size += perRow
+		hasFirst := false
+		t.row(i, func(c jsonCell) {
+			size += w.fieldSize(c.value, c.column, n)
+			hasFirst = hasFirst || c.column == 0
+		})
+		if !hasFirst {
+			size += w.fieldSize("", 0, n)
+		}
 	}
-	return cw.Write(record[1:])
+	return size
+}
+
+// recordSize returns the size of fields as record writes them.
+func (w *csvWriter) recordSize(fields []string) int64 {
+	size := int64(len(fields)-1)*int64(len(w.sepStr)) + 1
+	for i, field := range fields {
+		size += w.fieldSize(field, i, len(fields))
+	}
+	return size
+}
+
+// fieldSize returns the size of field as record writes it, as field i of n.
+func (w *csvWriter) fieldSize(field string, i, n int) int64 {
+	if !w.quoted(field, i, n) {
+		return int64(len(field))
+	}
+	return int64(len(field) + 2 + strings.Count(field, `"`))
+}
+
+// quoted reports whether record quotes field, as field i of n.
+func (w *csvWriter) quoted(field string, i, n int) bool {
+	if i == 0 && (n == 1 && field == "" || strings.HasPrefix(field, "\ufeff")) {
+		return true
+	}
+	if field == "" {
+		return false
+	}
+	if field == `\.` || strings.ContainsRune(field, w.sep) || strings.ContainsAny(field, "\"\r\n") {
+		return true
+	}
+	r, _ := utf8.DecodeRuneInString(field)
+	return unicode.IsSpace(r)
 }
 
 func describeJSONToken(tok json.Token) string {
