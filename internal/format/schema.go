@@ -487,9 +487,10 @@ func filePath(u string) (string, error) {
 // the generic form the validator takes, with every number kept exact as a
 // json.Number. It is stricter than encoding/json where leniency would mean
 // validating something other than the document as written: invalid UTF-8
-// (silently replaced by U+FFFD), duplicate keys (the last one silently
-// wins), and numbers whose decimal exponent is beyond ±1000000 (math/big
-// refuses them, and the library then panics or skips the keyword).
+// and escapes of lone UTF-16 surrogates (both silently replaced by U+FFFD),
+// duplicate keys (the last one silently wins), and numbers whose decimal
+// exponent is beyond ±1000000 (math/big refuses them, and the library then
+// panics or skips the keyword).
 func decodeStrict(data []byte) (any, error) {
 	data, err := checkText(data)
 	if err != nil {
@@ -507,7 +508,14 @@ func decodeStrict(data []byte) (any, error) {
 	}
 	d := strictDecoder{data: data, dec: json.NewDecoder(bytes.NewReader(data))}
 	d.dec.UseNumber()
-	return d.value()
+	doc, err := d.value()
+	if err != nil {
+		return nil, err
+	}
+	if err := CheckJSONSurrogates(data); err != nil {
+		return nil, err
+	}
+	return doc, nil
 }
 
 type strictDecoder struct {

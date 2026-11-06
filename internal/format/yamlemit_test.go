@@ -115,6 +115,7 @@ func TestJSONToYAML(t *testing.T) {
 		{name: "high surrogate before a letter", input: `{"a":"\ud83d\u0041"}`, wantErr: `(\ud83d)`},
 		{name: "high surrogate after a pair", input: `{"a":"\ud83d\ude00\udbff"}`, wantErr: `(\udbff)`},
 		{name: "lone surrogate in a key", input: `{"\ud83dz":1}`, wantErr: `string at line 1, column 2`},
+		{name: "duplicate key reported before a lone surrogate", input: `{"a":"\udc00","a":1}`, wantErr: `duplicate key "a" at line 1, column 15`},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

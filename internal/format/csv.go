@@ -336,6 +336,9 @@ func decodeJSONTable(data []byte) (*jsonTable, error) {
 		}
 		return nil, fmt.Errorf("unexpected data after the JSON array")
 	}
+	if err := CheckJSONSurrogates(data); err != nil {
+		return nil, err
+	}
 	return t, nil
 }
 
