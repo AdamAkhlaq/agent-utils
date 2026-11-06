@@ -8,7 +8,6 @@ import (
 	"io"
 	"strings"
 	"unicode"
-	"unicode/utf16"
 	"unicode/utf8"
 )
 
@@ -47,6 +46,9 @@ func jsonToYAML(w io.Writer, r io.Reader, floor int) error {
 	// to the input however large the output would be.
 	count := newYAMLEmitter(data, nil)
 	if err := count.value(0, atRoot); err != nil {
+		return err
+	}
+	if err := CheckJSONSurrogates(data); err != nil {
 		return err
 	}
 	if limit := outputLimit(floor, len(text)); count.size > limit {
@@ -111,7 +113,6 @@ func (e *yamlEmitter) writeByte(c byte) {
 func (e *yamlEmitter) value(indent int, at yamlPlace) error {
 	quote := e.quoteNext
 	e.quoteNext = false
-	start := nextTokenOffset(e.data, e.dec)
 	tok, err := e.dec.Token()
 	if err != nil {
 		return syntaxError(e.data, err)
@@ -123,9 +124,6 @@ func (e *yamlEmitter) value(indent int, at yamlPlace) error {
 		}
 		return e.sequence(indent, at)
 	case string:
-		if err := e.checkString(tok, start); err != nil {
-			return err
-		}
 		e.string(tok, indent, at, quote)
 	case json.Number:
 		e.scalar(yamlNumber(tok.String()), at)
@@ -153,9 +151,6 @@ func (e *yamlEmitter) mapping(indent int, at yamlPlace) error {
 			return syntaxError(e.data, err)
 		}
 		key, _ := tok.(string)
-		if err := e.checkString(key, start); err != nil {
-			return err
-		}
 		if seen[key] {
 			line, col := lineCol(e.data, start+1)
 			return fmt.Errorf("duplicate key %q at line %d, column %d", key, line, col)
@@ -205,62 +200,6 @@ func (e *yamlEmitter) sequence(indent int, at yamlPlace) error {
 		}
 	}
 	return e.closing()
-}
-
-// checkString rejects a string whose source escapes a lone UTF-16 surrogate,
-// which encoding/json decodes as U+FFFD without a word. start is the offset
-// of the string's opening quote.
-func (e *yamlEmitter) checkString(s string, start int64) error {
-	if !strings.ContainsRune(s, utf8.RuneError) {
-		return nil
-	}
-	if esc, ok := loneSurrogate(e.data[start:e.dec.InputOffset()]); ok {
-		line, col := lineCol(e.data, start+1)
-		return fmt.Errorf("string at line %d, column %d escapes a lone UTF-16 surrogate (%s), which has no UTF-8 form", line, col, esc)
-	}
-	return nil
-}
-
-// loneSurrogate returns the first \uXXXX escape in the valid JSON string
-// literal raw that is a surrogate outside a high-low pair.
-func loneSurrogate(raw []byte) (string, bool) {
-	for i := 0; i < len(raw); i++ {
-		if raw[i] != '\\' {
-			continue
-		}
-		i++
-		if raw[i] != 'u' {
-			continue
-		}
-		r := hexRune(raw[i+1 : i+5])
-		if !utf16.IsSurrogate(r) {
-			i += 4
-			continue
-		}
-		if r < 0xdc00 && i+10 < len(raw) && raw[i+5] == '\\' && raw[i+6] == 'u' {
-			if low := hexRune(raw[i+7 : i+11]); low >= 0xdc00 && low < 0xe000 {
-				i += 10
-				continue
-			}
-		}
-		return string(raw[i-1 : i+5]), true
-	}
-	return "", false
-}
-
-func hexRune(hex []byte) rune {
-	var r rune
-	for _, c := range hex {
-		switch {
-		case c >= '0' && c <= '9':
-			r = r<<4 | rune(c-'0')
-		case c >= 'a' && c <= 'f':
-			r = r<<4 | rune(c-'a'+10)
-		default:
-			r = r<<4 | rune(c-'A'+10)
-		}
-	}
-	return r
 }
 
 func (e *yamlEmitter) closing() error {

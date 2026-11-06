@@ -413,6 +413,9 @@ func TestJSONSchemaValidateInputErrors(t *testing.T) {
 		{name: "duplicate key", instance: "{\"a\": 1,\n \"a\": 2}", wantErr: `duplicate key "a" at line 2, column 2`},
 		{name: "nested duplicate key", instance: `[{"b": {"x": 1, "x": 1}}]`, wantErr: `duplicate key "x" at line 1, column 17`},
 		{name: "invalid UTF-8", instance: "\"ok \xff\"", wantErr: "invalid UTF-8 at line 1, column 5"},
+		{name: "lone surrogate", instance: `"\udc00"`, wantErr: `string at line 1, column 1 escapes a lone UTF-16 surrogate (\udc00), which has no UTF-8 form`},
+		{name: "lone surrogate in a key", instance: `{"\ud800": 1}`, wantErr: `string at line 1, column 2 escapes a lone UTF-16 surrogate (\ud800)`},
+		{name: "duplicate key reported before a lone surrogate", instance: `{"a": "\udc00", "a": 1}`, wantErr: `duplicate key "a" at line 1, column 17`},
 		{name: "UTF-16", instance: "\xff\xfe{\x00}\x00", wantErr: "this is UTF-16LE"},
 		{name: "exponent out of range", instance: `{"n": 1e9999999}`, wantErr: "number 1e9999999 at line 1, column 7 is out of range"},
 		{name: "negative exponent out of range", instance: `[1e-1000001]`, wantErr: "number 1e-1000001 at line 1, column 2 is out of range"},
@@ -494,6 +497,7 @@ func TestCompileJSONSchemaErrors(t *testing.T) {
 		{name: "empty file", files: map[string]string{"schema.json": "\n"}, wantErr: "schema schema.json: empty input"},
 		{name: "invalid JSON", files: map[string]string{"schema.json": `{"type": }`}, wantErr: "schema schema.json: invalid JSON at line 1, column 10"},
 		{name: "duplicate key", files: map[string]string{"schema.json": `{"type": "object", "type": "string"}`}, wantErr: `schema schema.json: duplicate key "type" at line 1, column 20`},
+		{name: "lone surrogate", files: map[string]string{"schema.json": `{"const": "\udc00"}`}, wantErr: `schema schema.json: string at line 1, column 11 escapes a lone UTF-16 surrogate (\udc00)`},
 		{name: "exponent out of range", files: map[string]string{"schema.json": `{"minimum": 1e9999999}`}, wantErr: "number 1e9999999 at line 1, column 13 is out of range"},
 		{
 			name:    "fails its meta-schema",

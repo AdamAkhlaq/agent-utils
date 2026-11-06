@@ -155,6 +155,9 @@ func parseJSONTable(data []byte, inputSize int) (*table, error) {
 		}
 		return nil, errors.New("unexpected data after the JSON array")
 	}
+	if err := format.CheckJSONSurrogates(data); err != nil {
+		return nil, err
+	}
 	if mode == '{' {
 		if len(t.columns) == 0 {
 			return nil, errors.New("no columns to render: none of the array's objects has any keys")

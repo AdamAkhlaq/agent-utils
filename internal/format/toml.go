@@ -74,6 +74,9 @@ func jsonToTOML(w io.Writer, r io.Reader, floor int) error {
 	if err != nil {
 		return err
 	}
+	if err := CheckJSONSurrogates(data); err != nil {
+		return err
+	}
 	limit := outputLimit(floor, len(text))
 	headers := tomlHeaders{limit: limit}
 	headers.table(value.(map[string]any), 0, 0)
