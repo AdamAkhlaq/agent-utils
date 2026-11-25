@@ -116,6 +116,38 @@ func TestXMLToJSON(t *testing.T) {
 </rss>`,
 			want: "{\n  \"rss\": {\n    \"@version\": \"2.0\",\n    \"channel\": {\n      \"item\": [\n        {\n          \"link\": \"https://e.com/1\",\n          \"title\": \"First\"\n        },\n        {\n          \"link\": \"https://e.com/2\",\n          \"title\": \"Second\"\n        }\n      ],\n      \"title\": \"Example\"\n    }\n  }\n}",
 		},
+		{
+			name:  "non-XML whitespace around text is preserved",
+			input: "<r> \t\r\n&#xa0;&#x2003;a&#x85;&#x3000; \t\r\n</r>",
+			want:  "{\n  \"r\": \"\u00a0\u2003a\u0085\u3000\"\n}",
+		},
+		{
+			name:  "non-XML whitespace alone is content",
+			input: "<r>&#x3000;</r>",
+			want:  "{\n  \"r\": \"\u3000\"\n}",
+		},
+		{
+			name:  "non-XML whitespace alongside attributes is content",
+			input: `<r id="1">&#xa0;</r>`,
+			want:  "{\n  \"r\": {\n    \"#text\": \"\u00a0\",\n    \"@id\": \"1\"\n  }\n}",
+		},
+		{
+			name:  "non-XML whitespace alongside children is content",
+			input: "<r>&#x2003;<a/> &#x85;</r>",
+			want:  "{\n  \"r\": {\n    \"#text\": \"\u2003 \u0085\",\n    \"a\": \"\"\n  }\n}",
+		},
+		{
+			name:  "CDATA keeps non-XML whitespace",
+			input: "<r><![CDATA[\u00a0x\u3000]]></r>",
+			want:  "{\n  \"r\": \"\u00a0x\u3000\"\n}",
+		},
+		{
+			name:  "all four XML whitespace characters are trimmed",
+			input: "<r> \t\r\nx \t\r\n</r>",
+			want:  "{\n  \"r\": \"x\"\n}",
+		},
+		{name: "non-XML whitespace before root", input: "\u00a0<r/>", wantErr: "text outside the root element"},
+		{name: "non-XML whitespace after root", input: "<r/>\u3000", wantErr: "text outside the root element"},
 		{name: "empty input", input: "", wantErr: "empty input"},
 		{name: "whitespace only", input: "  \n\n", wantErr: "empty input"},
 		{name: "unclosed tag", input: "<a><b>", wantErr: "invalid XML"},
@@ -245,6 +277,8 @@ func TestXMLToJSONDepthLimit(t *testing.T) {
 func FuzzXMLToJSON(f *testing.F) {
 	seeds := []string{
 		"<name>Ada</name>",
+		"<r>&#xa0;a&#x3000;</r>",
+		`<r id="1">&#x2003;<a/>&#x85;</r>`,
 		`<user id="7" role="admin">Ada<b/></user>`,
 		"<list><item>a</item><item>b</item><item>c</item></list>",
 		`<r xmlns="u" xmlns:x="v"><x:a x:k="1"/><b xmlns:x="w"><x:c/></b></r>`,

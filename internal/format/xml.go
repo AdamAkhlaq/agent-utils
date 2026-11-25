@@ -14,10 +14,10 @@ import (
 // "#text", an element with only text becomes a plain string, and repeated
 // sibling elements collapse into an array. Whitespace-only text between
 // elements is dropped; meaningful text is trimmed of leading and trailing
-// whitespace. CDATA is text; comments, processing instructions, the XML
-// declaration, and DOCTYPE are dropped. Namespace prefixes stay part of the
-// key name as written. Object keys are emitted in sorted order, which makes
-// the output deterministic.
+// XML whitespace (space, tab, CR, and LF). CDATA is text; comments,
+// processing instructions, the XML declaration, and DOCTYPE are dropped.
+// Namespace prefixes stay part of the key name as written. Object keys are
+// emitted in sorted order, which makes the output deterministic.
 func XMLToJSON(w io.Writer, r io.Reader) error {
 	data, err := ReadText(r)
 	if err != nil {
@@ -38,10 +38,13 @@ func XMLToJSON(w io.Writer, r io.Reader) error {
 // the object of an innermost element with attributes.
 const maxXMLDepth = 5_000
 
+// XML defines whitespace with the S production, not Unicode White_Space.
+const xmlWhitespace = " \t\r\n"
+
 // xmlDocument parses data into the JSON value XMLToJSON writes, failing on
 // elements nested deeper than maxDepth.
 func xmlDocument(data []byte, maxDepth int) (any, error) {
-	if len(bytes.TrimSpace(data)) == 0 {
+	if len(bytes.Trim(data, xmlWhitespace)) == 0 {
 		return nil, fmt.Errorf("empty input")
 	}
 	dec := xml.NewDecoder(bytes.NewReader(data))
@@ -73,7 +76,7 @@ func xmlDocument(data []byte, maxDepth int) (any, error) {
 		case xml.CharData:
 			// Same story: text outside the root comes through as a plain
 			// token, not a decoder error.
-			if len(bytes.TrimSpace(t)) > 0 {
+			if len(bytes.Trim(t, xmlWhitespace)) > 0 {
 				line, _ := dec.InputPos()
 				return nil, fmt.Errorf("invalid XML: text outside the root element at line %d", line)
 			}
@@ -120,7 +123,7 @@ func (d *xmlDecoder) element(start xml.StartElement, depth int) (string, any, er
 			addChild(obj, key, val)
 		case xml.EndElement:
 			name := d.ns.name(start.Name)
-			content := strings.TrimSpace(text.String())
+			content := strings.Trim(text.String(), xmlWhitespace)
 			if len(obj) == 0 {
 				return name, content, nil
 			}
